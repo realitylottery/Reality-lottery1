@@ -43,13 +43,13 @@
         document.getElementById("message").textContent = data.message;
 
         if (response.ok) {
-          window.location.href = "login.html";
+         alert(data.message);
+window.location.href = "payment.html"; // ⬅️ الانتقال إلى صفحة الدفع بعد التسجيل
         }
       } catch (err) {
         document.getElementById("message").textContent = "Server error, please try again.";
       }
-      alert(data.message);
-window.location.href = "payment.html"; // ⬅️ الانتقال إلى صفحة الدفع بعد التسجيل
+     
 
     });
   </script>
