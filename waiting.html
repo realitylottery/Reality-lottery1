@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment Pending</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Thank you for your payment!</h2>
+    <p>Your transaction is being reviewed by our team.</p>
+    <p>Please wait until your payment is approved.</p>
+
+    <div id="statusMessage">Checking status...</div>
+  </div>
+
+  <script>
+    const username = localStorage.getItem("username");
+
+    async function checkApproval() {
+      try {
+        const response = await fetch("http://localhost:3000/api/check-approval", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username }),
+        });
+
+        const data = await response.json();
+
+        if (data.approved) {
+          // Redirect to game page if approved
+          window.location.href = "game.html";
+        } else {
+          document.getElementById("statusMessage").innerText = "Still pending approval...";
+        }
+      } catch (error) {
+        document.getElementById("statusMessage").innerText = "Error checking approval.";
+        console.error(error);
+      }
+    }
+
+    // Check every 10 seconds
+    setInterval(checkApproval, 10000);
+    checkApproval(); // initial check
+  </script>
+</body>
+</html>
