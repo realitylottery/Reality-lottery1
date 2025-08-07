@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment - Reality Lottery</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Join the Contest - Entry Fee</h1>
+    <p>Send <strong>10 USDT</strong> to the following wallet address:</p>
+    <input type="text" value="TRX...YOUR_USDT_WALLET_ADDRESS" readonly />
+    <button onclick="confirmPayment()">I have paid</button>
+    <p id="message"></p>
+  </div>
+
+  <script>
+    function confirmPayment() {
+      document.getElementById("message").innerText =
+        "Thank you! Your payment will be reviewed by our team.";
+      // في المستقبل: إرسال إشعار للسيرفر بانتظار الموافقة
+    }
+  </script>
+</body>
+</html>
