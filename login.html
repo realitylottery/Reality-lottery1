@@ -45,9 +45,7 @@
     } else {
       alert("Login failed: " + data.message);
     }
-    alert(data.message);
-window.location.href = "payment.html"; // ⬅️ الانتقال إلى صفحة الدفع بعد التسجيل
-
+ 
   });
 </script>
 
@@ -75,7 +73,9 @@ window.location.href = "payment.html"; // ⬅️ الانتقال إلى صفح�
 
       if (res.ok) {
         localStorage.setItem("user", JSON.stringify(data.user));
-        window.location.href = "game.html"; // أو صفحة أخرى حسب الحالة
+      alert(data.message);
+window.location.href = "payment.html"; // ⬅️ الانتقال إلى صفحة الدفع بعد التسجيل
+
       } else {
         document.getElementById("message").innerText = data.error || "Login failed.";
       }
