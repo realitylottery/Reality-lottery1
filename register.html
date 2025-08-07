@@ -48,6 +48,9 @@
       } catch (err) {
         document.getElementById("message").textContent = "Server error, please try again.";
       }
+      alert(data.message);
+window.location.href = "payment.html"; // ⬅️ الانتقال إلى صفحة الدفع بعد التسجيل
+
     });
   </script>
 </body>
