@@ -1,91 +1,52 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register - Reality Lottery</title>
-  <style><link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="style.css" />
-    body {
-      background: linear-gradient(to bottom right, #2c3e50, #1e1e1e);
-      font-family: Arial, sans-serif;
-      color: white;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 400px;
-      margin: 60px auto;
-      background-color: rgba(255, 255, 255, 0.05);
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.4);
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    form input {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-    }
-    form button {
-      width: 100%;
-      padding: 12px;
-      background-color: #f39c12;
-      color: white;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    form button:hover {
-      background-color: #e67e22;
-    }
-    .login-link {
-      text-align: center;
-      margin-top: 15px;
-    }
-    .login-link a {
-      color: #f39c12;
-      text-decoration: none;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reality Lottery - Register</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
+  <div class="form-container">
     <h2>Create New Account</h2>
     <form id="registerForm">
-  <input type="text" id="username" placeholder="Username" required />
-  <input type="email" id="email" placeholder="Email" required />
-  <input type="text" id="country" placeholder="Country" required />
-  <input type="password" id="password" placeholder="Password" required />
-  <input type="text" id="referrer" placeholder="Referral (optional)" />
-  <button type="submit">Register</button>
-</form>
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="text" id="country" placeholder="Country" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <input type="text" id="referrer" placeholder="Referral (optional)" />
+      <button type="submit">Register</button>
+    </form>
+    <p id="message"></p>
+  </div>
 
-<script>
-document.getElementById("registerForm").addEventListener("submit", async function (e) {
-  e.preventDefault();
+  <script>
+    document.getElementById("registerForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-  const username = document.getElementById("username").value;
-  const email = document.getElementById("email").value;
-  const country = document.getElementById("country").value;
-  const password = document.getElementById("password").value;
-  const referrer = document.getElementById("referrer").value;
+      const username = document.getElementById("username").value;
+      const email = document.getElementById("email").value;
+      const country = document.getElementById("country").value;
+      const password = document.getElementById("password").value;
+      const referrer = document.getElementById("referrer").value;
 
-  const response = await fetch("http://localhost:3000/api/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password, email, country, referrer }),
-  });
+      try {
+        const response = await fetch("http://localhost:3000/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, email, country, password, referrer })
+        });
 
-  const data = await response.json();
-  alert(data.message);
-});
-</script>
+        const data = await response.json();
+        document.getElementById("message").textContent = data.message;
 
+        if (response.ok) {
+          window.location.href = "login.html";
+        }
+      } catch (err) {
+        document.getElementById("message").textContent = "Server error, please try again.";
+      }
+    });
+  </script>
+</body>
+</html>
