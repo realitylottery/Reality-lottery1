@@ -60,20 +60,32 @@
   <div class="container">
     <h2>Create New Account</h2>
     <form id="registerForm">
-      <input type="text" name="fullname" placeholder="Full Name" required>
-      <input type="email" name="email" placeholder="Email" required>
-      <input type="text" name="country" placeholder="Country" required>
-      <input type="text" name="username" placeholder="Username" required>
-      <input type="password" name="password" placeholder="Password" required>
-      <button type="submit">Register</button>
-    </form>
-    <div class="login-link">
-      Already have an account? <a href="login.html">Login here</a>
-    </div>
-  </div>  <script>
-    document.getElementById("registerForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      alert("✅ Registration submitted (backend not connected yet).");
-    });
-  </script></body>
-</html>
+  <input type="text" id="username" placeholder="Username" required />
+  <input type="email" id="email" placeholder="Email" required />
+  <input type="text" id="country" placeholder="Country" required />
+  <input type="password" id="password" placeholder="Password" required />
+  <input type="text" id="referrer" placeholder="Referral (optional)" />
+  <button type="submit">Register</button>
+</form>
+
+<script>
+document.getElementById("registerForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const username = document.getElementById("username").value;
+  const email = document.getElementById("email").value;
+  const country = document.getElementById("country").value;
+  const password = document.getElementById("password").value;
+  const referrer = document.getElementById("referrer").value;
+
+  const response = await fetch("http://localhost:3000/api/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password, email, country, referrer }),
+  });
+
+  const data = await response.json();
+  alert(data.message);
+});
+</script>
+
