@@ -1,39 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Payment - Reality Lottery</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Payment</title>
 </head>
 <body>
-  <div class="container">
-    <h1>Payment</h1>
-    <p>To participate, send <strong>10 USDT</strong> to the following wallet:</p>
-    <p><strong>Wallet Address:</strong> <code>TX7f...abc9</code></p>
+  <h2>Complete Your Payment</h2>
+  <p>Send $10 USDT to the following wallet:</p>
+  <p><strong>Wallet Address:</strong> TX8e4...your_wallet_here</p>
 
-    <label for="txid">Enter Your Transaction ID:</label>
-    <input type="text" id="txid" placeholder="Paste your TXID here" required />
-    <button onclick="submitPayment()">I Have Paid</button>
-
-    <p id="status"></p>
-  </div>
+  <input type="text" id="txid" placeholder="Enter your transaction ID">
+  <button onclick="submitPayment()">Submit</button>
 
   <script>
-    const userId = localStorage.getItem("userId"); // Assume userId is stored after login
-
-    async function submitPayment() {
+    const submitPayment = () => {
       const txid = document.getElementById("txid").value;
-      if (!txid || !userId) return alert("Transaction ID or user ID is missing");
+      const username = localStorage.getItem("username");
 
-      const res = await fetch("http://localhost:3000/api/payment", {
+      if (!txid || !username) {
+        alert("Transaction ID or user ID is missing");
+        return;
+      }
+
+      fetch("http://localhost:3000/api/payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, txid })
+        body: JSON.stringify({ username, txid })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+        window.location.href = "waiting.html";
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Error submitting payment");
       });
-
-      const data = await res.json();
-      document.getElementById("status").innerText = data.message;
-    }
+    };
   </script>
 </body>
 </html>
