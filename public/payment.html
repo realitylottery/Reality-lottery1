@@ -27,7 +27,7 @@
     const submitPayment = () => {
       const txid = document.getElementById("txid").value.trim();
       const phone = document.getElementById("phone").value.trim();
-      const username = localStorage.getItem("userid");
+      const userid = localStorage.getItem("userid");
 
       if (!txid || !phone || !userid) {
         alert("يرجى إدخال جميع البيانات");
