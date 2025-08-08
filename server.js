@@ -7,7 +7,11 @@ const path = require("path");
 const app = express();
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: "https://realitylottery.koyeb.app",
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 app.use(bodyParser.json());
 
 // Serve static frontend files from public folder
@@ -153,3 +157,4 @@ app.post("/api/approve-payment", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
+
