@@ -42,7 +42,7 @@ const Payment = mongoose.model("Payment", paymentSchema);
 
 // الاتصال بقاعدة البيانات
 mongoose.connect(
-  process.env.MONGODB_URI || "mongodb+srv://realitylottery:Moataz1234@realitylottery.fzcf67p.mongodb.net/?retryWrites=true&w=majority&appName=realitylottery"
+  process.env.MONGODB_URI || "mongodb+srv://realitylottery:Moataz1234@cluster0.mtdayj1.mongodb.net/lotteryDB?retryWrites=true&w=majority&appName=Cluster0"
 )
 .then(() => {
   console.log("✅ Connected to MongoDB");
@@ -195,3 +195,4 @@ app.post("/api/reject-payment", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
+
