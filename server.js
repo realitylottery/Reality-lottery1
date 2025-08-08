@@ -13,7 +13,7 @@ app.use(cors({
 }));
 
 // ====== Database Connection ======
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/realitylottery";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://realitylottery:Moataz1234@realitylottery.fzcf67p.mongodb.net/?retryWrites=true&w=majority&appName=realitylottery";
 
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
@@ -63,3 +63,4 @@ app.get("*", (req, res) => {
 // ====== Start Server ======
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
