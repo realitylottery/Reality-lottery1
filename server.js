@@ -114,13 +114,13 @@ app.get("/", (req, res) => {
 
 app.post("/api/payment", async (req, res) => {
 
-  const { userId, txid } = req.body;
+  const { phone, txid } = req.body;
 
-  if (!userId || !txid) return res.status(400).json({ message: "Missing data" });
+  if (!phone || !txid) return res.status(400).json({ message: "Missing data" });
 
 
 
-  const payment = new Payment({ userId, txid });
+  const payment = new Payment({ phone, txid });
 
   await payment.save();
 
@@ -307,4 +307,5 @@ app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 
 });
+
 
