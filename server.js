@@ -45,7 +45,7 @@ mongoose.connect("mongodb+srv://realitylottery:Moataz1234@realitylottery.fzcf67p
 
 // Health check or default route
 app.get("/", (req, res) => {
-  res.send("🎉 Reality Lottery Server is running!");
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // إرسال الدفع
@@ -152,3 +152,4 @@ app.post("/api/approve-payment", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
+
