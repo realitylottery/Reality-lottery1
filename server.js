@@ -59,15 +59,10 @@ const User = mongoose.model("User", userSchema);
 
 
 const paymentSchema = new mongoose.Schema({
-
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-
   txid: String,
-
-  approved: { type: Boolean, default: false },
-
-  timestamp: { type: Date, default: Date.now }
-
+  phone: String,
+  status: String,
+  date: Date
 });
 
 const Payment = mongoose.model("Payment", paymentSchema);
@@ -113,21 +108,29 @@ app.get("/", (req, res) => {
 // إرسال الدفع
 
 app.post("/api/payment", async (req, res) => {
+  console.log("Received payment request:", req.body); // 1. سجل البيانات المستلمة
 
-  const { phone, txid } = req.body;
+  try {
+    const { txid, phone } = req.body;
+    console.log(`txid: ${txid}, phone: ${phone}`); // 2. تأكد من وصول البيانات
 
-  if (!phone || !txid) return res.status(400).json({ message: "Missing data" });
+    if (!txid || !phone) {
+      console.log("Missing data");
+      return res.status(400).json({ error: "txid and phone are required" });
+    }
 
+    const newPayment = new Payment({ txid, phone });
+    console.log("New payment object created:", newPayment); // 3. تأكد من بناء الكائن
 
+    await newPayment.save();
+    console.log("Payment saved to DB:", newPayment._id); // 4. تأكد من الحفظ
 
-  const payment = new Payment({ phone, txid });
-
-  await payment.save();
-
-  res.json({ message: "Payment submitted. Waiting for admin approval." });
-
+    res.json({ message: "Payment saved successfully" });
+  } catch (err) {
+    console.error("Error saving payment:", err); // 5. سجل أي خطأ
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
-
 
 
 // تسجيل الدخول
@@ -316,6 +319,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 
 });
+
 
 
 
