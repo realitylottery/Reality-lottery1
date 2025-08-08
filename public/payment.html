@@ -27,9 +27,8 @@
     const submitPayment = () => {
       const txid = document.getElementById("txid").value.trim();
       const phone = document.getElementById("phone").value.trim();
-      const userid = localStorage.getItem("userid");
 
-      if (!txid || !phone || !userid) {
+      if (!txid || !phone) {
         alert("يرجى إدخال جميع البيانات");
         return;
       }
@@ -37,7 +36,7 @@
       fetch("https://realitylottery.koyeb.app/api/payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userid, txid, phone })
+        body: JSON.stringify({ txid, phone })
       })
       .then(res => res.json())
       .then(data => {
