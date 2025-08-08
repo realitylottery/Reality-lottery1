@@ -6,20 +6,20 @@ const path = require("path");
 
 const app = express();
 
-// Middlewares
+// السماح لأي مصدر (لتجنب مشاكل CORS أثناء التطوير)
 app.use(cors({
-  origin: "https://realitylottery.koyeb.app", // أو "*" أثناء التطوير
+  origin: "*",
   methods: ["GET", "POST", "PUT"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(bodyParser.json());
 
-// Serve static frontend files from public folder
+// تقديم الملفات الثابتة من مجلد public (بما فيها admin-dashboard.html)
 app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = process.env.PORT || 3000;
 
-// سكيمات mongoose
+// تعريف سكيمات Mongoose
 const userSchema = new mongoose.Schema({
   username: String,
   password: String,
@@ -51,24 +51,29 @@ mongoose.connect(
   console.error("❌ MongoDB connection error:", error);
 });
 
-// Routes
+// المسارات
 
-// صفحة البداية تعرض index.html
+// الصفحة الرئيسية (يمكنك تعديلها حسب الحاجة)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// إرسال الدفع
+// إضافة دفعة جديدة
 app.post("/api/payment", async (req, res) => {
   const { userId, txid } = req.body;
   if (!userId || !txid) return res.status(400).json({ message: "Missing data" });
 
-  const payment = new Payment({ userId, txid });
-  await payment.save();
-  res.json({ message: "Payment submitted. Waiting for admin approval." });
+  try {
+    const payment = new Payment({ userId, txid });
+    await payment.save();
+    res.json({ message: "Payment submitted. Waiting for admin approval." });
+  } catch (error) {
+    console.error("Error saving payment:", error);
+    res.status(500).json({ message: "Server error saving payment" });
+  }
 });
 
-// تسجيل الدخول
+// تسجيل دخول المستخدم (عادي)
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -88,6 +93,7 @@ app.post("/api/login", async (req, res) => {
       user: {
         username: user.username,
         email: user.email,
+        phone: user.phone,
         isApproved: user.isApproved
       },
       token: "mock-token" // رمزي فقط
@@ -133,7 +139,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// الحصول على الدفعات المعلقة (pending أو rejected)
+// جلب الدفعات المعلقة (pending أو rejected)
 app.get("/api/pending-payments", async (req, res) => {
   try {
     const payments = await Payment.find({ status: { $in: ["pending", "rejected"] } })
@@ -185,7 +191,7 @@ app.post("/api/reject-payment", async (req, res) => {
   }
 });
 
-// بدء السيرفر
+// تشغيل السيرفر
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
