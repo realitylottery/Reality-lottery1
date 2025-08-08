@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -14,7 +13,7 @@ app.use(cors({
 }));
 
 // ====== Database Connection ======
-mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/realitylottery", {
+mongoose.connect(process.env.MONGODB_URI || "mongodb+srv://realitylottery:Moataz1234@realitylottery.fzcf67p.mongodb.net/?retryWrites=true&w=majority&appName=realitylottery", {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
@@ -94,3 +93,4 @@ app.get("*", (req, res) => {
 // ====== Start Server ======
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
