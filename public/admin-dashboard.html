@@ -1,27 +1,58 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8">
-  <title>لوحة التحكم - الأدمن</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f7f7f7; direction: rtl; }
-    .login-box, .dashboard {
+<meta charset="UTF-8">
+<title>لوحة تحكم الدفع - الأدمن</title>
+<style>
+    body { font-family: Arial, sans-serif; direction: rtl; background: #f4f6f8; }
+    h2 { text-align: center; padding: 20px; color: #333; }
+    .search-box { width: 95%; margin: 0 auto 15px; display: flex; justify-content: center; }
+    .search-box input { width: 50%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; text-align: center; }
+    table { width: 95%; margin: 0 auto; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: center; }
+    th { background: #2c3e50; color: white; }
+    tr:hover { background: #f1f1f1; }
+    button { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; }
+    .approve { background: #28a745; color: white; }
+    .approve:hover { background: #218838; }
+    .reject { background: #dc3545; color: white; }
+    .reject:hover { background: #c82333; }
+
+    /* صندوق تسجيل الدخول */
+    .login-box {
       width: 350px; margin: 100px auto; padding: 20px;
       background: white; border-radius: 8px;
       box-shadow: 0 0 8px rgba(0,0,0,0.1);
       text-align: center;
     }
-    input, button {
+    .login-box input {
       width: 100%; padding: 10px; margin: 8px 0;
       border: 1px solid #ccc; border-radius: 5px;
       font-size: 16px;
     }
-    button { background: #007bff; color: white; cursor: pointer; border: none; }
-    button:hover { background: #0056b3; }
-  </style>
+    .login-box button {
+      width: 100%; padding: 10px;
+      background: #007bff; color: white; cursor: pointer; border: none; border-radius: 5px;
+      font-size: 16px;
+    }
+    .login-box button:hover { background: #0056b3; }
+
+    .logout-btn {
+      display: block;
+      margin: 15px auto;
+      background: #ff9800;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .logout-btn:hover { background: #e68900; }
+</style>
 </head>
 <body>
 
+<!-- تسجيل الدخول -->
 <div class="login-box" id="loginBox">
   <h2>تسجيل دخول الأدمن</h2>
   <input type="text" id="username" placeholder="اسم المستخدم">
@@ -29,41 +60,122 @@
   <button onclick="login()">تسجيل الدخول</button>
 </div>
 
-<div class="dashboard" id="dashboard" style="display:none;">
-  <h2>مرحبًا بك في لوحة تحكم الأدمن</h2>
-  <p>هنا محتوى لوحة التحكم...</p>
-  <button onclick="logout()">تسجيل الخروج</button>
+<!-- لوحة تحكم الدفع -->
+<div id="dashboard" style="display:none;">
+    <h2>📋 لوحة تحكم الدفع</h2>
+    <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 ابحث عن مستخدم أو رقم العملية أو الهاتف...">
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>المستخدم</th>
+                <th>رقم العملية</th>
+                <th>رقم الهاتف</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody id="paymentTable">
+            <tr><td colspan="5">جارٍ تحميل البيانات...</td></tr>
+        </tbody>
+    </table>
 </div>
 
 <script>
-  // بيانات تسجيل الدخول
-  const ADMIN_USER = "admin";
-  const ADMIN_PASS = "12345";
+/* بيانات تسجيل الدخول */
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "12345";
 
-  // إذا سبق الدخول بنجاح
-  if (localStorage.getItem("isAdmin") === "true") {
+if (localStorage.getItem("isAdmin") === "true") {
     document.getElementById("loginBox").style.display = "none";
     document.getElementById("dashboard").style.display = "block";
-  }
+    loadPayments();
+}
 
-  function login() {
+function login() {
     const user = document.getElementById("username").value.trim();
     const pass = document.getElementById("password").value.trim();
 
     if (user === ADMIN_USER && pass === ADMIN_PASS) {
-      localStorage.setItem("isAdmin", "true");
-      document.getElementById("loginBox").style.display = "none";
-      document.getElementById("dashboard").style.display = "block";
+        localStorage.setItem("isAdmin", "true");
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+        loadPayments();
     } else {
-      alert("اسم المستخدم أو كلمة المرور غير صحيحة");
+        alert("اسم المستخدم أو كلمة المرور غير صحيحة");
     }
-  }
+}
 
-  function logout() {
+function logout() {
     localStorage.removeItem("isAdmin");
     document.getElementById("dashboard").style.display = "none";
     document.getElementById("loginBox").style.display = "block";
-  }
+}
+
+/* أكواد الدفع */
+let allPayments = [];
+
+async function loadPayments(){
+    try {
+        let res = await fetch("https://realitylottery.koyeb.app/api/payment");
+        allPayments = await res.json();
+        renderTable(allPayments);
+    } catch (err) {
+        console.error(err);
+        document.getElementById("paymentTable").innerHTML = "<tr><td colspan='5'>خطأ في تحميل البيانات</td></tr>";
+    }
+}
+
+function renderTable(payments){
+    let table = document.getElementById("paymentTable");
+    table.innerHTML = "";
+    if (!payments.length) {
+        table.innerHTML = "<tr><td colspan='5'>لا توجد طلبات دفع حالياً</td></tr>";
+        return;
+    }
+    payments.forEach(p => {
+        let row = `<tr>
+            <td>${p.username || "-"}</td>
+            <td>${p.txid || "-"}</td>
+            <td>${p.phone || "-"}</td>
+            <td>${p.status || "pending"}</td>
+            <td>
+                <button class="approve" onclick="updateStatus('${p._id}', 'approved')">موافقة</button>
+                <button class="reject" onclick="updateStatus('${p._id}', 'rejected')">رفض</button>
+            </td>
+        </tr>`;
+        table.innerHTML += row;
+    });
+}
+
+async function updateStatus(id, status){
+    try {
+        await fetch(`https://realitylottery.koyeb.app/api/payment/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status })
+        });
+        loadPayments();
+    } catch (err) {
+        console.error(err);
+        alert("حدث خطأ أثناء تحديث الحالة");
+    }
+}
+
+// فلتر البحث
+document.getElementById("searchInput").addEventListener("input", function(){
+    let query = this.value.toLowerCase();
+    let filtered = allPayments.filter(p =>
+        (p.username && p.username.toLowerCase().includes(query)) ||
+        (p.txid && p.txid.toLowerCase().includes(query)) ||
+        (p.phone && p.phone.toLowerCase().includes(query))
+    );
+    renderTable(filtered);
+});
 </script>
 
 </body>
