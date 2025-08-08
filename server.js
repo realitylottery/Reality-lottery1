@@ -267,26 +267,19 @@ app.get("/api/pending-payments", async (req, res) => {
   try {
     const payments = await Payment.find({ status: { $in: ["pending", "rejected"] } });
     
-    // التعديل المهم: تصفية العناصر غير المعرّفة
-    const validPayments = payments.filter(p => p && p._id);
-    
     // تحويل كائنات Mongoose إلى كائنات JavaScript عادية
-    const formattedPayments = validPayments.map(p => ({
+    const plainPayments = payments.map(p => ({
       _id: p._id.toString(),
       txid: p.txid,
       phone: p.phone,
       status: p.status,
-      date: p.date.toISOString()
+      date: p.date
     }));
-
-    res.json(formattedPayments);
+    
+    res.json(plainPayments);
   } catch (err) {
     console.error("Error fetching payments:", err);
-    res.status(500).json({ 
-      success: false,
-      error: "Internal server error",
-      details: err.message 
-    });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -319,6 +312,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 
 });
+
 
 
 
