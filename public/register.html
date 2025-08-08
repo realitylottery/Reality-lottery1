@@ -33,7 +33,7 @@
       const referrer = document.getElementById("referrer").value;
 
       try {
-        const response = await fetch("http://localhost:3000/api/register", {
+        const response = await fetch("https://realitylottery.koyeb.app/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, email, country, password, referrer })
