@@ -61,12 +61,21 @@ app.get("/", (req, res) => {
 
 // إضافة دفعة جديدة
 app.post("/api/payment", async (req, res) => {
-  const { userId, txid, phone } = req.body;
-  if (!userId || !txid || !phone) return res.status(400).json({ message: "Missing data" });
+    try {
+        const { txid, phone } = req.body;
 
-  const payment = new Payment({ userId, txid, phone });
-  await payment.save();
-  res.json({ message: "Payment submitted. Waiting for admin approval." });
+        if (!txid || !phone) {
+            return res.status(400).json({ success: false, message: "البيانات ناقصة" });
+        }
+
+        const newPayment = new Payment({ txid, phone });
+        await newPayment.save();
+
+        res.json({ success: true, message: "تم تسجيل الدفع بنجاح" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: "خطأ في السيرفر" });
+    }
 });
 
 // تسجيل دخول المستخدم (عادي)
@@ -147,16 +156,14 @@ app.post("/api/register", async (req, res) => {
 app.get("/api/pending-payments", async (req, res) => {
   try {
     const payments = await Payment.find({ status: { $in: ["pending", "rejected"] } })
-      .populate("userId", "username phone");
+      .populate("username phone");
 
     const formatted = payments.map(p => ({
-      _id: p._id,
       txid: p.txid,
       status: p.status,
       user: {
-        _id: p.userId._id,
         username: p.userId.username,
-        phone: p.userId.phone || "-"
+        phone: p.phone || "-"
       }
     }));
 
@@ -169,7 +176,7 @@ app.get("/api/pending-payments", async (req, res) => {
 
 // الموافقة على الدفع
 app.post("/api/approve-payment", async (req, res) => {
-  const { paymentId, userId } = req.body;
+  const { paymentId } = req.body;
 
   try {
     await Payment.findByIdAndUpdate(paymentId, { status: "approved" });
@@ -199,6 +206,7 @@ app.post("/api/reject-payment", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
+
 
 
 
