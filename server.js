@@ -8,8 +8,8 @@ const app = express();
 
 // Middlewares
 app.use(cors({
-  origin: "https://realitylottery.koyeb.app",
-  methods: ["GET", "POST"],
+  origin: "https://realitylottery.koyeb.app", // أو "*" أثناء التطوير
+  methods: ["GET", "POST", "PUT"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(bodyParser.json());
@@ -17,7 +17,6 @@ app.use(bodyParser.json());
 // Serve static frontend files from public folder
 app.use(express.static(path.join(__dirname, "public")));
 
-// متغير البورت من البيئة أو 3000 محليًا
 const PORT = process.env.PORT || 3000;
 
 // سكيمات mongoose
@@ -25,6 +24,7 @@ const userSchema = new mongoose.Schema({
   username: String,
   password: String,
   email: String,
+  phone: String,          // إضافة رقم الهاتف
   country: String,
   isApproved: { type: Boolean, default: false },
   referrer: String,
@@ -35,7 +35,7 @@ const User = mongoose.model("User", userSchema);
 const paymentSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   txid: String,
-  approved: { type: Boolean, default: false },
+  status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
   timestamp: { type: Date, default: Date.now }
 });
 const Payment = mongoose.model("Payment", paymentSchema);
@@ -100,7 +100,7 @@ app.post("/api/login", async (req, res) => {
 
 // تسجيل مستخدم جديد
 app.post("/api/register", async (req, res) => {
-  const { username, password, email, country, referrer } = req.body;
+  const { username, password, email, phone, country, referrer } = req.body;
 
   try {
     const existingUser = await User.findOne({ username });
@@ -112,6 +112,7 @@ app.post("/api/register", async (req, res) => {
       username,
       password,
       email,
+      phone,
       country,
       referrer: referrer || null
     });
@@ -132,29 +133,59 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// الحصول على الدفعات المعلقة
+// الحصول على الدفعات المعلقة (pending أو rejected)
 app.get("/api/pending-payments", async (req, res) => {
-  const payments = await Payment.find({ approved: false }).populate("userId", "username");
-  const formatted = payments.map(p => ({
-    _id: p._id,
-    txid: p.txid,
-    user: { _id: p.userId._id, username: p.userId.username }
-  }));
-  res.json(formatted);
+  try {
+    const payments = await Payment.find({ status: { $in: ["pending", "rejected"] } })
+      .populate("userId", "username phone");
+
+    const formatted = payments.map(p => ({
+      _id: p._id,
+      txid: p.txid,
+      status: p.status,
+      user: {
+        _id: p.userId._id,
+        username: p.userId.username,
+        phone: p.userId.phone || "-"
+      }
+    }));
+
+    res.json(formatted);
+  } catch (error) {
+    console.error("Error fetching pending payments:", error);
+    res.status(500).json({ message: "Server error fetching payments" });
+  }
 });
 
 // الموافقة على الدفع
 app.post("/api/approve-payment", async (req, res) => {
   const { paymentId, userId } = req.body;
 
-  await Payment.findByIdAndUpdate(paymentId, { approved: true });
-  await User.findByIdAndUpdate(userId, { isApproved: true });
+  try {
+    await Payment.findByIdAndUpdate(paymentId, { status: "approved" });
+    await User.findByIdAndUpdate(userId, { isApproved: true });
 
-  res.json({ message: "✅ Payment approved and user activated." });
+    res.json({ message: "✅ Payment approved and user activated." });
+  } catch (error) {
+    console.error("Error approving payment:", error);
+    res.status(500).json({ message: "Server error approving payment" });
+  }
+});
+
+// رفض الدفع
+app.post("/api/reject-payment", async (req, res) => {
+  const { paymentId } = req.body;
+
+  try {
+    await Payment.findByIdAndUpdate(paymentId, { status: "rejected" });
+    res.json({ message: "❌ Payment rejected." });
+  } catch (error) {
+    console.error("Error rejecting payment:", error);
+    res.status(500).json({ message: "Server error rejecting payment" });
+  }
 });
 
 // بدء السيرفر
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
-
