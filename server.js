@@ -35,7 +35,8 @@ const User = mongoose.model("User", userSchema);
 const paymentSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   txid: String,
-  status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+  phone: String,
+  approved: { type: Boolean, default: false },
   timestamp: { type: Date, default: Date.now }
 });
 const Payment = mongoose.model("Payment", paymentSchema);
@@ -60,17 +61,12 @@ app.get("/", (req, res) => {
 
 // إضافة دفعة جديدة
 app.post("/api/payment", async (req, res) => {
-  const { userId, txid } = req.body;
-  if (!userId || !txid) return res.status(400).json({ message: "Missing data" });
+  const { userId, txid, phone } = req.body;
+  if (!userId || !txid || !phone) return res.status(400).json({ message: "Missing data" });
 
-  try {
-    const payment = new Payment({ userId, txid });
-    await payment.save();
-    res.json({ message: "Payment submitted. Waiting for admin approval." });
-  } catch (error) {
-    console.error("Error saving payment:", error);
-    res.status(500).json({ message: "Server error saving payment" });
-  }
+  const payment = new Payment({ userId, txid, phone });
+  await payment.save();
+  res.json({ message: "Payment submitted. Waiting for admin approval." });
 });
 
 // تسجيل دخول المستخدم (عادي)
@@ -89,15 +85,16 @@ app.post("/api/login", async (req, res) => {
     }
 
     res.json({
-      message: "Login successful",
-      user: {
-        username: user.username,
-        email: user.email,
-        phone: user.phone,
-        isApproved: user.isApproved
-      },
-      token: "mock-token" // رمزي فقط
-    });
+  message: "Login successful",
+  user: {
+    _id: user._id,           // أضف هذا السطر
+    username: user.username,
+    email: user.email,
+    phone: user.phone,
+    isApproved: user.isApproved
+  },
+  token: "mock-token"
+});
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Server error" });
@@ -132,7 +129,14 @@ app.post("/api/register", async (req, res) => {
       );
     }
 
-    res.status(201).json({ message: "User registered successfully" });
+    // إرجاع بيانات المستخدم مع _id
+    res.status(201).json({
+      message: "User registered successfully",
+      user: {
+        _id: newUser._id,
+        username: newUser.username
+      }
+    });
   } catch (err) {
     console.error("Registration error:", err);
     res.status(500).json({ message: "Server error during registration" });
@@ -195,6 +199,7 @@ app.post("/api/reject-payment", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
+
 
 
 
