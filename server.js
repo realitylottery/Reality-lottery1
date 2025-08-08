@@ -2,47 +2,19 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const path = require("path");
 
 const app = express();
-
-// Middlewares - لازم قبل الراوتات
-app.use(cors());
-app.use(bodyParser.json());
-
-// PORT من البيئة أو 3000 محلياً
-const PORT = process.env.PORT || 3000;
-
-// سكيمات mongoose
-const userSchema = new mongoose.Schema({
-  username: String,
-  password: String,
-  email: String,
-  country: String,
-  isApproved: { type: Boolean, default: false },
-  referrer: String,
-  refCount: { type: Number, default: 0 }
-});
-const User = mongoose.model("User", userSchema);
-
+const PORT = 3000;
 const paymentSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   txid: String,
   approved: { type: Boolean, default: false },
   timestamp: { type: Date, default: Date.now }
 });
+
 const Payment = mongoose.model("Payment", paymentSchema);
 
-// اتصال MongoDB
-mongoose.connect(process.env.MONGODB_URI || "your_mongodb_connection_string_here")
-.then(() => console.log("✅ Connected to MongoDB"))
-.catch(err => {
-  console.error("❌ MongoDB connection error:", err);
-  process.exit(1);
-});
-
-// API Routes
-
+// Endpoint to submit payment
 app.post("/api/payment", async (req, res) => {
   const { userId, txid } = req.body;
   if (!userId || !txid) return res.status(400).json({ message: "Missing data" });
@@ -52,68 +24,54 @@ app.post("/api/payment", async (req, res) => {
   res.json({ message: "Payment submitted. Waiting for admin approval." });
 });
 
+// Middlewares
+app.use(cors());
+app.use(bodyParser.json());
+
+// MongoDB Connection
+mongoose.connect("mongodb+srv://realitylottery:Moataz1234@realitylottery.fzcf67p.mongodb.net/?retryWrites=true&w=majority&appName=realitylottery", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => {
+  console.log("✅ Connected to MongoDB");
+})
+.catch((error) => {
+  console.error("❌ MongoDB connection error:", error);
+});
+
+// Schema for users
+const userSchema = new mongoose.Schema({
+  username: String,
+  password: String,
+  email: String,
+  country: String,
+  isApproved: { type: Boolean, default: false }
+});
+const User = mongoose.model("User", userSchema);
+
+// API login route
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
 
-  try {
-    const user = await User.findOne({ username, password });
-
-    if (!user) {
-      return res.status(401).json({ message: "Invalid username or password." });
-    }
-
-    if (!user.isApproved) {
-      return res.status(403).json({ message: "Your payment is under review." });
-    }
-
-    res.json({
-      message: "Login successful",
-      user: {
-        username: user.username,
-        email: user.email,
-        isApproved: user.isApproved
-      },
-      token: "mock-token"
-    });
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ message: "Server error" });
+  const user = await User.findOne({ username, password });
+  if (!user) {
+    return res.json({ success: false, message: "Invalid credentials" });
   }
+
+  if (!user.isApproved) {
+    return res.json({ success: false, message: "Your payment is under review." });
+  }
+
+  res.json({ success: true, message: "Login successful", user });
 });
 
-app.post("/api/register", async (req, res) => {
-  const { username, password, email, country, referrer } = req.body;
-
-  try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).json({ message: "Username already taken" });
-    }
-
-    const newUser = new User({
-      username,
-      password,
-      email,
-      country,
-      referrer: referrer || null
-    });
-
-    await newUser.save();
-
-    if (referrer) {
-      await User.findOneAndUpdate(
-        { username: referrer },
-        { $inc: { refCount: 1 } }
-      );
-    }
-
-    res.status(201).json({ message: "User registered successfully" });
-  } catch (err) {
-    console.error("Registration error:", err);
-    res.status(500).json({ message: "Server error during registration" });
-  }
+// Simple Test Route
+app.get("/", (req, res) => {
+  res.send("🎉 Reality Lottery Server is running!");
 });
 
+// Get all pending payments
 app.get("/api/pending-payments", async (req, res) => {
   const payments = await Payment.find({ approved: false }).populate("userId", "username");
   const formatted = payments.map(p => ({
@@ -127,6 +85,7 @@ app.get("/api/pending-payments", async (req, res) => {
   res.json(formatted);
 });
 
+// Approve payment
 app.post("/api/approve-payment", async (req, res) => {
   const { paymentId, userId } = req.body;
 
@@ -136,15 +95,79 @@ app.post("/api/approve-payment", async (req, res) => {
   res.json({ message: "✅ Payment approved and user activated." });
 });
 
-// Serve static front-end files from 'public' folder
-app.use(express.static(path.join(__dirname, "public")));
+// 🔐 Login Route
+app.post("/api/login", async (req, res) => {
+  const { username, password } = req.body;
 
-// Serve index.html for any unknown route (for SPA routing support)
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  try {
+    const user = await User.findOne({ username, password });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid username or password." });
+    }
+
+    // يمكن إضافة JWT لاحقًا إذا أردت
+    res.json({
+      message: "Login successful",
+      user: {
+        username: user.username,
+        paymentApproved: user.paymentApproved
+      },
+      token: "mock-token" // رمزي فقط
+    });
+
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
-// Start the server
+// 🔐 Register Route
+app.post("/api/register", async (req, res) => {
+  const { username, password, email, country, referrer } = req.body;
+
+  try {
+    // تحقق إذا كان اسم المستخدم موجود مسبقًا
+    const existingUser = await User.findOne({ username });
+
+    if (existingUser) {
+      return res.status(400).json({ message: "Username already taken" });
+    }
+
+    // إنشاء مستخدم جديد
+    const newUser = new User({
+      username,
+      password,
+      email,
+      country,
+      referrer: referrer || null
+    });
+
+    await newUser.save();
+
+    // إذا تم التسجيل عبر رابط إحالة referrer
+    if (referrer) {
+      await User.findOneAndUpdate(
+        { username: referrer },
+        { $inc: { refCount: 1 } }
+      );
+    }
+
+    res.status(201).json({ message: "User registered successfully" });
+
+  } catch (err) {
+    console.error("Registration error:", err);
+    res.status(500).json({ message: "Server error during registration" });
+  }
+});
+ 
+
+// ✅ Default route
+app.get("/", (req, res) => {
+  res.send("🎉 Reality Lottery Server is running!");
+});
+ 
+// Start the Server
 app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
