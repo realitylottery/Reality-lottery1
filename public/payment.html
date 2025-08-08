@@ -27,9 +27,9 @@
     const submitPayment = () => {
       const txid = document.getElementById("txid").value.trim();
       const phone = document.getElementById("phone").value.trim();
-      const username = localStorage.getItem("username");
+      const username = localStorage.getItem("userid");
 
-      if (!txid || !phone || !username) {
+      if (!txid || !phone || !userid) {
         alert("يرجى إدخال جميع البيانات");
         return;
       }
@@ -37,12 +37,12 @@
       fetch("https://realitylottery.koyeb.app/api/payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, txid, phone })
+        body: JSON.stringify({ userid, txid, phone })
       })
       .then(res => res.json())
       .then(data => {
         alert(data.message);
-        window.location.href = "admin.html"; // التحويل مباشرة لصفحة الأدمن
+        window.location.href = "admin-dashboard.html"; // التحويل مباشرة لصفحة الأدمن
       })
       .catch(err => {
         console.error(err);
