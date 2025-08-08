@@ -29,7 +29,6 @@
 <table>
     <thead>
         <tr>
-            <th>المستخدم</th>
             <th>رقم العملية</th>
             <th>رقم الهاتف</th>
             <th>الحالة</th>
@@ -37,7 +36,7 @@
         </tr>
     </thead>
     <tbody id="paymentTable">
-        <tr><td colspan="5">جارٍ تحميل البيانات...</td></tr>
+        <tr><td colspan="4">جارٍ تحميل البيانات...</td></tr>
     </tbody>
 </table>
 
@@ -64,22 +63,21 @@ function renderTable(payments){
     }
     payments.forEach(p => {
         let row = `<tr>
-            <td>${p.username || "-"}</td>
-            <td>${p.txid || "-"}</td>
-            <td>${p.phone || "-"}</td>
-            <td>${p.status || "pending"}</td>
-            <td>
-                <button class="approve" onclick="updateStatus('${p._id}', 'approved')">موافقة</button>
-                <button class="reject" onclick="updateStatus('${p._id}', 'rejected')">رفض</button>
-            </td>
-        </tr>`;
+    <td>${p.txid || "-"}</td> <!-- يمكن وضع رقم الهاتف هنا إذا أردت -->
+    <td>${p.phone || "-"}</td>
+    <td>${p.status || "pending"}</td>
+    <td>
+        <button class="approve" onclick="updateStatus('${p._id}', 'approved')">موافقة</button>
+        <button class="reject" onclick="updateStatus('${p._id}', 'rejected')">رفض</button>
+    </td>
+</tr>`;
         table.innerHTML += row;
     });
 }
 
 async function updateStatus(id, status){
     try {
-        await fetch(`https://realitylottery.koyeb.app/api/payment/${id}`, {
+        await fetch(`https://realitylottery.koyeb.app/api/pending-payment/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status })
