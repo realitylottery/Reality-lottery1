@@ -33,7 +33,7 @@
         return;
       }
 
-      fetch("https://realitylottery.koyeb.app/api/admin-dashboard.html", {
+      fetch("https://realitylottery.koyeb.app/api/pending-payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ txid, phone })
