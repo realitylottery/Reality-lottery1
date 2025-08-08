@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Payment</title>
+</head>
+<body>
+  <h2>Complete Your Payment</h2>
+  <p>Send $10 USDT to the following wallet:</p>
+  <p><strong>Wallet Address:</strong> TX8e4...your_wallet_here</p>
+
+  <input type="text" id="txid" placeholder="Enter your transaction ID">
+  <button onclick="submitPayment()">Submit</button>
+
+  <script>
+    const submitPayment = () => {
+      const txid = document.getElementById("txid").value;
+      const username = localStorage.getItem("username");
+
+      if (!txid || !username) {
+        alert("Transaction ID or user ID is missing");
+        return;
+      }
+
+      fetch("http://localhost:3000/api/payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, txid })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+        window.location.href = "waiting.html";
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Error submitting payment");
+      });
+    };
+  </script>
+</body>
+</html>
