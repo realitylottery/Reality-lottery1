@@ -1,41 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar">
 <head>
-  <title>Payment</title>
+  <meta charset="UTF-8" />
+  <title>إتمام الدفع</title>
 </head>
 <body>
-  <h2>Complete Your Payment</h2>
-  <p>Send $10 USDT to the following wallet:</p>
-  <p><strong>Wallet Address:</strong> TX8e4...your_wallet_here</p>
+  <h2>أكمل الدفع الخاص بك</h2>
+  <p>أرسل 10 دولارات USDT إلى المحفظة التالية:</p>
+  <p><strong>عنوان المحفظة:</strong> TX8e4...your_wallet_here</p>
 
-  <input type="text" id="txid" placeholder="Enter your transaction ID">
-  <button onclick="submitPayment()">Submit</button>
+  <input type="text" id="phone" placeholder="أدخل رقم الهاتف" />
+  <input type="text" id="txid" placeholder="أدخل رقم المعاملة (Transaction ID)" />
+  <button onclick="submitPayment()">إرسال الدفع</button>
 
   <script>
-    const submitPayment = () => {
-      const txid = document.getElementById("txid").value;
-      const username = localStorage.getItem("username");
+    function submitPayment() {
+      const userId = localStorage.getItem("userId");
+      const phone = document.getElementById("phone").value.trim();
+      const txid = document.getElementById("txid").value.trim();
 
-      if (!txid || !username) {
-        alert("Transaction ID or user ID is missing");
+      if (!userId || !txid || !phone) {
+        alert("يرجى إدخال رقم الهاتف ورقم المعاملة ومعرف المستخدم.");
         return;
       }
 
       fetch("http://localhost:3000/api/payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, txid })
+        body: JSON.stringify({ userId, phone, txid })
       })
       .then(res => res.json())
       .then(data => {
         alert(data.message);
-        window.location.href = "waiting.html";
+        if (data.message.includes("submitted")) {
+          window.location.href = "waiting.html";
+        }
       })
       .catch(err => {
         console.error(err);
-        alert("Error submitting payment");
+        alert("حدث خطأ أثناء إرسال الدفع.");
       });
-    };
+    }
   </script>
 </body>
 </html>
