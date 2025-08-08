@@ -6,7 +6,7 @@
 <body>
   <h2>Complete Your Payment</h2>
   <p>Send $10 USDT to the following wallet:</p>
-  <p><strong>Wallet Address:</strong> TX8e4...your_wallet_here</p>
+  <p><strong>Wallet Address:</strong> TX8e4654427moatazammar154</p>
 
   <input type="text" id="txid" placeholder="Enter your transaction ID">
   <button onclick="submitPayment()">Submit</button>
@@ -21,7 +21,7 @@
         return;
       }
 
-      fetch("http://localhost:3000/api/payment", {
+      fetch("https://realitylottery.koyeb.app/api/payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, txid })
