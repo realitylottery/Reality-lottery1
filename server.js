@@ -261,21 +261,30 @@ app.post("/api/register", async (req, res) => {
 // الحصول على الدفعات المعلقة
 
 app.get("/api/pending-payments", async (req, res) => {
+  try {
+    const payments = await Payment.find({ status: { $in: ["pending", "rejected"] } });
+    
+    // التعديل المهم: تصفية العناصر غير المعرّفة
+    const validPayments = payments.filter(p => p && p._id);
+    
+    // تحويل كائنات Mongoose إلى كائنات JavaScript عادية
+    const formattedPayments = validPayments.map(p => ({
+      _id: p._id.toString(),
+      txid: p.txid,
+      phone: p.phone,
+      status: p.status,
+      date: p.date.toISOString()
+    }));
 
-  const payments = await Payment.find({ approved: false }).populate("userId", "username");
-
-  const formatted = payments.map(p => ({
-
-    _id: p._id,
-
-    txid: p.txid,
-
-    user: { _id: p.userId._id, username: p.userId.username }
-
-  }));
-
-  res.json(formatted);
-
+    res.json(formattedPayments);
+  } catch (err) {
+    console.error("Error fetching payments:", err);
+    res.status(500).json({ 
+      success: false,
+      error: "Internal server error",
+      details: err.message 
+    });
+  }
 });
 
 
@@ -284,13 +293,13 @@ app.get("/api/pending-payments", async (req, res) => {
 
 app.post("/api/approve-payment", async (req, res) => {
 
-  const { paymentId, userId } = req.body;
+  const { paymentId, phone } = req.body;
 
 
 
   await Payment.findByIdAndUpdate(paymentId, { approved: true });
 
-  await User.findByIdAndUpdate(userId, { isApproved: true });
+  await User.findByIdAndUpdate(phone, { isApproved: true });
 
 
 
@@ -307,5 +316,6 @@ app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 
 });
+
 
 
