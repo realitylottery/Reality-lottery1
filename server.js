@@ -122,10 +122,11 @@ app.post("/api/payment", async (req, res) => {
 
     // 2. التأكد من تعيين الحالة
     const newPayment = new Payment({
-      txid,
-      phone,
-      status: "pending" // تأكد من تعيين هذه القيمة
-    });
+  txid,
+  phone,
+  status: "pending",
+  date: new Date() // إضافة التاريخ
+});
 
     await newPayment.save();
     console.log("✅ Saved payment:", newPayment._id);
@@ -286,12 +287,12 @@ app.get("/api/payment", async (req, res) => {
     
     // تحويل البيانات بشكل صحيح
     const formatted = payments.map(p => ({
-      _id: p._id.toString(), // تحويل ObjectId إلى string
-      txid: p.txid,
-      phone: p.phone,
-      status: p.status,
-      date: p.date.toISOString().split('T')[0] // تاريخ فقط
-    }));
+  _id: p._id.toString(),
+  txid: p.txid,
+  phone: p.phone,
+  status: p.status,
+  date: p.date ? p.date.toISOString().split('T')[0] : "N/A"
+}));
 
     res.json(formatted);
   } catch (err) {
@@ -332,6 +333,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 
 });
+
 
 
 
