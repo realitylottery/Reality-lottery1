@@ -263,7 +263,7 @@ app.post("/api/register", async (req, res) => {
 
 // الحصول على الدفعات المعلقة
 
-app.get("/api/pending-payments", async (req, res) => {
+app.get("/api/payment", async (req, res) => {
   try {
     const payments = await Payment.find({ status: { $in: ["pending", "rejected"] } });
     
@@ -312,6 +312,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 
 });
+
 
 
 
