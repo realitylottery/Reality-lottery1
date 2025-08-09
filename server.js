@@ -57,37 +57,28 @@ app.get("/", (req, res) => {
    body: { username, password, email, country, referrer? }
 */
 app.post("/api/register", async (req, res) => {
-  try {
-    const { username, password, email, country, referrer } = req.body;
-    if (!username || !password || !email) {
-      return res.status(400).json({ message: "username, email and password are required." });
+    try {
+        const { username, email, password } = req.body;
+
+        if (!username || !email || !password) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        // التحقق إذا كان المستخدم أو البريد موجود مسبقًا
+        const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+        if (existingUser) {
+            return res.status(400).json({ message: "Username or email already exists" });
+        }
+
+        // حفظ كلمة المرور كما هي (⚠️ غير آمن)
+        const newUser = new User({ username, email, password });
+        await newUser.save();
+
+        res.json({ message: "Registration successful" });
+    } catch (error) {
+        console.error("Error during registration:", error);
+        res.status(500).json({ message: "Server error during registration" });
     }
-
-    const existing = await User.findOne({ $or: [{ username }, { email }] });
-    if (existing) {
-      return res.status(400).json({ message: "Username or email already taken" });
-    }
-
-    const hashed = await bcrypt.hash(password, 10);
-    const newUser = new User({
-      username,
-      password: hashed,
-      email,
-      country,
-      referrer: referrer || null
-    });
-
-    await newUser.save();
-
-    if (referrer) {
-      await User.findOneAndUpdate({ username: referrer }, { $inc: { refCount: 1 } });
-    }
-
-    return res.status(201).json({ message: "User registered successfully", userId: newUser._id });
-  } catch (err) {
-    console.error("Registration error:", err);
-    return res.status(500).json({ message: "Server error during registration", details: err.message });
-  }
 });
 
 /* ---- Login ----
@@ -297,5 +288,6 @@ app.get("/api/winners", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
+
 
 
