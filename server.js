@@ -108,27 +108,39 @@ app.get("/", (req, res) => {
 // إرسال الدفع
 
 app.post("/api/payment", async (req, res) => {
-  console.log("Received payment request:", req.body); // 1. سجل البيانات المستلمة
-
   try {
     const { txid, phone } = req.body;
-    console.log(`txid: ${txid}, phone: ${phone}`); // 2. تأكد من وصول البيانات
 
-    if (!txid || !phone) {
-      console.log("Missing data");
-      return res.status(400).json({ error: "txid and phone are required" });
+    // 1. التحقق من التكرار
+    const existing = await Payment.findOne({ txid });
+    if (existing) {
+      console.log("⚠️ Duplicate TXID:", txid);
+      return res.status(409).json({ 
+        error: "Transaction ID already exists" 
+      });
     }
 
-    const newPayment = new Payment({ txid, phone });
-    console.log("New payment object created:", newPayment); // 3. تأكد من بناء الكائن
+    // 2. التأكد من تعيين الحالة
+    const newPayment = new Payment({
+      txid,
+      phone,
+      status: "pending" // تأكد من تعيين هذه القيمة
+    });
 
     await newPayment.save();
-    console.log("Payment saved to DB:", newPayment._id); // 4. تأكد من الحفظ
+    console.log("✅ Saved payment:", newPayment._id);
+    
+    res.json({ 
+      success: true,
+      message: "Payment submitted successfully"
+    });
 
-    res.json({ message: "Payment saved successfully" });
   } catch (err) {
-    console.error("Error saving payment:", err); // 5. سجل أي خطأ
-    res.status(500).json({ error: "Internal server error" });
+    console.error("❌ Save error:", err);
+    res.status(500).json({ 
+      error: "Internal server error",
+      details: err.message 
+    });
   }
 });
 
@@ -265,21 +277,29 @@ app.post("/api/register", async (req, res) => {
 
 app.get("/api/payment", async (req, res) => {
   try {
-    const payments = await Payment.find({ status: { $in: ["pending", "rejected"] } });
+    // تأكد من الاستعلام الصحيح
+    const payments = await Payment.find({ 
+      status: { $in: ["pending", "rejected"] } 
+    }).sort({ date: -1 }); // الترتيب من الأحدث للأقدم
+
+    console.log("🔍 Found payments:", payments.length); // تسجيل عدد النتائج
     
-    // تحويل كائنات Mongoose إلى كائنات JavaScript عادية
-    const plainPayments = payments.map(p => ({
-      _id: p._id.toString(),
+    // تحويل البيانات بشكل صحيح
+    const formatted = payments.map(p => ({
+      _id: p._id.toString(), // تحويل ObjectId إلى string
       txid: p.txid,
       phone: p.phone,
       status: p.status,
-      date: p.date
+      date: p.date.toISOString().split('T')[0] // تاريخ فقط
     }));
-    
-    res.json(plainPayments);
+
+    res.json(formatted);
   } catch (err) {
-    console.error("Error fetching payments:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("❌ Error in pending-payments:", err);
+    res.status(500).json({ 
+      error: "Internal server error",
+      details: err.message 
+    });
   }
 });
 
@@ -312,6 +332,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 
 });
+
 
 
 
