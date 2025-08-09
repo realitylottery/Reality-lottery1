@@ -1,70 +1,56 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>تسجيل مستخدم جديد</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reality Lottery - Register</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>تسجيل مستخدم جديد</h1>
+  <div class="form-container">
+    <h2>Create New Account</h2>
+    <form id="registerForm">
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="text" id="country" placeholder="Country" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <input type="text" id="referrer" placeholder="Referral (optional)" />
+      <button type="submit">Register</button>
+    </form>
+    <p id="message"></p>
+    <p>Already have an account? <a href="login.html">Login here</a></p>
 
-  <form id="registerForm">
-    <label>اسم المستخدم:<br />
-      <input type="text" id="username" required />
-    </label><br /><br />
-
-    <label>البريد الإلكتروني:<br />
-      <input type="email" id="email" required />
-    </label><br /><br />
-
-    <label>كلمة المرور:<br />
-      <input type="password" id="password" required />
-    </label><br /><br />
-
-    <button type="submit">تسجيل</button>
-  </form>
-
-  <p id="message"></p>
+  </div>
 
   <script>
-    const form = document.getElementById("registerForm");
-    const message = document.getElementById("message");
-
-    form.addEventListener("submit", async (e) => {
+    document.getElementById("registerForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const data = {
-        username: form.username.value.trim(),
-        email: form.email.value.trim(),
-        password: form.password.value.trim(),
-      };
+      const username = document.getElementById("username").value;
+      const email = document.getElementById("email").value;
+      const country = document.getElementById("country").value;
+      const password = document.getElementById("password").value;
+      const referrer = document.getElementById("referrer").value;
 
       try {
-        const res = await fetch("/api/register", {
+        const response = await fetch("https://realitylottery.koyeb.app/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify({ username, email, country, password, referrer })
         });
 
-        const result = await res.json();
+        const data = await response.json();
+        document.getElementById("message").textContent = data.message;
 
-        if (res.ok) {
-          message.style.color = "green";
-          message.textContent = result.message || "تم التسجيل بنجاح!";
-          form.reset();
-
-          // الانتقال إلى صفحة الدفع
-          setTimeout(() => {
-            window.location.href = "payment.html";
-          }, 1000);
-
-        } else {
-          message.style.color = "red";
-          message.textContent = result.message || "حدث خطأ أثناء التسجيل.";
+        if (response.ok) {
+         alert(data.message);
+window.location.href = "payment.html"; // ⬅️ الانتقال إلى صفحة الدفع بعد التسجيل
         }
       } catch (err) {
-        message.style.color = "red";
-        message.textContent = "خطأ في الاتصال بالخادم.";
+        document.getElementById("message").textContent = "Server error, please try again.";
       }
+     
+
     });
   </script>
 </body>
