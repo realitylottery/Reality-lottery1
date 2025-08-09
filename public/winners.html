@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reality Lottery</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f4f4;
+      color: #333;
+    }
+
+    /* ===== Header ===== */
+    .site-header {
+      background: #222;
+      color: #fff;
+      padding: 15px;
+      text-align: center;
+    }
+    .site-header h1 {
+      margin: 0;
+    }
+    .site-header nav a {
+      color: #ffcc00;
+      text-decoration: none;
+      margin: 0 8px;
+      font-weight: bold;
+    }
+    .site-header nav a:hover {
+      text-decoration: underline;
+    }
+
+    /* ===== Container ===== */
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    /* ===== Winners List ===== */
+    .winners-list {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+    .winners-list li {
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .winners-list li::before {
+      content: "🏆";
+      margin-right: 10px;
+      font-size: 18px;
+    }
+
+    /* ===== Footer ===== */
+    .site-footer {
+      background: #222;
+      color: #fff;
+      text-align: center;
+      padding: 10px;
+      margin-top: 30px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== Header ===== -->
+  <header class="site-header">
+    <h1>Reality Lottery</h1>
+    <nav>
+      <a href="index.html">Home</a> · 
+      <a href="register.html">Register</a> · 
+      <a href="login.html">Login</a> · 
+      <a href="admin-dashboard.html">Admin</a>
+    </nav>
+  </header>
+
+  <!-- ===== Main Content ===== -->
+  <main class="container">
+    <section>
+      <h2>🎁 Latest Winners</h2>
+      <ul id="winners-list" class="winners-list">
+        <li>Loading winners...</li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <p>© Reality Lottery</p>
+  </footer>
+
+  <!-- ===== JavaScript ===== -->
+  <script>
+    const API_BASE = "https://reality-lottery1.onrender.com";
+
+    async function loadWinners() {
+      try {
+        const res = await fetch(`${API_BASE}/api/winners`);
+        const data = await res.json();
+        const list = document.getElementById("winners-list");
+
+        list.innerHTML = "";
+
+        if (!data || data.length === 0) {
+          list.innerHTML = "<li>No winners yet.</li>";
+          return;
+        }
+
+        data.forEach(s => {
+          const li = document.createElement("li");
+          li.textContent = `${s.username} won ${s.prize}`;
+          list.appendChild(li);
+        });
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById("winners-list").innerHTML = "<li>Error loading winners.</li>";
+      }
+    }
+
+    loadWinners();
+    setInterval(loadWinners, 60000);
+  </script>
+</body>
+</html>
