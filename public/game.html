@@ -1,27 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Game</title>
+</head>
 <body>
-  <div id="pending-screen" style="display: none;">
-    <h2>Your payment is pending review by the admin.</h2>
-    <p>Please wait while your payment is being confirmed.</p>
-  </div>
-
-  <div id="wheel-screen" style="display: none;">
-    <!-- هنا توضع عجلة الحظ -->
-    <h2>🎉 Your payment is approved!</h2>
-    <div id="wheel">[Wheel will be shown here]</div>
-  </div>
-
-  <script>
-    const currentUserEmail = localStorage.getItem("userEmail");
-
-    fetch(`https://your-render-url.com/getUserByEmail/${currentUserEmail}`)
-      .then(res => res.json())
-      .then(user => {
-        if (user.approved) {
-          document.getElementById("wheel-screen").style.display = "block";
-          // عرض عجلة الحظ
-        } else {
-          document.getElementById("pending-screen").style.display = "block";
-        }
-      });
-  </script>
+  <h1>Welcome to the Game!</h1>
+  <p>You have successfully logged in after payment approval.</p>
 </body>
+</html>
