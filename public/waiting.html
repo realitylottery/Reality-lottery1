@@ -4,9 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Payment Pending</title>
-  <link rel="stylesheet" href="style.css" />
   <style>
-    /* لتنسيق الزر */
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      display: inline-block;
+    }
     #loginBtn {
       margin-top: 20px;
       padding: 10px 20px;
@@ -20,6 +31,19 @@
     #loginBtn:hover {
       background-color: #0056b3;
     }
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #007bff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -30,7 +54,10 @@
 
     <div id="statusMessage">Checking status...</div>
 
-    <button id="loginBtn" onclick="window.location.href='login.html'">Login</button>
+    <!-- Loader -->
+    <div class="loader"></div>
+
+    <button id="loginBtn" style="display:none;" onclick="window.location.href='login.html'">Go to Login</button>
   </div>
 
   <script>
@@ -40,17 +67,17 @@
       try {
         const response = await fetch("http://localhost:3000/api/check-approval", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username }),
         });
 
         const data = await response.json();
 
         if (data.approved) {
-          // Redirect to game page if approved
-          window.location.href = "game.html";
+          document.getElementById("statusMessage").innerText = "✅ Your payment has been approved!";
+          alert("Your payment has been approved! Please log in to continue.");
+          document.querySelector(".loader").style.display = "none";
+          document.getElementById("loginBtn").style.display = "inline-block";
         } else {
           document.getElementById("statusMessage").innerText = "Still pending approval...";
         }
@@ -60,9 +87,9 @@
       }
     }
 
-    // Check every 10 seconds
+    // التحقق كل 10 ثوانٍ
     setInterval(checkApproval, 10000);
-    checkApproval(); // initial check
+    checkApproval();
   </script>
 </body>
 </html>
