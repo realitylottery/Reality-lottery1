@@ -65,7 +65,7 @@
 
     async function checkApproval() {
       try {
-        const response = await fetch("http://localhost:3000/api/check-approval", {
+        const response = await fetch("https://realitylottery.koyeb.app/api/check-approval", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username }),
