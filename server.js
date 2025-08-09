@@ -1,722 +1,242 @@
+// server.js أو index.js - ملف السيرفر كامل مع التعديلات المطلوبة
+
 const express = require("express");
-
-
-
 const mongoose = require("mongoose");
-
-
-
 const cors = require("cors");
-
-
-
-const bodyParser = require("body-parser");
-
-
-
-const path = require("path");
-
-
-
-
-
-
+const bcrypt = require("bcrypt");
+const { v4: uuidv4 } = require("uuid");
 
 const app = express();
-
-
-
-
-
-
-
-// Middlewares
-
-
-
-app.use(cors());
-
-
-
-app.use(bodyParser.json());
-
-
-
-
-
-
-
-// Serve static frontend files from public folder
-
-
-
-app.use(express.static(path.join(__dirname, "public")));
-
-
-
-
-
-
-
-// متغير البورت من البيئة أو 3000 محليًا
-
-
-
 const PORT = process.env.PORT || 3000;
 
+// ======== Middleware ========
+app.use(cors());
+app.use(express.json());
 
+// ======== الاتصال بقاعدة البيانات ========
+mongoose.connect("mongodb://localhost:27017/realitylottery", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => {
+  console.log("✅ Connected to MongoDB");
+}).catch(err => {
+  console.error("❌ MongoDB connection error:", err);
+});
 
-
-
-
-
-// سكيمات mongoose
-
-
+// ======== Schema & Models ========
 
 const userSchema = new mongoose.Schema({
-
-
-
-  username: String,
-
-
-
-  password: String,
-
-
-
-  email: String,
-
-
-
+  userId: { type: String, default: uuidv4, unique: true },
+  username: { type: String, unique: true, required: true },
+  password: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
   country: String,
-
-
-
+  phone: String, // رقم الهاتف مع كود الدولة
   isApproved: { type: Boolean, default: false },
-
-
-
   referrer: String,
-
-
-
   refCount: { type: Number, default: 0 }
-
-
-
 });
-
-
-
-const User = mongoose.model("User", userSchema);
-
-
-
-
-
-
 
 const paymentSchema = new mongoose.Schema({
-
-  txid: String,
-
+  txid: { type: String, required: true, unique: true },
   phone: String,
-
-  status: String,
-
-  date: Date
-
+  status: { type: String, default: "pending" }, // pending, approved, rejected
+  date: { type: Date, default: Date.now },
+  userId: String, // ربط الدفع بالمستخدم
 });
 
-
-
+const User = mongoose.model("User", userSchema);
 const Payment = mongoose.model("Payment", paymentSchema);
 
+// ======== Routes ========
 
+// تسجيل مستخدم جديد مع حفظ userId و phone مع كود الدولة
+app.post("/api/register", async (req, res) => {
+  const { username, email, country, password, phone, referrer } = req.body;
 
-
-
-
-
-// الاتصال بقاعدة البيانات
-
-
-
-mongoose.connect(
-
-
-
-  process.env.MONGODB_URI || "mongodb+srv://realitylottery:Moataz1234@realitylottery.fzcf67p.mongodb.net/?retryWrites=true&w=majority&appName=realitylottery"
-
-
-
-)
-
-
-
-.then(() => {
-
-
-
-  console.log("✅ Connected to MongoDB");
-
-
-
-})
-
-
-
-.catch((error) => {
-
-
-
-  console.error("❌ MongoDB connection error:", error);
-
-
-
-});
-
-
-
-
-
-
-
-// Routes
-
-
-
-// مثال في Express.js
-
-app.put("/api/payment/:id", async (req, res) => {
-
-  try {
-
-    const { status } = req.body; // 'approved' أو 'rejected'
-
-    const paymentId = req.params.id;
-
-
-
-    // تحقق أن المستخدم أدمن (إذا فيه نظام حماية)
-
-    // if (!req.user.isAdmin) return res.status(403).json({ error: "Not authorized" });
-
-
-
-    // تعديل الحالة في قاعدة البيانات
-
-    await Payment.findByIdAndUpdate(paymentId, { status });
-
-
-
-    res.json({ message: "Payment status updated successfully" });
-
-  } catch (err) {
-
-    console.error(err);
-
-    res.status(500).json({ error: "Server error" });
-
+  if (!username || !email || !password || !phone) {
+    return res.status(400).json({ message: "جميع الحقول المطلوبة مطلوبة" });
   }
 
-});
-
-
-
-// صفحة البداية تعرض index.html
-
-
-
-app.get("/", (req, res) => {
-
-
-
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-
-
-
-});
-
-
-
-
-
-
-
-// إرسال الدفع
-
-
-
-app.post("/api/payment", async (req, res) => {
-
   try {
-
-    const { txid, phone } = req.body;
-
-
-
-    // 1. التحقق من التكرار
-
-    const existing = await Payment.findOne({ txid });
-
-    if (existing) {
-
-      console.log("⚠️ Duplicate TXID:", txid);
-
-      return res.status(409).json({ 
-
-        error: "Transaction ID already exists" 
-
-      });
-
+    // التحقق من وجود المستخدم
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res.status(400).json({ message: "اسم المستخدم أو البريد الإلكتروني مستخدم مسبقاً" });
     }
 
+    // تشفير كلمة المرور
+    const hashedPassword = await bcrypt.hash(password, 10);
 
+    // إنشاء مستخدم جديد
+    const newUser = new User({
+      username,
+      email,
+      country,
+      password: hashedPassword,
+      phone,
+      referrer
+    });
 
-    // 2. التأكد من تعيين الحالة
+    // حفظ المستخدم
+    await newUser.save();
 
-    const newPayment = new Payment({
+    // زيادة عدد الدعوات للمُحيل إذا كان موجود
+    if (referrer) {
+      const refUser = await User.findOne({ username: referrer });
+      if (refUser) {
+        refUser.refCount += 1;
+        await refUser.save();
+      }
+    }
 
-  txid,
+    res.json({ message: "تم التسجيل بنجاح" });
 
-  phone,
-
-  status: "pending",
-
-  date: new Date() // إضافة التاريخ
-
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "خطأ في السيرفر" });
+  }
 });
 
+// تسجيل الدخول
+app.post("/api/login", async (req, res) => {
+  const { username, password } = req.body;
 
+  if (!username || !password) return res.status(400).json({ success: false, message: "الرجاء إدخال اسم المستخدم وكلمة المرور" });
+
+  try {
+    // البحث عن المستخدم حسب اسم المستخدم أو البريد
+    const user = await User.findOne({ username });
+    if (!user) return res.status(401).json({ success: false, message: "المستخدم غير موجود" });
+
+    // التحقق من كلمة المرور
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ success: false, message: "كلمة المرور خاطئة" });
+
+    // تحقق من حالة الموافقة
+    if (!user.isApproved) {
+      return res.status(403).json({ success: false, message: "لم يتم الموافقة على حسابك بعد" });
+    }
+
+    // تسجيل الدخول ناجح
+    res.json({ success: true, message: "تم تسجيل الدخول بنجاح", user: { username: user.username, userId: user.userId } });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "خطأ في السيرفر" });
+  }
+});
+
+// إضافة دفعة دفع جديدة مع ربطها بالمستخدم حسب رقم الهاتف
+app.post("/api/payment", async (req, res) => {
+  const { txid, phone } = req.body;
+
+  if (!txid || !phone) return res.status(400).json({ message: "رقم العملية ورقم الهاتف مطلوبان" });
+
+  try {
+    // التحقق من وجود دفع بنفس رقم العملية مسبقاً
+    const existingPayment = await Payment.findOne({ txid });
+    if (existingPayment) {
+      return res.status(400).json({ message: "رقم العملية هذا تم تسجيله مسبقاً" });
+    }
+
+    // إيجاد المستخدم بناءً على رقم الهاتف
+    const user = await User.findOne({ phone });
+
+    // إذا لم يوجد المستخدم بناءً على رقم الهاتف
+    if (!user) {
+      return res.status(404).json({ message: "لم يتم العثور على مستخدم بهذا الرقم" });
+    }
+
+    // إنشاء سجل الدفع مرتبط بالمستخدم
+    const newPayment = new Payment({
+      txid,
+      phone,
+      status: "pending",
+      userId: user.userId
+    });
 
     await newPayment.save();
 
-    console.log("✅ Saved payment:", newPayment._id);
+    // إرسال رسالة نجاح
+    res.json({ message: "تم تسجيل عملية الدفع بنجاح، في انتظار الموافقة" });
 
-    
-
-    res.json({ 
-
-      success: true,
-
-      message: "Payment submitted successfully"
-
-    });
-
-
-
-  } catch (err) {
-
-    console.error("❌ Save error:", err);
-
-    res.status(500).json({ 
-
-      error: "Internal server error",
-
-      details: err.message 
-
-    });
-
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "خطأ في السيرفر" });
   }
-
 });
 
-
-
-
-
-// تسجيل الدخول
-
-
-
-app.post("/api/login", async (req, res) => {
-
-
-
-  const { username, password } = req.body;
-
-
-
-
-
-
-
-  try {
-
-
-
-    const user = await User.findOne({ username, password });
-
-
-
-
-
-
-
-    if (!user) {
-
-
-
-      return res.status(401).json({ message: "Invalid username or password." });
-
-
-
-    }
-
-
-
-
-
-
-
-    if (!user.isApproved) {
-
-
-
-      return res.status(403).json({ message: "Your payment is under review." });
-
-
-
-    }
-
-
-
-
-
-
-
-    res.json({
-
-
-
-      message: "Login successful",
-
-
-
-      user: {
-
-
-
-        username: user.username,
-
-
-
-        email: user.email,
-
-
-
-        isApproved: user.isApproved
-
-
-
-      },
-
-
-
-      token: "mock-token" // رمزي فقط
-
-
-
-    });
-
-
-
-  } catch (err) {
-
-
-
-    console.error("Login error:", err);
-
-
-
-    res.status(500).json({ message: "Server error" });
-
-
-
-  }
-
-
-
-});
-
-
-
-
-
-
-
-// تسجيل مستخدم جديد
-
-
-
-app.post("/api/register", async (req, res) => {
-
-
-
-  const { username, password, email, country, referrer } = req.body;
-
-
-
-
-
-
-
-  try {
-
-
-
-    const existingUser = await User.findOne({ username });
-
-
-
-    if (existingUser) {
-
-
-
-      return res.status(400).json({ message: "Username already taken" });
-
-
-
-    }
-
-
-
-
-
-
-
-    const newUser = new User({
-
-
-
-      username,
-
-
-
-      password,
-
-
-
-      email,
-
-
-
-      country,
-
-
-
-      referrer: referrer || null
-
-
-
-    });
-
-
-
-
-
-
-
-    await newUser.save();
-
-
-
-
-
-
-
-    if (referrer) {
-
-
-
-      await User.findOneAndUpdate(
-
-
-
-        { username: referrer },
-
-
-
-        { $inc: { refCount: 1 } }
-
-
-
-      );
-
-
-
-    }
-
-
-
-
-
-
-
-    res.status(201).json({ message: "User registered successfully" });
-
-
-
-  } catch (err) {
-
-
-
-    console.error("Registration error:", err);
-
-
-
-    res.status(500).json({ message: "Server error during registration" });
-
-
-
-  }
-
-
-
-});
-
-
-
-
-
-
-
-// الحصول على الدفعات المعلقة
-
-
-
+// استرجاع كل دفعات الدفع (صفحة الأدمن)
 app.get("/api/payment", async (req, res) => {
-
   try {
+    const payments = await Payment.find().sort({ date: -1 });
+    res.json(payments);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "خطأ في السيرفر" });
+  }
+});
 
-    // تأكد من الاستعلام الصحيح
+// تحديث حالة الدفع (الموافقة أو الرفض)
+app.put("/api/payment/:id", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body; // approved أو rejected
 
-    const payments = await Payment.find({ 
-
-      status: { $in: ["pending", "rejected"] } 
-
-    }).sort({ date: -1 }); // الترتيب من الأحدث للأقدم
-
-
-
-    console.log("🔍 Found payments:", payments.length); // تسجيل عدد النتائج
-
-    
-
-    // تحويل البيانات بشكل صحيح
-
-    const formatted = payments.map(p => ({
-
-  _id: p._id.toString(),
-
-  txid: p.txid,
-
-  phone: p.phone,
-
-  status: p.status,
-
-  date: p.date ? p.date.toISOString().split('T')[0] : "N/A"
-
-}));
-
-
-
-    res.json(formatted);
-
-  } catch (err) {
-
-    console.error("❌ Error in pending-payments:", err);
-
-    res.status(500).json({ 
-
-      error: "Internal server error",
-
-      details: err.message 
-
-    });
-
+  if (!["approved", "rejected"].includes(status)) {
+    return res.status(400).json({ error: "حالة غير صحيحة" });
   }
 
+  try {
+    // تحديث حالة الدفع
+    const payment = await Payment.findByIdAndUpdate(id, { status }, { new: true });
+
+    if (!payment) return res.status(404).json({ error: "عملية الدفع غير موجودة" });
+
+    // إذا تمت الموافقة على الدفع، يتم تحديث حالة المستخدم
+    if (status === "approved") {
+      await User.findOneAndUpdate({ userId: payment.userId }, { isApproved: true });
+    }
+
+    res.json({ message: `تم تحديث حالة الدفع إلى ${status}` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "خطأ في السيرفر" });
+  }
 });
 
+// API لفحص حالة الموافقة حسب اسم المستخدم (waiting.html)
+app.post("/api/check-approval", async (req, res) => {
+  const { username } = req.body;
 
+  if (!username) return res.status(400).json({ error: "Missing username" });
 
+  try {
+    const user = await User.findOne({ username });
 
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-
-
-// الموافقة على الدفع
-
-
-
-app.post("/api/approve-payment", async (req, res) => {
-
-
-
-  const { paymentId, phone } = req.body;
-
-
-
-
-
-
-
-  await Payment.findByIdAndUpdate(paymentId, { approved: true });
-
-
-
-  await User.findByIdAndUpdate(phone, { isApproved: true });
-
-
-
-
-
-
-
-  res.json({ message: "✅ Payment approved and user activated." });
-
-
-
+    res.json({ approved: user.isApproved });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
+// ----- إضافة endpoint لعرض بيانات مستخدم مفصل (اختياري)
 
+app.get("/api/user/:username", async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username }, "-password");
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
-
-
-
-
-// بدء السيرفر
-
-
-
+// ======== بدء تشغيل السيرفر ========
 app.listen(PORT, () => {
-
-
-
-  console.log(`🚀 Server is running on port ${PORT}`);
-
-
-
+  console.log(`🚀 Server running on port ${PORT}`);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
