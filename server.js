@@ -93,7 +93,24 @@ mongoose.connect(
 
 // Routes
 
+// مثال في Express.js
+app.put("/api/payment/:id", async (req, res) => {
+  try {
+    const { status } = req.body; // 'approved' أو 'rejected'
+    const paymentId = req.params.id;
 
+    // تحقق أن المستخدم أدمن (إذا فيه نظام حماية)
+    // if (!req.user.isAdmin) return res.status(403).json({ error: "Not authorized" });
+
+    // تعديل الحالة في قاعدة البيانات
+    await Payment.findByIdAndUpdate(paymentId, { status });
+
+    res.json({ message: "Payment status updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 // صفحة البداية تعرض index.html
 
@@ -333,6 +350,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 
 });
+
 
 
 
