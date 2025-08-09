@@ -4,33 +4,33 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Reality Lottery</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="styl.css" />
 </head>
 <body>
 
   <!-- ===== Header ===== -->
-  <header class="site-header">
+  <header class="site-header" role="banner">
     <h1>Reality Lottery</h1>
-    <nav>
-      <a href="index.html">Home</a> · 
-      <a href="register.html">Register</a> · 
-      <a href="login.html">Login</a> · 
+    <nav role="navigation" aria-label="Main navigation">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="register.html">Register</a>
+      <a href="login.html">Login</a>
       <a href="admin-dashboard.html">Admin</a>
     </nav>
   </header>
 
   <!-- ===== Main Content ===== -->
-  <main class="container">
-    <section>
-      <h2>🎁 Latest Winners</h2>
-      <ul id="winners-list" class="winners-list">
+  <main class="container" role="main">
+    <section aria-labelledby="winners-title">
+      <h2 id="winners-title">🎁 Latest Winners</h2>
+      <ul id="winners-list" class="winners-list" aria-live="polite" aria-relevant="additions">
         <li>Loading winners...</li>
       </ul>
     </section>
   </main>
 
   <!-- ===== Footer ===== -->
-  <footer class="site-footer">
+  <footer class="site-footer" role="contentinfo">
     <p>© Reality Lottery</p>
   </footer>
 
@@ -38,14 +38,13 @@
   <script>
     const API_BASE = "https://reality-lottery1.onrender.com";
 
-    // جلب قائمة الفائزين من السيرفر
     async function loadWinners() {
       try {
         const res = await fetch(`${API_BASE}/api/winners`);
         const data = await res.json();
         const list = document.getElementById("winners-list");
 
-        list.innerHTML = ""; // مسح القائمة القديمة
+        list.innerHTML = "";
 
         if (!data || data.length === 0) {
           list.innerHTML = "<li>No winners yet.</li>";
@@ -64,7 +63,6 @@
       }
     }
 
-    // تحميل أولي وتحديث كل دقيقة
     loadWinners();
     setInterval(loadWinners, 60000);
   </script>
