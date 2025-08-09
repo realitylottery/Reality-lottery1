@@ -120,7 +120,7 @@ let allPayments = [];
 
 async function loadPayments(){
   try {
-    const response = await fetch("https://realitylottery.koyeb.app/api/pending-payments");
+    const response = await fetch("https://realitylottery.koyeb.app/api/payment");
     
     if (!response.ok) {
       const errorText = await response.text();
