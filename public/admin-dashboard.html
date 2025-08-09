@@ -88,33 +88,37 @@
 <script>
   /* بيانات تسجيل الدخول */
   const ADMIN_USER = "admin";
-  const ADMIN_PASS = "12345";
+const ADMIN_PASS = "12345";
 
+function checkLogin() {
   if (localStorage.getItem("isAdmin") === "true") {
-      document.getElementById("loginBox").style.display = "none";
-      document.getElementById("dashboard").style.display = "block";
-      loadPayments();
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    loadPayments();
+  } else {
+    document.getElementById("loginBox").style.display = "block";
+    document.getElementById("dashboard").style.display = "none";
   }
+}
 
-  function login() {
-      const user = document.getElementById("username").value.trim();
-      const pass = document.getElementById("password").value.trim();
+function login() {
+  const user = document.getElementById("username").value.trim();
+  const pass = document.getElementById("password").value.trim();
 
-      if (user === ADMIN_USER && pass === ADMIN_PASS) {
-          localStorage.setItem("isAdmin", "true");
-          document.getElementById("loginBox").style.display = "none";
-          document.getElementById("dashboard").style.display = "block";
-          loadPayments();
-      } else {
-          alert("اسم المستخدم أو كلمة المرور غير صحيحة");
-      }
+  if (user === ADMIN_USER && pass === ADMIN_PASS) {
+    localStorage.setItem("isAdmin", "true");
+    checkLogin();
+  } else {
+    alert("اسم المستخدم أو كلمة المرور غير صحيحة");
   }
+}
 
-  function logout() {
-      localStorage.removeItem("isAdmin");
-      document.getElementById("dashboard").style.display = "none";
-      document.getElementById("loginBox").style.display = "block";
-  }
+function logout() {
+  localStorage.removeItem("isAdmin");
+  checkLogin();
+}
+
+window.onload = checkLogin;
 
   /* أكواد الدفع */
   let allPayments = [];
