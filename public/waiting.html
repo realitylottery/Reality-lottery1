@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Payment Pending</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* لتنسيق الزر */
+    #loginBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    #loginBtn:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -13,6 +29,8 @@
     <p>Please wait until your payment is approved.</p>
 
     <div id="statusMessage">Checking status...</div>
+
+    <button id="loginBtn" onclick="window.location.href='login.html'">Login</button>
   </div>
 
   <script>
