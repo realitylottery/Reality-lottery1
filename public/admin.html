@@ -86,6 +86,131 @@
       padding-top: 20px;
       border-top: 1px solid rgba(255,215,0,0.3);
     }
+    
+    /* أنماط جديدة لطلبات الدفع */
+    .payment-requests {
+      max-height: 400px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+    }
+    
+    .payment-item {
+      background: rgba(255, 215, 0, 0.05);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .payment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .payment-id {
+      font-weight: bold;
+      color: #ffd700;
+      font-size: 16px;
+    }
+    
+    .payment-amount {
+      font-weight: bold;
+      font-size: 18px;
+      color: #2ecc71;
+    }
+    
+    .payment-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .payment-detail {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 8px;
+      border-radius: 4px;
+    }
+    
+    .payment-detail strong {
+      color: #ffd700;
+    }
+    
+    .payment-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .btn-confirm {
+      background: linear-gradient(45deg, #2ecc71, #27ae60);
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-confirm:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 3px 10px rgba(46, 204, 113, 0.3);
+    }
+    
+    .btn-reject {
+      background: linear-gradient(45deg, #e74c3c, #c0392b);
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-reject:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 3px 10px rgba(231, 76, 60, 0.3);
+    }
+    
+    .payment-status {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .status-pending {
+      background: rgba(241, 196, 15, 0.2);
+      color: #f1c40f;
+    }
+    
+    .status-completed {
+      background: rgba(46, 204, 113, 0.2);
+      color: #2ecc71;
+    }
+    
+    .status-rejected {
+      background: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+    }
+    
+    .payment-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+    
+    .payment-user img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
   </style>
 </head>
 <body>
@@ -111,6 +236,91 @@
       </div>
 
       <div class="admin-sections">
+        <!-- قسم طلبات الدفع المعلقة -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-money-bill-wave"></i> Pending Payment Requests</h3>
+          <div class="payment-requests" id="paymentRequests">
+            <!-- سيتم ملؤها ديناميكياً -->
+            <div class="payment-item">
+              <div class="payment-header">
+                <span class="payment-id">#PAY-20231015-001</span>
+                <span class="payment-amount">$500.00</span>
+                <span class="payment-status status-pending">Pending</span>
+              </div>
+              
+              <div class="payment-user">
+                <i class="fas fa-user"></i>
+                <span>John Doe (john_doe)</span>
+              </div>
+              
+              <div class="payment-details">
+                <div class="payment-detail">
+                  <strong>Method:</strong> PayPal
+                </div>
+                <div class="payment-detail">
+                  <strong>Date:</strong> Oct 15, 2023
+                </div>
+                <div class="payment-detail">
+                  <strong>Reference:</strong> TXN-67890
+                </div>
+                <div class="payment-detail">
+                  <strong>Type:</strong> Deposit
+                </div>
+              </div>
+              
+              <div class="payment-actions">
+                <button class="btn-confirm" onclick="confirmPayment('PAY-20231015-001')">
+                  <i class="fas fa-check"></i> Confirm
+                </button>
+                <button class="btn-reject" onclick="rejectPayment('PAY-20231015-001')">
+                  <i class="fas fa-times"></i> Reject
+                </button>
+              </div>
+            </div>
+            
+            <div class="payment-item">
+              <div class="payment-header">
+                <span class="payment-id">#PAY-20231016-002</span>
+                <span class="payment-amount">$250.00</span>
+                <span class="payment-status status-pending">Pending</span>
+              </div>
+              
+              <div class="payment-user">
+                <i class="fas fa-user"></i>
+                <span>Jane Smith (jane_smith)</span>
+              </div>
+              
+              <div class="payment-details">
+                <div class="payment-detail">
+                  <strong>Method:</strong> Credit Card
+                </div>
+                <div class="payment-detail">
+                  <strong>Date:</strong> Oct 16, 2023
+                </div>
+                <div class="payment-detail">
+                  <strong>Reference:</strong> TXN-67891
+                </div>
+                <div class="payment-detail">
+                  <strong>Type:</strong> Withdrawal
+                </div>
+              </div>
+              
+              <div class="payment-actions">
+                <button class="btn-confirm" onclick="confirmPayment('PAY-20231016-002')">
+                  <i class="fas fa-check"></i> Confirm
+                </button>
+                <button class="btn-reject" onclick="rejectPayment('PAY-20231016-002')">
+                  <i class="fas fa-times"></i> Reject
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <button class="save-btn" onclick="fetchPayments()">
+            <i class="fas fa-sync"></i> Refresh Payments
+          </button>
+        </div>
+
         <!-- إدارة المحتوى القابل للتعديل -->
         <div class="admin-section">
           <h3 class="section-title"><i class="fas fa-edit"></i> Content Management</h3>
@@ -159,7 +369,7 @@
           <div id="imageStatus" class="status-message"></div>
         </div>
 
-        <!-- Homepage Content (القديم) -->
+        <!-- Homepage Content -->
         <div class="admin-section">
           <h3 class="section-title"><i class="fas fa-home"></i> Homepage Content</h3>
           <div class="form-group">
@@ -177,7 +387,7 @@
           <button class="save-btn">Save Changes</button>
         </div>
 
-        <!-- Carousel Management (القديم) -->
+        <!-- Carousel Management -->
         <div class="admin-section">
           <h3 class="section-title"><i class="fas fa-images"></i> Carousel Slides</h3>
           <div class="form-group">
@@ -199,7 +409,7 @@
           <button class="save-btn">Save Slides</button>
         </div>
 
-        <!-- User Management (القديم) -->
+        <!-- User Management -->
         <div class="admin-section">
           <h3 class="section-title"><i class="fas fa-users"></i> User Management</h3>
           <div class="user-list" id="userList">
@@ -212,7 +422,7 @@
           <button class="save-btn" onclick="addUser()">Add User</button>
         </div>
 
-        <!-- Lottery Settings (القديم) -->
+        <!-- Lottery Settings -->
         <div class="admin-section">
           <h3 class="section-title"><i class="fas fa-ticket-alt"></i> Lottery Settings</h3>
           <div class="form-group">
@@ -230,7 +440,7 @@
           <button class="save-btn">Update Settings</button>
         </div>
 
-        <!-- Countries (القديم) -->
+        <!-- Countries -->
         <div class="admin-section">
           <h3 class="section-title"><i class="fas fa-globe"></i> Countries</h3>
           <div class="form-group">
@@ -254,7 +464,7 @@
           <button class="save-btn">Add Country</button>
         </div>
 
-        <!-- Partners (القديم) -->
+        <!-- Partners -->
         <div class="admin-section">
           <h3 class="section-title"><i class="fas fa-handshake"></i> Partners</h3>
           <div class="form-group">
@@ -275,6 +485,7 @@
   <script>
     const API_BASE = 'https://realitylottery.koyeb.app';
     let contentData = {};
+    let paymentData = [];
 
     // Admin login via backend
     function login() {
@@ -298,7 +509,8 @@
           document.getElementById('adminPanel').style.display = 'block';
           setCurrentDateTime();
           fetchUsers();
-          fetchContent(); // جلب المحتوى بعد تسجيل الدخول
+          fetchContent();
+          fetchPayments(); // جلب طلبات الدفع بعد تسجيل الدخول
         }
       }).catch(err => {
         console.error(err);
@@ -573,6 +785,181 @@
       }
     }
 
+    // جلب طلبات الدفع المعلقة
+    async function fetchPayments() {
+      const token = localStorage.getItem('rl_admin_token');
+      if (!token) return;
+      
+      try {
+        // في الواقع، سيأتي هذا من API مثل: /api/admin/payments?status=pending
+        // لكننا سنستخدم بيانات تجريبية للتوضيح
+        const mockPayments = [
+          {
+            id: 'PAY-20231015-001',
+            userId: 'user_123',
+            username: 'john_doe',
+            fullName: 'John Doe',
+            amount: 500,
+            currency: 'USD',
+            method: 'PayPal',
+            type: 'Deposit',
+            date: '2023-10-15T14:30:00Z',
+            reference: 'TXN-67890',
+            status: 'pending'
+          },
+          {
+            id: 'PAY-20231016-002',
+            userId: 'user_456',
+            username: 'jane_smith',
+            fullName: 'Jane Smith',
+            amount: 250,
+            currency: 'USD',
+            method: 'Credit Card',
+            type: 'Withdrawal',
+            date: '2023-10-16T10:15:00Z',
+            reference: 'TXN-67891',
+            status: 'pending'
+          },
+          {
+            id: 'PAY-20231017-003',
+            userId: 'user_789',
+            username: 'mike_jones',
+            fullName: 'Mike Jones',
+            amount: 1000,
+            currency: 'USD',
+            method: 'Bank Transfer',
+            type: 'Deposit',
+            date: '2023-10-17T16:45:00Z',
+            reference: 'TXN-67892',
+            status: 'pending'
+          }
+        ];
+        
+        paymentData = mockPayments;
+        renderPayments();
+        
+      } catch (err) {
+        console.error('Error fetching payments:', err);
+        showStatus('paymentStatus', 'Error loading payments: ' + err.message, 'error');
+      }
+    }
+
+    // عرض طلبات الدفع
+    function renderPayments() {
+      const container = document.getElementById('paymentRequests');
+      container.innerHTML = '';
+      
+      paymentData.forEach(payment => {
+        if (payment.status !== 'pending') return;
+        
+        const formattedDate = new Date(payment.date).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+        
+        const paymentItem = document.createElement('div');
+        paymentItem.className = 'payment-item';
+        paymentItem.innerHTML = `
+          <div class="payment-header">
+            <span class="payment-id">#${payment.id}</span>
+            <span class="payment-amount">$${payment.amount.toFixed(2)}</span>
+            <span class="payment-status status-pending">Pending</span>
+          </div>
+          
+          <div class="payment-user">
+            <i class="fas fa-user"></i>
+            <span>${payment.fullName} (${payment.username})</span>
+          </div>
+          
+          <div class="payment-details">
+            <div class="payment-detail">
+              <strong>Method:</strong> ${payment.method}
+            </div>
+            <div class="payment-detail">
+              <strong>Date:</strong> ${formattedDate}
+            </div>
+            <div class="payment-detail">
+              <strong>Reference:</strong> ${payment.reference}
+            </div>
+            <div class="payment-detail">
+              <strong>Type:</strong> ${payment.type}
+            </div>
+          </div>
+          
+          <div class="payment-actions">
+            <button class="btn-confirm" onclick="confirmPayment('${payment.id}')">
+              <i class="fas fa-check"></i> Confirm
+            </button>
+            <button class="btn-reject" onclick="rejectPayment('${payment.id}')">
+              <i class="fas fa-times"></i> Reject
+            </button>
+          </div>
+        `;
+        
+        container.appendChild(paymentItem);
+      });
+      
+      if (container.innerHTML === '') {
+        container.innerHTML = '<div class="status-message status-success">No pending payment requests</div>';
+      }
+    }
+
+    // تأكيد عملية الدفع
+    async function confirmPayment(paymentId) {
+      const token = localStorage.getItem('rl_admin_token');
+      if (!token) return;
+      
+      if (!confirm(`Are you sure you want to confirm payment ${paymentId}?`)) return;
+      
+      try {
+        // في الواقع، هذا سيستدعي API مثل: /api/admin/payments/${paymentId}/confirm
+        // إجراء تجريبي:
+        showStatus('paymentStatus', `Payment ${paymentId} confirmed successfully!`, 'success');
+        
+        // تحديث حالة الدفع في البيانات المحلية
+        const payment = paymentData.find(p => p.id === paymentId);
+        if (payment) {
+          payment.status = 'completed';
+        }
+        
+        // إعادة عرض طلبات الدفع
+        renderPayments();
+        
+      } catch (err) {
+        console.error('Error confirming payment:', err);
+        showStatus('paymentStatus', 'Error confirming payment: ' + err.message, 'error');
+      }
+    }
+
+    // رفض عملية الدفع
+    async function rejectPayment(paymentId) {
+      const token = localStorage.getItem('rl_admin_token');
+      if (!token) return;
+      
+      const reason = prompt('Please enter reason for rejection:');
+      if (!reason) return;
+      
+      try {
+        // في الواقع، هذا سيستدعي API مثل: /api/admin/payments/${paymentId}/reject
+        // إجراء تجريبي:
+        showStatus('paymentStatus', `Payment ${paymentId} rejected. Reason: ${reason}`, 'success');
+        
+        // تحديث حالة الدفع في البيانات المحلية
+        const payment = paymentData.find(p => p.id === paymentId);
+        if (payment) {
+          payment.status = 'rejected';
+        }
+        
+        // إعادة عرض طلبات الدفع
+        renderPayments();
+        
+      } catch (err) {
+        console.error('Error rejecting payment:', err);
+        showStatus('paymentStatus', 'Error rejecting payment: ' + err.message, 'error');
+      }
+    }
+
     // عرض رسائل الحالة
     function showStatus(elementId, message, type) {
       const statusElement = document.getElementById(elementId);
@@ -607,7 +994,8 @@
         document.getElementById('adminPanel').style.display = 'block';
         setCurrentDateTime();
         fetchUsers();
-        fetchContent(); // جلب المحتوى عند التهيئة
+        fetchContent();
+        fetchPayments(); // جلب طلبات الدفع عند التهيئة
       }
       // Enter key to login
       document.getElementById('password').addEventListener('keypress', function(e) {
