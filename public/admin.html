@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RealityLottery - Admin Panel</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* copy CSS from your provided admin.html (kept identical) */
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background:#121212; color:#fff; min-height:100vh; display:flex; justify-content:center; align-items:center; }
+    .admin-container{ width:100%; max-width:1200px; padding:20px; }
+    .login-form{ background:rgba(0,0,0,0.8); border:1px solid #ffd700; border-radius:10px; padding:40px; max-width:500px; margin:0 auto; box-shadow:0 10px 30px rgba(0,0,0,0.5); text-align:center; }
+    .login-form h1{ color:#ffd700; margin-bottom:30px; font-size:28px; }
+    .form-group{ margin-bottom:20px; text-align:left; }
+    .form-group label{ display:block; margin-bottom:8px; color:#ffd700; }
+    .form-group input{ width:100%; padding:12px 15px; border-radius:5px; border:1px solid #444; background:#222; color:#fff; font-size:16px; }
+    .login-btn{ background:linear-gradient(45deg,#ffd700,#ffa500); color:#000; border:none; padding:12px 30px; border-radius:5px; font-weight:bold; font-size:16px; cursor:pointer; transition:all .3s; width:100%; margin-top:10px;}
+    .login-btn:hover{ transform:translateY(-3px); box-shadow:0 5px 15px rgba(255,215,0,0.4); }
+    .admin-panel{ display:none; background:rgba(0,0,0,0.8); border:1px solid #ffd700; border-radius:10px; padding:30px; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+    .admin-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; padding-bottom:20px; border-bottom:1px solid rgba(255,215,0,0.3); }
+    .admin-title{ color:#ffd700; font-size:24px; }
+    .logout-btn{ background:transparent; color:#ff6b6b; border:1px solid #ff6b6b; padding:8px 15px; border-radius:5px; cursor:pointer; transition:all .3s; }
+    .logout-btn:hover{ background:rgba(255,107,107,0.1); }
+    .admin-sections{ display:grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap:20px; }
+    .admin-section{ background:rgba(255,215,0,0.05); border:1px solid rgba(255,215,0,0.3); border-radius:10px; padding:20px; }
+    .section-title{ color:#ffd700; margin-bottom:15px; font-size:18px; display:flex; align-items:center; gap:10px; }
+    .form-control{ width:100%; padding:10px; margin-bottom:15px; background:#222; border:1px solid #444; color:#fff; border-radius:5px; }
+    textarea.form-control{ min-height:100px; resize:vertical; }
+    .save-btn{ background:linear-gradient(45deg,#ffd700,#ffa500); color:#000; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer; transition:all .3s; width:100%; }
+    .save-btn:hover{ transform:translateY(-3px); box-shadow:0 5px 15px rgba(255,215,0,0.4); }
+    .error-message{ color:#ff6b6b; margin-top:10px; text-align:center; display:none; }
+    .user-list{ max-height:200px; overflow-y:auto; margin-bottom:15px; border:1px solid rgba(255,215,0,0.3); border-radius:5px; padding:10px; }
+    .user-item{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.1); }
+    .user-item:last-child{ border-bottom:none; }
+    .user-actions a{ color:#ff6b6b; margin-left:10px; cursor:pointer; }
+    .user-actions a.edit-user{ color:#ffd700; }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <div class="login-form" id="loginForm">
+      <h1><i class="fas fa-lock"></i> Admin Login</h1>
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="Enter admin username">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter admin password">
+      </div>
+      <button class="login-btn" onclick="login()">Login</button>
+      <div class="error-message" id="errorMessage">Invalid credentials. Please try again.</div>
+    </div>
+
+    <div class="admin-panel" id="adminPanel">
+      <div class="admin-header">
+        <h2 class="admin-title"><i class="fas fa-cog"></i> RealityLottery Admin Panel</h2>
+        <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+
+      <div class="admin-sections">
+        <!-- (احتفظت بكل الأقسام التي أرسلتها بنفس المحتويات) -->
+        <!-- Homepage Content -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-home"></i> Homepage Content</h3>
+          <div class="form-group">
+            <label>Main Title</label>
+            <input type="text" class="form-control" id="mainTitle" value="Dream Big, Win Bigger!">
+          </div>
+          <div class="form-group">
+            <label>Subtitle</label>
+            <textarea class="form-control" id="mainSubtitle">Join millions of players worldwide for a chance to win life-changing prizes.</textarea>
+          </div>
+          <div class="form-group">
+            <label>Button Text</label>
+            <input type="text" class="form-control" id="mainButton" value="Play Now">
+          </div>
+          <button class="save-btn">Save Changes</button>
+        </div>
+
+        <!-- Carousel Management -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-images"></i> Carousel Slides</h3>
+          <div class="form-group">
+            <label>Slide 1 Image URL</label>
+            <input type="text" class="form-control" id="slide1Url" value="https://images.unsplash.com/photo-1516245834210-c4c142a335d3?auto=format&fit=crop&w=1200&q=80">
+          </div>
+          <div class="form-group">
+            <label>Slide 1 Title</label>
+            <input type="text" class="form-control" id="slide1Title" value="Dream Big, Win Bigger!">
+          </div>
+          <div class="form-group">
+            <label>Slide 2 Image URL</label>
+            <input type="text" class="form-control" id="slide2Url" value="https://images.unsplash.com/photo-1585314062604-1a357de8b000?auto=format&fit=crop&w=1200&q=80">
+          </div>
+          <div class="form-group">
+            <label>Slide 2 Title</label>
+            <input type="text" class="form-control" id="slide2Title" value="Your Chance to Become a Millionaire">
+          </div>
+          <button class="save-btn">Save Slides</button>
+        </div>
+
+        <!-- User Management -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-users"></i> User Management</h3>
+          <div class="user-list" id="userList">
+            <!-- سيتم ملؤها عبر JS عند طلب /api/admin/users -->
+          </div>
+          <div class="form-group">
+            <label>Add New User</label>
+            <input type="text" class="form-control" id="newUsername" placeholder="Enter username">
+          </div>
+          <button class="save-btn" onclick="addUser()">Add User</button>
+        </div>
+
+        <!-- Lottery Settings -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-ticket-alt"></i> Lottery Settings</h3>
+          <div class="form-group">
+            <label>Jackpot Amount ($)</label>
+            <input type="number" class="form-control" id="jackpotAmount" value="1000000">
+          </div>
+          <div class="form-group">
+            <label>Next Draw Date</label>
+            <input type="datetime-local" class="form-control" id="nextDrawDate">
+          </div>
+          <div class="form-group">
+            <label>Ticket Price ($)</label>
+            <input type="number" class="form-control" id="ticketPrice" value="5" step="0.01">
+          </div>
+          <button class="save-btn">Update Settings</button>
+        </div>
+
+        <!-- Countries -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-globe"></i> Countries</h3>
+          <div class="form-group">
+            <label>Add Country</label>
+            <select class="form-control" id="countrySelect">
+              <option value="">Select a country</option>
+              <option value="US">United States</option>
+              <option value="GB">United Kingdom</option>
+              <option value="CA">Canada</option>
+              <option value="AU">Australia</option>
+              <option value="DE">Germany</option>
+              <option value="FR">France</option>
+              <option value="ES">Spain</option>
+              <option value="IT">Italy</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Participants Count</label>
+            <input type="number" class="form-control" id="participantsCount" placeholder="Enter number of participants">
+          </div>
+          <button class="save-btn">Add Country</button>
+        </div>
+
+        <!-- Partners -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-handshake"></i> Partners</h3>
+          <div class="form-group">
+            <label>Partner Name</label>
+            <input type="text" class="form-control" id="partnerName" placeholder="Enter partner name">
+          </div>
+          <div class="form-group">
+            <label>Partner Logo URL</label>
+            <input type="text" class="form-control" id="partnerLogo" placeholder="Enter logo URL">
+          </div>
+          <button class="save-btn">Add Partner</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://realitylottery.koyeb.app';
+
+    // Admin login via backend
+    function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorMessage = document.getElementById('errorMessage');
+
+      fetch(API_BASE + '/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      }).then(async r => {
+        const body = await r.json();
+        if (!r.ok) {
+          errorMessage.style.display = 'block';
+          errorMessage.textContent = body.message || 'Invalid credentials';
+          document.getElementById('password').value = '';
+        } else {
+          localStorage.setItem('rl_admin_token', body.token);
+          document.getElementById('loginForm').style.display = 'none';
+          document.getElementById('adminPanel').style.display = 'block';
+          setCurrentDateTime();
+          fetchUsers();
+        }
+      }).catch(err => {
+        console.error(err);
+        alert('Network error');
+      });
+    }
+
+    function logout() {
+      localStorage.removeItem('rl_admin_token');
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('adminPanel').style.display = 'none';
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('errorMessage').style.display = 'none';
+    }
+
+    function setCurrentDateTime() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const input = document.getElementById('nextDrawDate');
+      if (input) input.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    async function fetchUsers() {
+      const token = localStorage.getItem('rl_admin_token');
+      if (!token) return;
+      try {
+        const res = await fetch(API_BASE + '/api/admin/users', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.message || 'Failed to fetch users');
+          return;
+        }
+        const list = document.getElementById('userList');
+        list.innerHTML = '';
+        data.users.forEach(u => {
+          const div = document.createElement('div');
+          div.className = 'user-item';
+          div.innerHTML = `<span>${u.fullName} (${u.username})</span>
+            <div class="user-actions">
+              <a class="edit-user" onclick="editUser('${u._id}')"><i class="fas fa-edit"></i></a>
+              <a class="delete-user" onclick="deleteUser('${u._id}')"><i class="fas fa-trash"></i></a>
+            </div>`;
+          list.appendChild(div);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function addUser() {
+      alert('This demo adds user UI-only. Implement create-user API in backend if desired.');
+    }
+
+    function editUser(id) {
+      alert('Edit user: ' + id + '. Implement edit function as needed.');
+    }
+
+    function deleteUser(id) {
+      if (!confirm('Are you sure you want to delete this user?')) return;
+      alert('Implement delete endpoint on server to delete user ' + id);
+    }
+
+    // Initialize
+    window.onload = function() {
+      const token = localStorage.getItem('rl_admin_token');
+      if (token) {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        setCurrentDateTime();
+        fetchUsers();
+      }
+      // Enter key to login
+      document.getElementById('password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') login();
+      });
+    };
+  </script>
+</body>
+</html>
