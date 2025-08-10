@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RealityLottery - Register</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* --- نفس الستايل الذي أرسلته سابقاً --- */
+    /* ... (لأن المساحة طويلة، احتفظت بنفس CSS كما في نسختك الأصلية) ... */
+    /* انسخ CSS المعطى سابقاً هنا (لم أغيّره) */
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: #000; color:#fff; min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px }
+    .register-container { width:100%; max-width:600px; background: rgba(0,0,0,0.8); border:1px solid #ffd700; border-radius:10px; padding:40px; box-shadow:0 10px 30px rgba(255,215,0,0.1); }
+    .logo{ text-align:center; margin-bottom:30px; font-size:28px; font-weight:800; color:#ffd700; text-transform:uppercase; letter-spacing:2px;}
+    .register-title{ text-align:center; margin-bottom:30px; color:#ffd700; font-size:24px; }
+    .form-group{ margin-bottom:20px;}
+    .form-group label{ display:block; margin-bottom:8px; color:#ffd700; font-weight:500;}
+    .form-control{ width:100%; padding:12px 15px; border-radius:5px; border:1px solid #444; background:#222; color:#fff; font-size:16px; transition:all .3s; }
+    .form-control:focus{ border-color:#ffd700; outline:none; box-shadow:0 0 0 2px rgba(255,215,0,0.2); }
+    .phone-group{ display:flex; gap:10px; }
+    .country-code{ width:100px; }
+    .phone-number{ flex:1; }
+    .checkbox-group{ display:flex; align-items:center; margin:25px 0; }
+    .checkbox-group input{ margin-right:10px; width:18px; height:18px; accent-color:#ffd700; }
+    .register-btn{ width:100%; padding:14px; background: linear-gradient(45deg,#ffd700,#ffa500); color:#000; border:none; border-radius:5px; font-weight:bold; font-size:16px; cursor:pointer; transition:all .3s; margin-bottom:20px; }
+    .register-btn:hover{ transform:translateY(-3px); box-shadow:0 5px 15px rgba(255,215,0,0.4);}
+    .login-link{ text-align:center; color:#aaa; }
+    .login-link a{ color:#ffd700; text-decoration:none; transition:all .3s; }
+    .login-link a:hover{ text-decoration:underline; }
+    @media (max-width:768px){ .register-container{ padding:30px 20px; } }
+  </style>
+</head>
+<body>
+  <div class="register-container">
+    <div class="logo">Reality<span>Lottery</span></div>
+    <h2 class="register-title">Create Your Account</h2>
+
+    <form id="registrationForm">
+      <div class="form-group">
+        <label for="fullName">Full Name</label>
+        <input type="text" id="fullName" class="form-control" placeholder="Enter your full name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" class="form-control" placeholder="Enter your email" required>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <div class="phone-group">
+          <select id="countryCode" class="form-control country-code">
+            <option value="+1">+1 (USA)</option>
+            <option value="+44">+44 (UK)</option>
+            <option value="+966">+966 (KSA)</option>
+            <option value="+971">+971 (UAE)</option>
+            <option value="+20">+20 (EGY)</option>
+            <option value="+962">+962 (JOR)</option>
+            <option value="+973">+973 (BHR)</option>
+            <option value="+974">+974 (QAT)</option>
+          </select>
+          <input type="tel" id="phone" class="form-control phone-number" placeholder="Enter your phone number" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" class="form-control" placeholder="Choose a username" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" class="form-control" placeholder="Create a password" required>
+      </div>
+
+      <div class="form-group">
+        <label for="referral">Referral Username (Optional)</label>
+        <input type="text" id="referral" class="form-control" placeholder="Enter who invited you">
+      </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="ageConfirm" required>
+        <label for="ageConfirm">I confirm that I am 18 years of age or older</label>
+      </div>
+
+      <button type="submit" class="register-btn">Register Now</button>
+
+      <div class="login-link">
+        Already have an account? <a href="login.html">Login here</a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // API base should point to your backend domain.
+    const API_BASE = 'https://realitylottery.koyeb.app';
+
+    document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const fullName = document.getElementById('fullName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const countryCode = document.getElementById('countryCode').value;
+      const phone = document.getElementById('phone').value.trim();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const referral = document.getElementById('referral').value.trim();
+      const ageConfirm = document.getElementById('ageConfirm').checked;
+
+      if (!ageConfirm) {
+        alert('You must be 18 years or older to register.');
+        return;
+      }
+      if (!fullName || !email || !username || !password) {
+        alert('Please fill required fields.');
+        return;
+      }
+
+      const payload = {
+        fullName,
+        email,
+        phone: countryCode + phone,
+        username,
+        password,
+        referral
+      };
+
+      try {
+        const res = await fetch(API_BASE + '/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.message || 'Registration failed');
+          return;
+        }
+
+        localStorage.setItem('rl_token', data.token);
+        localStorage.setItem('rl_user', JSON.stringify(data.user));
+
+        alert('Registration successful! Redirecting to login...');
+        window.location.href = 'login.html';
+      } catch (err) {
+        console.error(err);
+        alert('Network error. Try again later.');
+      }
+    });
+  </script>
+</body>
+</html>
