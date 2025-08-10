@@ -6,7 +6,6 @@
   <title>RealityLottery - Admin Panel</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
-    /* copy CSS from your provided admin.html (kept identical) */
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background:#121212; color:#fff; min-height:100vh; display:flex; justify-content:center; align-items:center; }
     .admin-container{ width:100%; max-width:1200px; padding:20px; }
@@ -35,6 +34,58 @@
     .user-item:last-child{ border-bottom:none; }
     .user-actions a{ color:#ff6b6b; margin-left:10px; cursor:pointer; }
     .user-actions a.edit-user{ color:#ffd700; }
+    
+    /* إضافات جديدة لإدارة المحتوى */
+    .content-management { margin-bottom: 20px; }
+    .content-item { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,215,0,0.2); }
+    .content-item:last-child { border-bottom: none; }
+    .content-key { font-weight: bold; color: #ffd700; margin-bottom: 5px; }
+    .image-upload-container { 
+      border: 2px dashed rgba(255, 215, 0, 0.5); 
+      padding: 20px; 
+      text-align: center; 
+      border-radius: 8px; 
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .image-upload-container:hover {
+      border-color: #ffd700;
+      background: rgba(255, 215, 0, 0.05);
+    }
+    .image-upload-container p {
+      margin-bottom: 10px;
+      color: #ffd700;
+    }
+    .image-preview {
+      max-width: 100%;
+      max-height: 200px;
+      margin-top: 10px;
+      display: none;
+      border-radius: 5px;
+    }
+    .status-message {
+      text-align: center;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      display: none;
+    }
+    .status-success {
+      background: rgba(46, 204, 113, 0.2);
+      color: #2ecc71;
+      border: 1px solid #2ecc71;
+    }
+    .status-error {
+      background: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+      border: 1px solid #e74c3c;
+    }
+    .add-content-form {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,215,0,0.3);
+    }
   </style>
 </head>
 <body>
@@ -60,8 +111,55 @@
       </div>
 
       <div class="admin-sections">
-        <!-- (احتفظت بكل الأقسام التي أرسلتها بنفس المحتويات) -->
-        <!-- Homepage Content -->
+        <!-- إدارة المحتوى القابل للتعديل -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-edit"></i> Content Management</h3>
+          <div id="contentManagement" class="content-management">
+            <!-- سيتم ملؤها ديناميكياً -->
+          </div>
+          
+          <div class="add-content-form">
+            <h3 class="section-title"><i class="fas fa-plus"></i> Add New Content</h3>
+            <div class="form-group">
+              <label for="newContentKey">Content Key</label>
+              <input type="text" class="form-control" id="newContentKey" placeholder="Example: heroTitle">
+            </div>
+            <div class="form-group">
+              <label for="newContentValue">Content Value</label>
+              <textarea class="form-control" id="newContentValue" placeholder="Enter content..."></textarea>
+            </div>
+            <button class="save-btn" onclick="addContentItem()">Add Content Item</button>
+          </div>
+          <div id="contentStatus" class="status-message"></div>
+        </div>
+
+        <!-- إدارة الصور -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-images"></i> Image Management</h3>
+          
+          <div class="form-group">
+            <label>Homepage Background Image</label>
+            <div class="image-upload-container" onclick="document.getElementById('heroImageInput').click()">
+              <p>Click to upload image (max 5MB)</p>
+              <img id="heroImagePreview" class="image-preview" src="" alt="Hero Image Preview">
+              <input type="file" id="heroImageInput" accept="image/*" style="display: none" onchange="previewImage(this, 'heroImagePreview')">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>About Us Image</label>
+            <div class="image-upload-container" onclick="document.getElementById('aboutImageInput').click()">
+              <p>Click to upload image (max 5MB)</p>
+              <img id="aboutImagePreview" class="image-preview" src="" alt="About Image Preview">
+              <input type="file" id="aboutImageInput" accept="image/*" style="display: none" onchange="previewImage(this, 'aboutImagePreview')">
+            </div>
+          </div>
+          
+          <button class="save-btn" onclick="saveImages()">Save Images</button>
+          <div id="imageStatus" class="status-message"></div>
+        </div>
+
+        <!-- Homepage Content (القديم) -->
         <div class="admin-section">
           <h3 class="section-title"><i class="fas fa-home"></i> Homepage Content</h3>
           <div class="form-group">
@@ -79,7 +177,7 @@
           <button class="save-btn">Save Changes</button>
         </div>
 
-        <!-- Carousel Management -->
+        <!-- Carousel Management (القديم) -->
         <div class="admin-section">
           <h3 class="section-title"><i class="fas fa-images"></i> Carousel Slides</h3>
           <div class="form-group">
@@ -101,7 +199,7 @@
           <button class="save-btn">Save Slides</button>
         </div>
 
-        <!-- User Management -->
+        <!-- User Management (القديم) -->
         <div class="admin-section">
           <h3 class="section-title"><i class="fas fa-users"></i> User Management</h3>
           <div class="user-list" id="userList">
@@ -114,7 +212,7 @@
           <button class="save-btn" onclick="addUser()">Add User</button>
         </div>
 
-        <!-- Lottery Settings -->
+        <!-- Lottery Settings (القديم) -->
         <div class="admin-section">
           <h3 class="section-title"><i class="fas fa-ticket-alt"></i> Lottery Settings</h3>
           <div class="form-group">
@@ -132,7 +230,7 @@
           <button class="save-btn">Update Settings</button>
         </div>
 
-        <!-- Countries -->
+        <!-- Countries (القديم) -->
         <div class="admin-section">
           <h3 class="section-title"><i class="fas fa-globe"></i> Countries</h3>
           <div class="form-group">
@@ -156,7 +254,7 @@
           <button class="save-btn">Add Country</button>
         </div>
 
-        <!-- Partners -->
+        <!-- Partners (القديم) -->
         <div class="admin-section">
           <h3 class="section-title"><i class="fas fa-handshake"></i> Partners</h3>
           <div class="form-group">
@@ -176,6 +274,7 @@
 
   <script>
     const API_BASE = 'https://realitylottery.koyeb.app';
+    let contentData = {};
 
     // Admin login via backend
     function login() {
@@ -199,6 +298,7 @@
           document.getElementById('adminPanel').style.display = 'block';
           setCurrentDateTime();
           fetchUsers();
+          fetchContent(); // جلب المحتوى بعد تسجيل الدخول
         }
       }).catch(err => {
         console.error(err);
@@ -255,6 +355,237 @@
       }
     }
 
+    // جلب المحتوى القابل للتعديل
+    async function fetchContent() {
+      const token = localStorage.getItem('rl_admin_token');
+      if (!token) return;
+      
+      try {
+        const res = await fetch(API_BASE + '/api/content', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (!res.ok) {
+          throw new Error('Failed to fetch content');
+        }
+        
+        contentData = await res.json();
+        renderContentItems();
+      } catch (err) {
+        console.error('Error fetching content:', err);
+        showStatus('contentStatus', 'Error loading content: ' + err.message, 'error');
+      }
+    }
+
+    // عرض عناصر المحتوى
+    function renderContentItems() {
+      const container = document.getElementById('contentManagement');
+      container.innerHTML = '';
+      
+      Object.entries(contentData).forEach(([key, value]) => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'content-item';
+        
+        itemDiv.innerHTML = `
+          <div class="content-key">${key}</div>
+          <div class="form-group">
+            <textarea class="form-control content-value" data-key="${key}" 
+                      placeholder="Enter value">${value}</textarea>
+          </div>
+          <button class="save-btn" onclick="updateContentItem('${key}')">Update</button>
+        `;
+        
+        container.appendChild(itemDiv);
+      });
+    }
+
+    // تحديث عنصر محتوى
+    async function updateContentItem(key) {
+      const token = localStorage.getItem('rl_admin_token');
+      if (!token) return;
+      
+      const value = document.querySelector(`.content-value[data-key="${key}"]`).value;
+      
+      try {
+        const res = await fetch(API_BASE + '/api/admin/content', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ [key]: value })
+        });
+        
+        if (!res.ok) {
+          throw new Error('Failed to update content');
+        }
+        
+        showStatus('contentStatus', `"${key}" updated successfully!`, 'success');
+        // تحديث البيانات المحلية
+        contentData[key] = value;
+      } catch (err) {
+        console.error('Error updating content:', err);
+        showStatus('contentStatus', 'Error updating content: ' + err.message, 'error');
+      }
+    }
+
+    // إضافة عنصر محتوى جديد
+    async function addContentItem() {
+      const token = localStorage.getItem('rl_admin_token');
+      if (!token) return;
+      
+      const key = document.getElementById('newContentKey').value.trim();
+      const value = document.getElementById('newContentValue').value.trim();
+      
+      if (!key || !value) {
+        showStatus('contentStatus', 'Both key and value are required', 'error');
+        return;
+      }
+      
+      try {
+        const res = await fetch(API_BASE + '/api/admin/content', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ [key]: value })
+        });
+        
+        if (!res.ok) {
+          throw new Error('Failed to add content item');
+        }
+        
+        // تحديث الواجهة
+        contentData[key] = value;
+        renderContentItems();
+        
+        // مسح حقول الإدخال
+        document.getElementById('newContentKey').value = '';
+        document.getElementById('newContentValue').value = '';
+        
+        showStatus('contentStatus', `"${key}" added successfully!`, 'success');
+      } catch (err) {
+        console.error('Error adding content item:', err);
+        showStatus('contentStatus', 'Error adding item: ' + err.message, 'error');
+      }
+    }
+
+    // معاينة الصورة قبل الرفع
+    function previewImage(input, previewId) {
+      const file = input.files[0];
+      if (!file) return;
+      
+      // التحقق من حجم الملف
+      if (file.size > 5 * 1024 * 1024) {
+        showStatus('imageStatus', 'File size exceeds 5MB limit', 'error');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const preview = document.getElementById(previewId);
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      }
+      reader.readAsDataURL(file);
+    }
+
+    // حفظ الصور
+    async function saveImages() {
+      const token = localStorage.getItem('rl_admin_token');
+      if (!token) return;
+      
+      const heroImageFile = document.getElementById('heroImageInput').files[0];
+      const aboutImageFile = document.getElementById('aboutImageInput').files[0];
+      
+      if (!heroImageFile && !aboutImageFile) {
+        showStatus('imageStatus', 'No images selected', 'error');
+        return;
+      }
+      
+      try {
+        let heroImagePath = '';
+        let aboutImagePath = '';
+        
+        // رفع صورة الخلفية إذا تم اختيارها
+        if (heroImageFile) {
+          const formData = new FormData();
+          formData.append('image', heroImageFile);
+          
+          const res = await fetch(API_BASE + '/api/admin/upload', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: formData
+          });
+          
+          if (!res.ok) {
+            throw new Error('Failed to upload hero image');
+          }
+          
+          const data = await res.json();
+          heroImagePath = data.imagePath;
+        }
+        
+        // رفع صورة "من نحن" إذا تم اختيارها
+        if (aboutImageFile) {
+          const formData = new FormData();
+          formData.append('image', aboutImageFile);
+          
+          const res = await fetch(API_BASE + '/api/admin/upload', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: formData
+          });
+          
+          if (!res.ok) {
+            throw new Error('Failed to upload about image');
+          }
+          
+          const data = await res.json();
+          aboutImagePath = data.imagePath;
+        }
+        
+        // تحديث المسارات في قاعدة البيانات
+        const updates = {};
+        if (heroImagePath) updates.heroImage = heroImagePath;
+        if (aboutImagePath) updates.aboutImage = aboutImagePath;
+        
+        if (Object.keys(updates).length > 0) {
+          await fetch(API_BASE + '/api/admin/content', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(updates)
+          });
+        }
+        
+        showStatus('imageStatus', 'Images saved successfully!', 'success');
+        setTimeout(() => {
+          document.getElementById('imageStatus').style.display = 'none';
+        }, 3000);
+        
+      } catch (err) {
+        console.error('Error saving images:', err);
+        showStatus('imageStatus', 'Error: ' + err.message, 'error');
+      }
+    }
+
+    // عرض رسائل الحالة
+    function showStatus(elementId, message, type) {
+      const statusElement = document.getElementById(elementId);
+      statusElement.textContent = message;
+      statusElement.className = `status-message status-${type}`;
+      statusElement.style.display = 'block';
+      
+      // إخفاء الرسالة بعد 5 ثواني
+      setTimeout(() => {
+        statusElement.style.display = 'none';
+      }, 5000);
+    }
+
     function addUser() {
       alert('This demo adds user UI-only. Implement create-user API in backend if desired.');
     }
@@ -276,6 +607,7 @@
         document.getElementById('adminPanel').style.display = 'block';
         setCurrentDateTime();
         fetchUsers();
+        fetchContent(); // جلب المحتوى عند التهيئة
       }
       // Enter key to login
       document.getElementById('password').addEventListener('keypress', function(e) {
