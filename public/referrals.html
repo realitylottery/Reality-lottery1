@@ -20,6 +20,9 @@
             --darker: #1a1a1a;
             --light: #ffffff;
             --gray: #aaaaaa;
+            --success: #32cd32;
+            --warning: #ffa500;
+            --danger: #ff4500;
         }
         
         body {
@@ -65,6 +68,11 @@
             background: linear-gradient(45deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            transition: transform 0.3s;
+        }
+        
+        .logo:hover {
+            transform: scale(1.05);
         }
         
         .header-right {
@@ -151,6 +159,8 @@
             text-align: center;
             transition: all 0.3s;
             border: 1px solid rgba(255, 215, 0, 0.2);
+            position: relative;
+            overflow: hidden;
         }
         
         .stat-card:hover {
@@ -244,6 +254,7 @@
             background: rgba(255, 255, 255, 0.1);
             color: var(--light);
             transition: all 0.3s;
+            cursor: pointer;
         }
         
         .social-btn:hover {
@@ -393,17 +404,17 @@
         
         .status.pending {
             background: rgba(255, 165, 0, 0.2);
-            color: #ffa500;
+            color: var(--warning);
         }
         
         .status.completed {
             background: rgba(50, 205, 50, 0.2);
-            color: #32cd32;
+            color: var(--success);
         }
         
         .status.failed {
             background: rgba(255, 69, 0, 0.2);
-            color: #ff4500;
+            color: var(--danger);
         }
         
         /* Withdrawal Section */
@@ -428,6 +439,41 @@
             border: 1px solid rgba(255, 215, 0, 0.3);
             color: var(--light);
             font-size: 16px;
+        }
+        
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--primary);
+            color: var(--light);
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.3s ease-in-out;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.success {
+            border-color: var(--success);
+        }
+        
+        .toast.warning {
+            border-color: var(--warning);
+        }
+        
+        .toast.danger {
+            border-color: var(--danger);
         }
         
         /* Footer Navigation */
@@ -463,6 +509,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            cursor: pointer;
         }
         
         .nav-item i {
@@ -507,18 +554,28 @@
             th, td {
                 padding: 10px;
             }
+            
+            .withdrawal-form {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">تم النسخ بنجاح!</span>
+    </div>
+    
     <!-- Header -->
     <header>
         <div class="container header-container">
             <div class="logo">RealityLottery</div>
             <div class="header-right">
                 <div class="auth-buttons">
-                    <button class="btn login-btn">تسجيل الدخول</button>
-                    <button class="btn register-btn">تسجيل جديد</button>
+                    <button class="btn login-btn" id="loginBtn">تسجيل الدخول</button>
+                    <button class="btn register-btn" id="registerBtn">تسجيل جديد</button>
                 </div>
             </div>
         </div>
@@ -559,16 +616,16 @@
             <div class="referral-link-section">
                 <h2 class="section-title"><i class="fas fa-link"></i> رابط الإحالة الخاص بك</h2>
                 <div class="link-container">
-                    <input type="text" class="referral-input" value="https://realitylottery.com/ref/ahmed2023" readonly>
-                    <button class="copy-btn">نسخ الرابط</button>
+                    <input type="text" class="referral-input" id="referralLink" value="https://realitylottery.com/ref/ahmed2023" readonly>
+                    <button class="copy-btn" id="copyBtn">نسخ الرابط</button>
                 </div>
                 
                 <div class="social-share">
                     <p>مشاركة الرابط:</p>
-                    <a href="#" class="social-btn facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social-btn twitter"><i class="fab fa-twitter"></i></a>
-                    <a href="#" class="social-btn whatsapp"><i class="fab fa-whatsapp"></i></a>
-                    <a href="#" class="social-btn telegram"><i class="fab fa-telegram-plane"></i></a>
+                    <div class="social-btn facebook" id="facebookShare"><i class="fab fa-facebook-f"></i></div>
+                    <div class="social-btn twitter" id="twitterShare"><i class="fab fa-twitter"></i></div>
+                    <div class="social-btn whatsapp" id="whatsappShare"><i class="fab fa-whatsapp"></i></div>
+                    <div class="social-btn telegram" id="telegramShare"><i class="fab fa-telegram-plane"></i></div>
                 </div>
             </div>
             
@@ -669,14 +726,14 @@
                                 <td>15/10/2023</td>
                                 <td><span class="status completed">مكتملة</span></td>
                                 <td>$10</td>
-                                <td><button class="copy-btn">سحب</button></td>
+                                <td><button class="copy-btn withdraw-btn" data-amount="10">سحب</button></td>
                             </tr>
                             <tr>
                                 <td>سارة خالد</td>
                                 <td>18/10/2023</td>
                                 <td><span class="status completed">مكتملة</span></td>
                                 <td>$10</td>
-                                <td><button class="copy-btn">سحب</button></td>
+                                <td><button class="copy-btn withdraw-btn" data-amount="10">سحب</button></td>
                             </tr>
                             <tr>
                                 <td>علي محمود</td>
@@ -690,7 +747,7 @@
                                 <td>22/10/2023</td>
                                 <td><span class="status completed">مكتملة</span></td>
                                 <td>$10</td>
-                                <td><button class="copy-btn">سحب</button></td>
+                                <td><button class="copy-btn withdraw-btn" data-amount="10">سحب</button></td>
                             </tr>
                             <tr>
                                 <td>يوسف كمال</td>
@@ -707,11 +764,11 @@
             <!-- Withdrawal Section -->
             <div class="withdrawal-section">
                 <h2 class="section-title"><i class="fas fa-wallet"></i> سحب الأرباح</h2>
-                <p>الرصيد المتاح للسحب: <span style="color: var(--primary); font-weight: bold;">$45</span></p>
+                <p>الرصيد المتاح للسحب: <span id="available-amount" style="color: var(--primary); font-weight: bold;">$45</span></p>
                 
                 <div class="withdrawal-form">
-                    <input type="number" class="amount-input" placeholder="المبلغ المطلوب" min="5" max="45">
-                    <button class="copy-btn">طلب السحب</button>
+                    <input type="number" class="amount-input" id="withdrawalAmount" placeholder="المبلغ المطلوب" min="5" max="45">
+                    <button class="copy-btn" id="withdrawBtn">طلب السحب</button>
                 </div>
                 
                 <div style="margin-top: 20px; color: var(--gray);">
@@ -725,36 +782,55 @@
     <!-- Fixed Navigation at Bottom -->
     <nav class="fixed-nav">
         <div class="nav-container">
-            <a href="index.html" class="nav-item">
+            <div class="nav-item" id="homeNav">
                 <i class="fas fa-home"></i>
                 <span>الرئيسية</span>
-            </a>
-            <a href="lottery.html" class="nav-item">
+            </div>
+            <div class="nav-item" id="lotteryNav">
                 <i class="fas fa-ticket-alt"></i>
                 <span>اليانصيب</span>
-            </a>
-            <a href="prizes.html" class="nav-item">
+            </div>
+            <div class="nav-item" id="prizesNav">
                 <i class="fas fa-gift"></i>
                 <span>الجوائز</span>
-            </a>
-            <a href="referrals.html" class="nav-item active">
+            </div>
+            <div class="nav-item active" id="referralsNav">
                 <i class="fas fa-users"></i>
                 <span>الإحالات</span>
-            </a>
-            <a href="profile.html" class="nav-item">
+            </div>
+            <div class="nav-item" id="profileNav">
                 <i class="fas fa-user"></i>
                 <span>الحساب</span>
-            </a>
+            </div>
         </div>
     </nav>
 
     <script>
+        // Toast Notification System
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.textContent = message;
+            toast.className = 'toast show';
+            toast.classList.add(type);
+            
+            setTimeout(() => {
+                toast.className = 'toast';
+                toast.classList.remove(type);
+            }, 3000);
+        }
+        
         // Copy referral link functionality
-        document.querySelector('.copy-btn').addEventListener('click', function() {
-            const referralInput = document.querySelector('.referral-input');
+        document.getElementById('copyBtn').addEventListener('click', function() {
+            const referralInput = document.getElementById('referralLink');
             referralInput.select();
             document.execCommand('copy');
             
+            // Show success toast
+            showToast('تم نسخ رابط الإحالة بنجاح!');
+            
+            // Visual feedback
             const originalText = this.textContent;
             this.textContent = 'تم النسخ!';
             this.style.background = 'linear-gradient(45deg, #32CD32, #228B22)';
@@ -765,41 +841,74 @@
             }, 2000);
         });
         
+        // Social share buttons
+        document.getElementById('facebookShare').addEventListener('click', function() {
+            showToast('تم فتح نافذة مشاركة الفيسبوك', 'success');
+        });
+        
+        document.getElementById('twitterShare').addEventListener('click', function() {
+            showToast('تم فتح نافذة مشاركة تويتر', 'success');
+        });
+        
+        document.getElementById('whatsappShare').addEventListener('click', function() {
+            showToast('تم فتح نافذة مشاركة واتساب', 'success');
+        });
+        
+        document.getElementById('telegramShare').addEventListener('click', function() {
+            showToast('تم فتح نافذة مشاركة تليجرام', 'success');
+        });
+        
         // Withdrawal button functionality
-        document.querySelector('.withdrawal-form .copy-btn').addEventListener('click', function() {
-            const amountInput = document.querySelector('.amount-input');
+        document.getElementById('withdrawBtn').addEventListener('click', function() {
+            const amountInput = document.getElementById('withdrawalAmount');
             const amount = amountInput.value;
+            const availableAmount = 45;
             
-            if(amount < 5) {
-                alert('الحد الأدنى للسحب هو $5');
+            if (!amount || amount < 5) {
+                showToast('الحد الأدنى للسحب هو $5', 'warning');
                 return;
             }
             
-            alert(`تم تقديم طلب سحب بمبلغ $${amount}. سيتم معالجة الطلب خلال 24-48 ساعة.`);
+            if (amount > availableAmount) {
+                showToast('المبلغ المطلوب أكبر من الرصيد المتاح', 'danger');
+                return;
+            }
+            
+            showToast(`تم تقديم طلب سحب بمبلغ $${amount}. سيتم معالجة الطلب خلال 24-48 ساعة.`);
             amountInput.value = '';
         });
         
-        // Social share buttons
-        document.querySelectorAll('.social-btn').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const platform = this.classList[1];
-                let message = 'انضم إلى RealityLottery واحصل على فرصة للفوز بجوائز مذهلة باستخدام رابط الإحالة الخاص بي!';
+        // Withdraw individual rewards
+        document.querySelectorAll('.withdraw-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const amount = this.getAttribute('data-amount');
+                showToast(`تم تقديم طلب سحب بمبلغ $${amount} بنجاح!`);
+            });
+        });
+        
+        // Navigation buttons
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            showToast('سيتم توجيهك إلى صفحة تسجيل الدخول', 'success');
+        });
+        
+        document.getElementById('registerBtn').addEventListener('click', function() {
+            showToast('سيتم توجيهك إلى صفحة التسجيل', 'success');
+        });
+        
+        // Bottom navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove active class from all items
+                document.querySelectorAll('.nav-item').forEach(nav => {
+                    nav.classList.remove('active');
+                });
                 
-                switch(platform) {
-                    case 'facebook':
-                        alert('مشاركة الرابط على فيسبوك');
-                        break;
-                    case 'twitter':
-                        alert('مشاركة الرابط على تويتر');
-                        break;
-                    case 'whatsapp':
-                        alert('مشاركة الرابط على واتساب');
-                        break;
-                    case 'telegram':
-                        alert('مشاركة الرابط على تليجرام');
-                        break;
-                }
+                // Add active class to clicked item
+                this.classList.add('active');
+                
+                // Show toast for demo
+                const pageName = this.querySelector('span').textContent;
+                showToast(`سيتم توجيهك إلى صفحة ${pageName}`, 'success');
             });
         });
     </script>
