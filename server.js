@@ -72,6 +72,86 @@ async function authMiddleware(req, res, next) {
 }
 
 // ================= ROUTES =================
+const Withdrawal = require("./models/Withdrawal");
+
+// User requests withdrawal
+app.post("/api/withdrawals", authMiddleware, async (req, res) => {
+  try {
+    const { amount, wallet } = req.body;
+    if (!amount || !wallet) return res.status(400).json({ message: "Missing fields" });
+
+    const w = new Withdrawal({
+      user: req.user.id,
+      amount,
+      wallet
+    });
+    await w.save();
+
+    res.json({ message: "Withdrawal request submitted", withdrawal: w });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// User views own withdrawals
+app.get("/api/withdrawals", authMiddleware, async (req, res) => {
+  try {
+    const withdrawals = await Withdrawal.find({ user: req.user.id }).sort({ createdAt: -1 });
+    res.json({ withdrawals });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Admin manages withdrawals
+app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  const all = await Withdrawal.find().populate("user", "username email").sort({ createdAt: -1 });
+  res.json({ withdrawals: all });
+});
+
+app.put("/api/admin/withdrawals/:id", authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  try {
+    const w = await Withdrawal.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
+    res.json({ withdrawal: w });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+const News = require("./models/News");
+
+// Public get news
+app.get("/api/news", async (req, res) => {
+  const news = await News.find().sort({ createdAt: -1 });
+  res.json({ news });
+});
+
+// Admin add news
+app.post("/api/admin/news", authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  try {
+    const n = new News(req.body);
+    await n.save();
+    res.json({ message: "News added", news: n });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Admin delete news
+app.delete("/api/admin/news/:id", authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  try {
+    await News.findByIdAndDelete(req.params.id);
+    res.json({ message: "News deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // Health check
 app.get('/api/health', (req, res) =>
@@ -232,3 +312,4 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
