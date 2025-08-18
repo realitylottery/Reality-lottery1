@@ -75,6 +75,30 @@ async function authMiddleware(req, res, next) {
 }
 
 // ================= ROUTES =================
+
+// Update user subscription (Admin only)
+app.put("/api/admin/updateUser/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { subscriptionType, balance, isActive } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { subscriptionType, balance, isActive },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "User updated successfully", user });
+  } catch (err) {
+    console.error("Update user error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // News Ticker
 app.get("/api/ticker", async (req, res) => {
   const tickers = await NewsTicker.find().sort({ createdAt: -1 });
@@ -347,3 +371,4 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
