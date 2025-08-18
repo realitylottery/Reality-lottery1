@@ -125,9 +125,14 @@ app.put("/api/admin/withdrawals/:id", authMiddleware, async (req, res) => {
 const News = require("./models/News");
 
 // Public get news
-app.get("/api/news", async (req, res) => {
-  const news = await News.find().sort({ createdAt: -1 });
-  res.json({ news });
+app.get('/api/news', async (req, res) => {
+  try {
+    const news = await News.find().sort({ createdAt: -1 });
+    res.json(news);
+  } catch (err) {
+    console.error('News fetch error:', err);
+    res.status(500).json({ error: 'Failed to fetch news' });
+  }
 });
 
 // Admin add news
@@ -312,4 +317,5 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
