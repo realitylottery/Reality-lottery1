@@ -1,707 +1,712 @@
+<!-- FILE: public/admin-dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>RealityLottery — Admin Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <style>
-    :root{
-      --bg:#0a0a0a;
-      --panel:#121212;
-      --muted:#9f9f9f;
-      --gold:#ffd700;
-      --gold-2:#ffb400;
-      --red:#ff4d4f;
-      --green:#2ecc71;
-      --amber:#f1c40f;
-      --card:#121212;
-      --border:rgba(255,215,0,.2);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:var(--bg); color:#fff; display:flex; flex-direction:column;
-    }
-
-    /* Top Bar */
-    .topbar{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:14px 18px; background:#111; border-bottom:2px solid var(--gold);
-      position:sticky; top:0; z-index:20;
-    }
-    .brand{font-weight:800; letter-spacing:.5px; color:var(--gold); font-size:20px}
-    .top-actions{display:flex; align-items:center; gap:10px}
-    .pill{
-      padding:8px 12px; border:1px solid var(--border); border-radius:999px; color:#fff;
-      background:linear-gradient(180deg,#151515,#0d0d0d);
-      display:flex; align-items:center; gap:8px; font-size:14px
-    }
-    .btn{
-      background:linear-gradient(45deg,var(--gold),var(--gold-2));
-      color:#000; border:none; padding:10px 14px; border-radius:10px; font-weight:700;
-      cursor:pointer; transition:.15s transform; box-shadow:0 6px 18px rgba(255,215,0,.15)
-    }
-    .btn:hover{transform:translateY(-1px)}
-    .btn.secondary{background:#1a1a1a;color:#fff;border:1px solid var(--border);box-shadow:none}
-    .btn.danger{background:linear-gradient(45deg,#ff9b9b,#ff4d4f); color:#000}
-    .btn.success{background:linear-gradient(45deg,#b2ffcf,#2ecc71); color:#000}
-    .btn.warning{background:linear-gradient(45deg,#fff0b3,#f1c40f); color:#000}
-
-    /* Layout */
-    .wrap{display:flex; min-height:calc(100% - 62px)}
-    .sidebar{
-      width:260px; background:#0f0f0f; border-right:1px solid var(--border);
-      padding:16px; position:sticky; top:62px; height:calc(100vh - 62px); overflow:auto;
-    }
-    .nav-link{
-      display:flex; align-items:center; gap:10px; padding:12px 10px; margin-bottom:6px;
-      color:#ddd; text-decoration:none; border-radius:10px; border:1px solid transparent;
-    }
-    .nav-link:hover{background:#121212;border-color:var(--border)}
-    .nav-link.active{background:#151515;border-color:var(--gold); color:#fff}
-    .content{flex:1; padding:20px; display:flex; flex-direction:column; gap:18px}
-
-    /* Cards / grids */
-    .grid{display:grid; gap:16px}
-    .grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .grid.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-    @media (max-width:1100px){.grid.cols-4{grid-template-columns:repeat(2,1fr)}}
-    @media (max-width:800px){.grid.cols-3,.grid.cols-2,.grid.cols-4{grid-template-columns:1fr}.sidebar{position:static;width:100%;height:auto}}
-    .card{
-      background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px;
-    }
-    .card h3{margin:0 0 8px 0; color:var(--gold)}
-    .muted{color:var(--muted); font-size:13px}
-
-    /* Tables */
-    table{width:100%; border-collapse:separate; border-spacing:0 8px}
-    thead th{font-size:13px; color:var(--muted); font-weight:600; text-align:left; padding:6px 10px}
-    tbody td{background:#111; border:1px solid var(--border); border-left:none; border-right:none; padding:10px; font-size:14px}
-    tbody tr{border-radius:10px; overflow:hidden}
-    tbody td:first-child{border-left:1px solid var(--border); border-radius:10px 0 0 10px}
-    tbody td:last-child{border-right:1px solid var(--border); border-radius:0 10px 10px 0}
-    .tag{display:inline-flex; align-items:center; gap:6px; padding:5px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); color:#eee; background:#141414}
-
-    /* Forms */
-    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-    .row-3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
-    .field{display:flex; flex-direction:column; gap:6px}
-    .field label{font-size:13px; color:#ddd}
-    .field input,.field select,.field textarea{
-      background:#0f0f0f; color:#fff; border:1px solid var(--border); padding:10px 12px; border-radius:10px; outline:none
-    }
-    .field textarea{min-height:120px; resize:vertical}
-    .hr{height:1px; background:var(--border); margin:6px 0 14px}
-
-    /* Login gate */
-    #loginGate{max-width:420px; margin:60px auto; text-align:center}
-    #loginGate .logo{font-size:32px; color:var(--gold); font-weight:800; margin-bottom:10px}
-    .error{color:#ff9b9b; font-size:13px}
-    .success{color:#b2ffcf; font-size:13px}
-    .right{display:flex; gap:10px; justify-content:flex-end}
-    .stack{display:flex; flex-direction:column; gap:10px}
-    .empty{padding:18px; border:1px dashed var(--border); border-radius:12px; text-align:center; color:var(--muted)}
-    .toolbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .inline{display:flex; align-items:center; gap:8px}
-  </style>
+<meta charset="UTF-8" />
+<title>RealityLottery — Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+/>
+<style>
+  :root{
+    --bg:#000; --panel:#0f0f0f; --muted:#b9b9b9; --gold:#ffd700; --gold2:#ffa500; --red:#ff5252; --green:#23d18b;
+  }
+  *{box-sizing:border-box; font-family: Arial, Helvetica, sans-serif;}
+  body{margin:0; background:var(--bg); color:#fff; min-height:100vh; display:flex; flex-direction:column;}
+  header{border-bottom:2px solid var(--gold); background:#111; padding:16px 20px; display:flex; align-items:center; justify-content:space-between;}
+  .brand{font-weight:800; letter-spacing:1px; color:var(--gold); font-size:20px;}
+  .admin-state{font-size:14px; color:var(--muted);}
+  .wrap{display:flex; flex:1; min-height:0;}
+  aside{width:280px; background:var(--panel); border-right:1px solid rgba(255,215,0,0.25); padding:14px; overflow:auto;}
+  main{flex:1; padding:16px; overflow:auto;}
+  .section{background:#111; border:1px solid rgba(255,215,0,0.25); border-radius:10px; padding:16px; margin-bottom:16px;}
+  .title{font-weight:700; color:var(--gold); margin-bottom:10px; display:flex; align-items:center; gap:10px;}
+  .muted{color:var(--muted); font-size:13px;}
+  .btn{background:linear-gradient(45deg, var(--gold), var(--gold2)); color:#000; font-weight:700; border:none; border-radius:8px; padding:10px 14px; cursor:pointer; transition:transform .15s ease, box-shadow .15s ease; box-shadow:0 4px 12px rgba(255,215,0,.25);}
+  .btn:hover{transform:translateY(-1px); box-shadow:0 6px 14px rgba(255,215,0,.35);}
+  .btn-outline{background:transparent; border:1px solid var(--gold); color:var(--gold);}
+  .btn-danger{background:#2b0000; border:1px solid #900; color:#f88;}
+  .btn-ok{background:#092; border:1px solid #0f6; color:#eaffea;}
+  .row{display:flex; gap:12px; flex-wrap:wrap;}
+  .col{flex:1 1 240px; min-width:220px;}
+  input, select, textarea{
+    width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,215,0,.25);
+    background:#0f0f0f; color:#fff; outline:none;
+  }
+  textarea{min-height:120px; resize:vertical;}
+  label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px;}
+  table{width:100%; border-collapse:collapse; overflow:auto;}
+  th, td{border-bottom:1px solid rgba(255,215,0,.15); padding:10px; text-align:left; font-size:14px;}
+  th{color:var(--gold);}
+  .chip{display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid rgba(255,215,0,.35); color:var(--gold);}
+  .grid{display:grid; gap:12px;}
+  .grid-2{grid-template-columns:repeat(2, minmax(0, 1fr));}
+  .grid-3{grid-template-columns:repeat(3, minmax(0, 1fr));}
+  .grid-4{grid-template-columns:repeat(4, minmax(0, 1fr));}
+  .stat{background:#0f0f0f; border:1px solid rgba(255,215,0,.2); border-radius:10px; padding:14px;}
+  .stat .label{color:var(--muted); font-size:12px;}
+  .stat .value{color:#fff; font-size:22px; margin-top:6px;}
+  .hidden{display:none !important;}
+  .danger{color:#ff8b8b}
+  .ok{color:#9effb3}
+  .notice{background:#141414; border:1px dashed rgba(255,215,0,.35); border-radius:10px; padding:10px; color:var(--muted); font-size:13px;}
+  .top-actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .small{font-size:12px;}
+  .card{border:1px solid rgba(255,215,0,.2); background:#0e0e0e; border-radius:10px; padding:12px;}
+  .img-preview{width:100%; max-height:140px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,215,0,.25); background:#000;}
+  .pill{border:1px solid rgba(255,215,0,.25); padding:4px 10px; border-radius:999px; font-size:12px; color:var(--muted)}
+  .divider{height:1px; background:rgba(255,215,0,.2); margin:10px 0;}
+  footer{border-top:1px solid rgba(255,215,0,.25); padding:10px 16px; color:var(--muted); text-align:center; background:#111;}
+  .navbtn{width:100%; text-align:left; background:transparent; border:1px solid rgba(255,215,0,.25); color:#fff; padding:10px 12px; border-radius:8px; cursor:pointer; margin-bottom:8px;}
+  .navbtn.active{border-color:var(--gold); color:var(--gold); background:#151515;}
+  .inline{display:inline-flex; gap:8px; align-items:center;}
+  .nowrap{white-space:nowrap;}
+  .right{margin-left:auto}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+</style>
 </head>
 <body>
-  <!-- Top bar -->
-  <div class="topbar">
-    <div class="brand"><i class="fa-solid fa-crown"></i> RealityLottery — Admin</div>
-    <div class="top-actions">
-      <div class="pill"><i class="fa-solid fa-user-shield"></i> <span id="adminName">Not signed in</span></div>
-      <button class="btn secondary" id="logoutBtn" title="Log out" style="display:none"><i class="fa-solid fa-right-from-bracket"></i></button>
-    </div>
+<header>
+  <div class="brand"><i class="fa-solid fa-crown"></i> RealityLottery Admin</div>
+  <div class="inline">
+    <span id="adminState" class="admin-state">Not signed in</span>
+    <button id="btnLogout" class="btn btn-outline hidden"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
   </div>
+</header>
 
-  <!-- Login gate -->
-  <div id="loginGate" class="content" style="max-width:640px">
-    <div class="card">
-      <div class="logo"><i class="fa-solid fa-crown"></i></div>
-      <h2>Admin Sign in</h2>
-      <p class="muted">Use the admin credentials configured on the server.</p>
-      <div class="hr"></div>
-      <div class="stack">
-        <div class="field">
-          <label>Username</label>
-          <input id="adminUser" placeholder="admin" autocomplete="username">
+<div class="wrap">
+  <aside>
+    <button class="navbtn active" data-tab="tab-login"><i class="fa-solid fa-lock"></i> Admin Sign-in</button>
+    <button class="navbtn" data-tab="tab-stats"><i class="fa-solid fa-chart-line"></i> Stats</button>
+    <button class="navbtn" data-tab="tab-users"><i class="fa-solid fa-users"></i> Users</button>
+    <button class="navbtn" data-tab="tab-withdrawals"><i class="fa-solid fa-wallet"></i> Withdrawals</button>
+    <button class="navbtn" data-tab="tab-news"><i class="fa-solid fa-newspaper"></i> News</button>
+    <button class="navbtn" data-tab="tab-content"><i class="fa-solid fa-pen-ruler"></i> Site Content</button>
+    <div class="divider"></div>
+    <div class="small muted">All actions require admin token.</div>
+  </aside>
+
+  <main>
+    <!-- LOGIN -->
+    <section id="tab-login" class="section">
+      <div class="title"><i class="fa-solid fa-lock"></i> Admin Sign-in</div>
+      <div class="row">
+        <div class="col card">
+          <label>Admin Username</label>
+          <input id="adminUser" placeholder="admin" />
+          <label style="margin-top:8px">Admin Password</label>
+          <input id="adminPass" type="password" placeholder="Your strong password" />
+          <div class="row" style="margin-top:12px">
+            <button class="btn" id="btnLoginAdmin"><i class="fa-solid fa-right-to-bracket"></i> Sign in</button>
+            <span id="loginMsg" class="muted"></span>
+          </div>
+          <div class="notice" style="margin-top:12px">
+            Default (as per server): <span class="mono">admin / RealityLottery@2023</span>. You can change them via environment variables <span class="mono">ADMIN_USER</span> and <span class="mono">ADMIN_PASS</span>.
+          </div>
         </div>
-        <div class="field">
-          <label>Password</label>
-          <input id="adminPass" type="password" placeholder="••••••••" autocomplete="current-password">
+        <div class="col">
+          <div class="notice">
+            Your token is stored in <span class="mono">localStorage.rl_admin_token</span> and attached as <span class="mono">Authorization: Bearer &lt;token&gt;</span> to all admin API calls on the same origin.
+          </div>
         </div>
-        <button class="btn" id="adminLoginBtn"><i class="fa-solid fa-right-to-bracket"></i> Sign in</button>
-        <div id="loginMsg" class="muted"></div>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- App -->
-  <div class="wrap" id="app" style="display:none">
-    <aside class="sidebar">
-      <a href="#overview" class="nav-link active"><i class="fa-solid fa-gauge"></i> Overview</a>
-      <a href="#users" class="nav-link"><i class="fa-solid fa-users"></i> Users</a>
-      <a href="#withdrawals" class="nav-link"><i class="fa-solid fa-money-bill-transfer"></i> Withdrawals</a>
-      <a href="#news" class="nav-link"><i class="fa-solid fa-newspaper"></i> News</a>
-      <a href="#content" class="nav-link"><i class="fa-solid fa-pen-to-square"></i> Site Content</a>
-    </aside>
+    <!-- STATS -->
+    <section id="tab-stats" class="section hidden">
+      <div class="title"><i class="fa-solid fa-chart-line"></i> Platform Stats</div>
+      <div id="statsWrap" class="grid grid-4">
+        <!-- cards injected -->
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="btnRefreshStats"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        <span class="muted">If endpoint is not ready, you’ll see a gentle message instead of an error.</span>
+      </div>
+    </section>
 
-    <main class="content">
-      <!-- OVERVIEW -->
-      <section id="panel-overview" class="panel">
-        <div class="grid cols-4">
-          <div class="card">
-            <h3>Total Users</h3>
-            <div class="hr"></div>
-            <div style="font-size:28px;font-weight:800" id="stat-users">—</div>
-            <div class="muted">Registered accounts</div>
-          </div>
-          <div class="card">
-            <h3>Paid Users</h3>
-            <div class="hr"></div>
-            <div style="font-size:28px;font-weight:800" id="stat-paid">—</div>
-            <div class="muted">Users with active subscription</div>
-          </div>
-          <div class="card">
-            <h3>Pending Withdrawals</h3>
-            <div class="hr"></div>
-            <div style="font-size:28px;font-weight:800" id="stat-wd-pending">—</div>
-            <div class="muted">Awaiting approval</div>
-          </div>
-          <div class="card">
-            <h3>News Posts</h3>
-            <div class="hr"></div>
-            <div style="font-size:28px;font-weight:800" id="stat-news">—</div>
-            <div class="muted">Published items</div>
-          </div>
-        </div>
-      </section>
+    <!-- USERS -->
+    <section id="tab-users" class="section hidden">
+      <div class="title"><i class="fa-solid fa-users"></i> Users Management</div>
+      <div class="row top-actions">
+        <input id="userSearch" placeholder="Search by username or email..." class="col" />
+        <button class="btn" id="btnReloadUsers"><i class="fa-solid fa-rotate"></i> Reload</button>
+        <span class="pill">Tip: use the inline actions to set balance, subscription, and task progress.</span>
+      </div>
+      <div class="row" style="margin-top:12px; overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email</th>
+              <th>Balance</th>
+              <th>Subscription</th>
+              <th>Task Progress</th>
+              <th class="nowrap">Save</th>
+            </tr>
+          </thead>
+          <tbody id="usersTbody">
+            <tr><td colspan="6" class="muted">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-      <!-- USERS -->
-      <section id="panel-users" class="panel" style="display:none">
+    <!-- WITHDRAWALS -->
+    <section id="tab-withdrawals" class="section hidden">
+      <div class="title"><i class="fa-solid fa-wallet"></i> Withdrawals</div>
+      <div class="row top-actions">
+        <button class="btn" id="btnReloadWithdrawals"><i class="fa-solid fa-rotate"></i> Reload</button>
+        <span class="pill">Approve or reject user withdrawal requests.</span>
+      </div>
+      <div class="row" style="margin-top:12px; overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Amount</th>
+              <th>Wallet Address</th>
+              <th>Status</th>
+              <th class="nowrap">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="withdrawalsTbody">
+            <tr><td colspan="5" class="muted">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="notice" style="margin-top:10px">
+        This expects endpoints <span class="mono">GET /api/admin/withdrawals</span>, <span class="mono">POST /api/admin/withdrawals/:id/approve</span> and <span class="mono">POST /api/admin/withdrawals/:id/reject</span>.
+        If not implemented yet, you’ll see an informational message instead of an error.
+      </div>
+    </section>
+
+    <!-- NEWS -->
+    <section id="tab-news" class="section hidden">
+      <div class="title"><i class="fa-solid fa-newspaper"></i> News Management</div>
+
+      <div class="grid grid-2">
         <div class="card">
-          <div class="toolbar">
-            <h3 style="margin:0">Users</h3>
-            <span class="muted">Edit balances, subscription, and task progress.</span>
-            <div style="flex:1"></div>
-            <div class="inline">
-              <input id="usersSearch" placeholder="Search by username/email..." />
-              <button class="btn secondary" id="reloadUsers"><i class="fa-solid fa-rotate"></i></button>
-            </div>
-          </div>
-          <div class="hr"></div>
-          <div id="usersWrap" class="empty">Loading users…</div>
-        </div>
-      </section>
-
-      <!-- WITHDRAWALS -->
-      <section id="panel-withdrawals" class="panel" style="display:none">
-        <div class="card">
-          <div class="toolbar">
-            <h3 style="margin:0">Withdrawals</h3>
-            <span class="muted">Review and approve or reject requests.</span>
-            <div style="flex:1"></div>
-            <button class="btn secondary" id="reloadWD"><i class="fa-solid fa-rotate"></i></button>
-          </div>
-          <div class="hr"></div>
-          <div id="wdWrap" class="empty">Loading…</div>
-        </div>
-      </section>
-
-      <!-- NEWS -->
-      <section id="panel-news" class="panel" style="display:none">
-        <div class="grid cols-2">
-          <div class="card">
-            <h3>Create / Update News</h3>
-            <div class="hr"></div>
-            <div class="row">
-              <div class="field">
-                <label>Title</label>
-                <input id="newsTitle" placeholder="Title">
-              </div>
-              <div class="field">
-                <label>Image URL</label>
-                <input id="newsImage" placeholder="https://…">
-              </div>
-            </div>
-            <div class="field">
-              <label>Text</label>
-              <textarea id="newsText" placeholder="Content…"></textarea>
-            </div>
-            <div class="row">
-              <div class="field">
-                <label>Button Label</label>
-                <input id="newsBtnLabel" placeholder="Learn more">
-              </div>
-              <div class="field">
-                <label>Button Link</label>
-                <input id="newsBtnUrl" placeholder="https://…">
-              </div>
-            </div>
-            <div class="right">
-              <button class="btn" id="createNews"><i class="fa-solid fa-plus"></i> Publish</button>
-              <button class="btn secondary" id="resetNews"><i class="fa-solid fa-eraser"></i> Clear</button>
-            </div>
-          </div>
-          <div class="card">
-            <h3>All News</h3>
-            <div class="hr"></div>
-            <div id="newsList" class="empty">No news yet.</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- CONTENT (home) -->
-      <section id="panel-content" class="panel" style="display:none">
-        <div class="card">
-          <h3>Homepage Content</h3>
-          <div class="hr"></div>
+          <div class="title" style="font-size:16px"><i class="fa-solid fa-plus"></i> New News Item</div>
           <div class="row">
-            <div class="field">
-              <label>Hero Title</label>
-              <input id="c_heroTitle" placeholder="Welcome to RealityLottery">
+            <div class="col">
+              <label>Title</label>
+              <input id="newsTitle" placeholder="Headline…" />
             </div>
-            <div class="field">
-              <label>Main Button Text</label>
-              <input id="c_mainButton" placeholder="Get Started">
+            <div class="col">
+              <label>Button Text</label>
+              <input id="newsBtnText" placeholder="Read more" />
             </div>
           </div>
-          <div class="field">
-            <label>Hero Subtitle</label>
-            <textarea id="c_heroSubtitle" placeholder="Subtitle…"></textarea>
+          <label style="margin-top:8px">Body</label>
+          <textarea id="newsBody" placeholder="Short description…"></textarea>
+          <div class="row" style="margin-top:8px">
+            <div class="col">
+              <label>Image URL</label>
+              <input id="newsImage" placeholder="https://…" />
+            </div>
+            <div class="col">
+              <label>Button Link URL</label>
+              <input id="newsBtnLink" placeholder="https://…" />
+            </div>
           </div>
+          <div class="row" style="margin-top:10px; align-items:flex-start">
+            <div class="col"><img id="newsPreview" class="img-preview" alt="Preview" /></div>
+            <div class="col">
+              <button class="btn" id="btnCreateNews"><i class="fa-solid fa-floppy-disk"></i> Create</button>
+              <div class="small muted" id="newsCreateMsg" style="margin-top:6px;"></div>
+            </div>
+          </div>
+          <div class="notice" style="margin-top:12px">
+            Image uploads are via URL for now. If you later add file uploads on the server, you can wire it here easily.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="title" style="font-size:16px"><i class="fa-solid fa-list"></i> Existing News</div>
+          <div id="newsList" class="grid" style="grid-template-columns:1fr; gap:10px;">
+            <div class="muted">Loading…</div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="btnReloadNews"><i class="fa-solid fa-rotate"></i> Reload</button>
+          </div>
+          <div class="small muted" style="margin-top:8px">
+            Endpoints expected: <span class="mono">GET/POST /api/admin/news</span>, <span class="mono">PUT/DELETE /api/admin/news/:id</span>.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTENT -->
+    <section id="tab-content" class="section hidden">
+      <div class="title"><i class="fa-solid fa-pen-ruler"></i> Site Content Controls</div>
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="title" style="font-size:16px"><i class="fa-solid fa-bullhorn"></i> News Ticker</div>
+          <label>Ticker Text</label>
+          <textarea id="tickerText" placeholder="Set the scrolling ticker text shown on the homepage…"></textarea>
+          <div class="row" style="margin-top:8px">
+            <button class="btn" id="btnSaveTicker"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+            <span id="tickerMsg" class="muted"></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="title" style="font-size:16px"><i class="fa-solid fa-image"></i> Homepage Slides</div>
           <div class="row">
-            <div class="field">
-              <label>Hero Image URL</label>
-              <input id="c_heroImage" placeholder="/media/hero.png">
-            </div>
-            <div class="field">
-              <label>About Image URL</label>
-              <input id="c_aboutImage" placeholder="/media/about.png">
-            </div>
-          </div>
-          <div class="field">
-            <label>About Text</label>
-            <textarea id="c_aboutText" placeholder="About…"></textarea>
-          </div>
-          <div class="row-3">
-            <div class="field">
+            <div class="col">
               <label>Slide 1 Image URL</label>
-              <input id="c_slide1Url" placeholder="https://…">
+              <input id="slide1Url" placeholder="https://…" />
+              <label style="margin-top:6px">Slide 1 Title</label>
+              <input id="slide1Title" placeholder="…" />
             </div>
-            <div class="field">
-              <label>Slide 1 Title</label>
-              <input id="c_slide1Title" placeholder="Title">
-            </div>
-            <div class="field">
-              <label>Partners (JSON array)</label>
-              <input id="c_partners" placeholder='[{"name":"X","logo":"https://…"}]'>
-            </div>
-          </div>
-          <div class="row-3">
-            <div class="field">
+            <div class="col">
               <label>Slide 2 Image URL</label>
-              <input id="c_slide2Url" placeholder="https://…">
-            </div>
-            <div class="field">
-              <label>Slide 2 Title</label>
-              <input id="c_slide2Title" placeholder="Title">
-            </div>
-            <div class="field">
-              <label>Countries (JSON array)</label>
-              <input id="c_countries" placeholder='[{"code":"US","participants":120}]'>
+              <input id="slide2Url" placeholder="https://…" />
+              <label style="margin-top:6px">Slide 2 Title</label>
+              <input id="slide2Title" placeholder="…" />
             </div>
           </div>
-          <div class="right">
-            <button class="btn" id="saveContent"><i class="fa-solid fa-floppy-disk"></i> Save</button>
-            <button class="btn secondary" id="reloadContent"><i class="fa-solid fa-rotate"></i> Reload</button>
+          <div class="row" style="margin-top:8px">
+            <button class="btn" id="btnSaveSlides"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+            <span id="slidesMsg" class="muted"></span>
+          </div>
+          <div class="small muted" style="margin-top:8px">
+            Endpoint expected: <span class="mono">GET/PUT /api/admin/content</span> (and public <span class="mono">GET /api/content</span> for the homepage).
           </div>
         </div>
-      </section>
-    </main>
-  </div>
+      </div>
+    </section>
 
-  <script>
-    // ===== CONFIG =====
-    const API_BASE = 'https://realitylottery.koyeb.app';
-    const LS_ADMIN_TOKEN = 'rl_admin_token';
-    const qs = (s, p=document)=>p.querySelector(s);
-    const qsa = (s, p=document)=>[...p.querySelectorAll(s)];
+  </main>
+</div>
 
-    // ===== Auth State =====
-    const state = {
-      token: localStorage.getItem(LS_ADMIN_TOKEN) || null,
-      users: [],
-      withdrawals: [],
-      news: [],
-      content: {},
-    };
+<footer>
+  <div>© <span id="year"></span> RealityLottery — Admin. All rights reserved.</div>
+</footer>
 
-    function setLoggedInUI(name){
-      qs('#adminName').textContent = name || 'Admin';
-      qs('#logoutBtn').style.display = 'inline-flex';
-      qs('#loginGate').style.display = 'none';
-      qs('#app').style.display = 'flex';
-    }
-    function setLoggedOutUI(){
-      qs('#adminName').textContent = 'Not signed in';
-      qs('#logoutBtn').style.display = 'none';
-      qs('#loginGate').style.display = 'block';
-      qs('#app').style.display = 'none';
-    }
+<script>
+  // ========= CONFIG =========
+  // Use same-origin to avoid CORS/network errors:
+  const API_BASE = ''; // same domain (e.g., https://realitylottery.koyeb.app)
+  const LS_TOKEN = 'rl_admin_token';
 
-    // ===== Helpers =====
-    async function api(path, opts={}){
-      const headers = Object.assign(
-        { 'Content-Type':'application/json' },
-        opts.headers || {}
-      );
-      if(state.token) headers['Authorization'] = 'Bearer ' + state.token;
-      const res = await fetch(API_BASE + path, { ...opts, headers });
-      if(!res.ok){
-        const txt = await res.text().catch(()=> '');
-        throw new Error(`HTTP ${res.status} — ${txt || res.statusText}`);
-      }
-      const ct = res.headers.get('content-type')||'';
-      return ct.includes('application/json') ? res.json() : res.text();
-    }
-    function fmtMoney(n){ return Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) }
-    function toast(el, msg, ok=false){ el.textContent = msg; el.className = ok?'success':'error'; setTimeout(()=>{ el.textContent=''; el.className='muted'; }, 3500); }
+  const $ = (q)=>document.querySelector(q);
+  const $$ = (q)=>Array.from(document.querySelectorAll(q));
+  const year = new Date().getFullYear(); $('#year').textContent = year;
 
-    // ===== Navigation =====
-    function switchPanel(hash){
-      qsa('.nav-link').forEach(a=>a.classList.toggle('active', a.getAttribute('href')===hash));
-      qsa('.panel').forEach(p=>p.style.display='none');
-      const id = hash.replace('#','panel-') || 'panel-overview';
-      const el = qs('#'+(id || 'panel-overview'));
-      (el||qs('#panel-overview')).style.display = 'block';
-    }
-    window.addEventListener('hashchange', ()=> switchPanel(location.hash || '#overview'));
-
-    // ===== Login =====
-    qs('#adminLoginBtn').addEventListener('click', async ()=>{
-      const u = qs('#adminUser').value.trim();
-      const p = qs('#adminPass').value;
-      const msg = qs('#loginMsg');
-      msg.textContent = 'Signing in…';
-      try{
-        const r = await api('/api/admin/login', {
-          method:'POST',
-          body: JSON.stringify({ username:u, password:p })
-        });
-        state.token = r.token;
-        localStorage.setItem(LS_ADMIN_TOKEN, state.token);
-        setLoggedInUI(u);
-        await Promise.all([loadUsers(), loadWithdrawals(), loadNews(), loadContent(), paintOverview()]);
-        switchPanel('#overview');
-        msg.textContent = '';
-      }catch(e){
-        toast(msg, e.message);
-      }
+  // ========= NAV =========
+  $$('.navbtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      $$('.navbtn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      $$('main .section').forEach(s=>s.classList.add('hidden'));
+      document.getElementById(tab).classList.remove('hidden');
     });
-    qs('#logoutBtn').addEventListener('click', ()=>{
-      localStorage.removeItem(LS_ADMIN_TOKEN);
-      state.token = null;
-      setLoggedOutUI();
+  });
+
+  // ========= AUTH =========
+  const adminState = $('#adminState');
+  const btnLogout = $('#btnLogout');
+
+  function getToken(){ return localStorage.getItem(LS_TOKEN) || ''; }
+  function setToken(t){
+    if (t) localStorage.setItem(LS_TOKEN, t);
+    updateAuthUI();
+  }
+  function clearToken(){
+    localStorage.removeItem(LS_TOKEN);
+    updateAuthUI();
+  }
+  function isSigned(){ return !!getToken(); }
+
+  function updateAuthUI(){
+    if (isSigned()){
+      adminState.innerHTML = '<span class="ok">Signed in</span> — token stored';
+      btnLogout.classList.remove('hidden');
+    } else {
+      adminState.innerHTML = 'Not signed in';
+      btnLogout.classList.add('hidden');
+    }
+  }
+  btnLogout.addEventListener('click', ()=>{ clearToken(); info('Signed out.'); });
+
+  // ========= HELPERS =========
+  function authHeaders(json=true){
+    const h = { 'Authorization':'Bearer ' + getToken() };
+    if (json) h['Content-Type'] = 'application/json';
+    return h;
+  }
+  function info(msg){ console.log(msg); }
+  function humanErr(e){
+    if (e && e.message) return e.message;
+    return 'Endpoint not available yet';
+  }
+  async function safeFetch(url, opts={}){
+    try{
+      const res = await fetch(url, opts);
+      const ct = res.headers.get('content-type') || '';
+      const data = ct.includes('application/json') ? await res.json() : await res.text();
+      if (!res.ok){
+        throw new Error((data && data.message) ? data.message : ('HTTP ' + res.status));
+      }
+      return data;
+    }catch(e){
+      console.warn('Fetch error', url, e);
+      return { _error: true, message: humanErr(e) };
+    }
+  }
+  function el(tag, attrs={}, children=[]){
+    const n = document.createElement(tag);
+    Object.entries(attrs||{}).forEach(([k,v])=>{
+      if (k==='class') n.className = v;
+      else if (k==='html') n.innerHTML = v;
+      else n.setAttribute(k,v);
     });
+    (children||[]).forEach(c=>{
+      if (typeof c==='string') n.appendChild(document.createTextNode(c));
+      else if (c) n.appendChild(c);
+    });
+    return n;
+  }
 
-    // ===== Overview =====
-    async function paintOverview(){
-      qs('#stat-users').textContent = state.users.length;
-      const paid = state.users.filter(x=> (x.subscription && x.subscription!=='none') || x.isPaid).length;
-      qs('#stat-paid').textContent = paid;
-      qs('#stat-wd-pending').textContent = state.withdrawals.filter(w=>w.status==='pending').length;
-      qs('#stat-news').textContent = state.news.length;
+  // ========= LOGIN =========
+  $('#btnLoginAdmin').addEventListener('click', async ()=>{
+    const username = $('#adminUser').value.trim();
+    const password = $('#adminPass').value.trim();
+    $('#loginMsg').textContent = 'Signing in…';
+    const r = await safeFetch(API_BASE + '/api/admin/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password })
+    });
+    if (r._error){
+      $('#loginMsg').innerHTML = '<span class="danger">'+ r.message +'</span>';
+    } else {
+      setToken(r.token);
+      $('#loginMsg').innerHTML = '<span class="ok">Success</span>';
     }
+  });
 
-    // ===== Users =====
-    async function loadUsers(){
-      const r = await api('/api/admin/users');
-      state.users = r.users || [];
-      renderUsers();
-      paintOverview();
+  // ========= STATS =========
+  async function loadStats(){
+    const wrap = $('#statsWrap');
+    wrap.innerHTML = '';
+    const r = await safeFetch(API_BASE + '/api/admin/stats', { headers: authHeaders(false) });
+    if (r._error){
+      wrap.appendChild(el('div', {class:'notice'}, [r.message]));
+      return;
     }
-    function renderUsers(){
-      const wrap = qs('#usersWrap');
-      if(!state.users.length){ wrap.className='empty'; wrap.textContent='No users'; return; }
-      wrap.className='';
-      const q = qs('#usersSearch').value?.toLowerCase()||'';
-      const list = state.users.filter(u=>{
-        return !q || (u.username?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q));
-      });
-      wrap.innerHTML = `
-        <div style="overflow:auto">
-          <table>
-            <thead>
-              <tr>
-                <th>User</th><th>Email</th><th>Balance</th><th>Subscription</th><th>Task Progress</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${list.map(u=>`
-                <tr>
-                  <td>
-                    <div style="font-weight:700">${u.username||'-'}</div>
-                    <div class="muted" style="font-size:12px">${u.fullName||''}</div>
-                    <div class="tag" style="margin-top:6px"><i class="fa-regular fa-clock"></i> ${new Date(u.registeredAt||u.createdAt||Date.now()).toLocaleString()}</div>
-                  </td>
-                  <td>${u.email||'-'}</td>
-                  <td style="min-width:180px">
-                    <div class="inline">
-                      <input type="number" step="0.01" value="${Number(u.balance||0)}" id="bal-${u._id}" style="max-width:120px">
-                      <span class="muted">$</span>
-                    </div>
-                  </td>
-                  <td>
-                    <select id="sub-${u._id}">
-                      ${['none','basic','silver','gold','vip'].map(s=>`<option ${String(u.subscription||'none')===s?'selected':''} value="${s}">${s.toUpperCase()}</option>`).join('')}
-                    </select>
-                  </td>
-                  <td>
-                    <div class="inline">
-                      <input id="task-${u._id}" type="number" min="0" max="6" value="${Number(u.taskProgress||0)}" style="width:90px">
-                      <span class="muted">/ 6</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="inline">
-                      <button class="btn success" onclick="saveUser('${u._id}')"><i class="fa-solid fa-floppy-disk"></i></button>
-                      <button class="btn secondary" onclick="impersonate('${u._id}','${u.username||''}')"><i class="fa-solid fa-user-secret"></i></button>
-                    </div>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>`;
-    }
-    window.saveUser = async function(id){
-      const balance = parseFloat(qs('#bal-'+id).value||'0');
-      const subscription = qs('#sub-'+id).value;
-      const taskProgress = parseInt(qs('#task-'+id).value||'0',10);
-      try{
-        await api('/api/admin/users/'+id, {
-          method:'PATCH',
-          body: JSON.stringify({ balance, subscription, taskProgress })
-        });
-        await loadUsers();
-      }catch(e){ alert(e.message); }
-    }
-    window.impersonate = function(id, username){
-      alert(`(Mock) Impersonate ${username} — Add a real token endpoint on the server if you want one.`);
-    }
-    qs('#reloadUsers').addEventListener('click', loadUsers);
-    qs('#usersSearch').addEventListener('input', renderUsers);
+    // expected fields (adjust to your server): totalUsers, paidUsers, spins, successfulInvites, totalWithdrawals, pendingWithdrawals
+    const items = [
+      { label:'Total Users', value: r.totalUsers },
+      { label:'Paid Users', value: r.paidUsers },
+      { label:'Wheel Spins', value: r.spins },
+      { label:'Successful Invites', value: r.successfulInvites },
+      { label:'Total Withdrawals', value: r.totalWithdrawals },
+      { label:'Pending Withdrawals', value: r.pendingWithdrawals },
+    ];
+    items.forEach(it=>{
+      const card = el('div', {class:'stat'}, [
+        el('div', {class:'label'}, [it.label]),
+        el('div', {class:'value'}, [String(it.value ?? 0)])
+      ]);
+      wrap.appendChild(card);
+    });
+  }
+  $('#btnRefreshStats').addEventListener('click', loadStats);
 
-    // ===== Withdrawals =====
-    async function loadWithdrawals(){
-      const r = await api('/api/admin/withdrawals'); // expected: {items:[{_id,user,amount,address,status,createdAt}]}
-      state.withdrawals = r.items || [];
-      renderWithdrawals();
-      paintOverview();
+  // ========= USERS =========
+  async function loadUsers(){
+    const tb = $('#usersTbody');
+    tb.innerHTML = '<tr><td colspan="6" class="muted">Loading…</td></tr>';
+    const r = await safeFetch(API_BASE + '/api/admin/users', { headers: authHeaders(false) });
+    if (r._error){
+      tb.innerHTML = '<tr><td colspan="6"><div class="notice">'+ r.message +'</div></td></tr>';
+      return;
     }
-    function renderWithdrawals(){
-      const wrap = qs('#wdWrap');
-      if(!state.withdrawals.length){ wrap.className='empty'; wrap.textContent='No withdrawal requests'; return; }
-      wrap.className='';
-      wrap.innerHTML = `
-        <div style="overflow:auto">
-          <table>
-            <thead>
-              <tr><th>User</th><th>Amount</th><th>Wallet</th><th>Status</th><th>Requested</th><th>Actions</th></tr>
-            </thead>
-            <tbody>
-              ${state.withdrawals.map(w=>`
-                <tr>
-                  <td>
-                    <div style="font-weight:700">${w.user?.username||'-'}</div>
-                    <div class="muted" style="font-size:12px">${w.user?.email||''}</div>
-                  </td>
-                  <td>$ ${fmtMoney(w.amount)}</td>
-                  <td><code>${w.address||'-'}</code></td>
-                  <td>
-                    <span class="tag"><i class="fa-solid fa-circle-${w.status==='approved'?'check':(w.status==='rejected'?'xmark':'dot')}"></i> ${String(w.status||'pending').toUpperCase()}</span>
-                  </td>
-                  <td>${new Date(w.createdAt||Date.now()).toLocaleString()}</td>
-                  <td>
-                    <div class="inline">
-                      <button class="btn success" ${w.status!=='pending'?'disabled':''} onclick="approveWD('${w._id}')"><i class="fa-solid fa-check"></i></button>
-                      <button class="btn danger" ${w.status!=='pending'?'disabled':''} onclick="rejectWD('${w._id}')"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>`;
+    const users = (r.users || []);
+    if (!users.length){
+      tb.innerHTML = '<tr><td colspan="6" class="muted">No users yet.</td></tr>';
+      return;
     }
-    window.approveWD = async function(id){
-      try{
-        await api('/api/admin/withdrawals/'+id, { method:'PATCH', body: JSON.stringify({ status:'approved' }) });
-        await loadWithdrawals();
-      }catch(e){ alert(e.message); }
-    }
-    window.rejectWD = async function(id){
-      try{
-        await api('/api/admin/withdrawals/'+id, { method:'PATCH', body: JSON.stringify({ status:'rejected' }) });
-        await loadWithdrawals();
-      }catch(e){ alert(e.message); }
-    }
-    qs('#reloadWD').addEventListener('click', loadWithdrawals);
+    const q = $('#userSearch').value.trim().toLowerCase();
+    const filtered = q ? users.filter(u=>{
+      const x = (u.username||'') + ' ' + (u.email||'');
+      return x.toLowerCase().includes(q);
+    }) : users;
 
-    // ===== News =====
-    function clearNewsForm(){
-      qs('#newsTitle').value='';
-      qs('#newsImage').value='';
-      qs('#newsText').value='';
-      qs('#newsBtnLabel').value='';
-      qs('#newsBtnUrl').value='';
-    }
-    qs('#resetNews').addEventListener('click', clearNewsForm);
-
-    async function loadNews(){
-      const r = await api('/api/news'); // expected: {items:[{_id,title,text,image,buttonLabel,buttonUrl,createdAt}]}
-      state.news = r.items || [];
-      renderNews();
-      paintOverview();
-    }
-    function renderNews(){
-      const box = qs('#newsList');
-      if(!state.news.length){ box.className='empty'; box.textContent='No news published yet.'; return; }
-      box.className='';
-      box.innerHTML = `
-        <div class="grid cols-2">
-          ${state.news.map(n=>`
-            <div class="card">
-              <div style="display:flex; gap:14px">
-                <img src="${n.image||''}" alt="" style="width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--border)">
-                <div style="flex:1">
-                  <div style="font-weight:800;color:var(--gold);font-size:16px">${n.title||'-'}</div>
-                  <div class="muted" style="margin:6px 0 10px">${n.text||''}</div>
-                  <div class="inline" style="gap:12px;flex-wrap:wrap">
-                    ${n.buttonLabel?`<a class="btn" href="${n.buttonUrl||'#'}" target="_blank" rel="noopener">${n.buttonLabel}</a>`:''}
-                    <button class="btn secondary" onclick='editNews(${JSON.stringify(n)})'><i class="fa-solid fa-pen"></i> Edit</button>
-                    <button class="btn danger" onclick="deleteNews('${n._id}')"><i class="fa-solid fa-trash"></i> Delete</button>
-                  </div>
-                </div>
-              </div>
-              <div class="hr"></div>
-              <div class="muted">Published: ${new Date(n.createdAt||Date.now()).toLocaleString()}</div>
-            </div>
-          `).join('')}
-        </div>
+    tb.innerHTML = '';
+    filtered.forEach(u=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <div><strong>${u.username||'-'}</strong></div>
+          <div class="small muted mono">${u._id||''}</div>
+        </td>
+        <td>${u.email||'-'}</td>
+        <td>
+          <input data-field="balance" data-id="${u._id}" value="${Number(u.balance||0)}" />
+        </td>
+        <td>
+          <select data-field="subscriptionType" data-id="${u._id}">
+            <option value="">None</option>
+            <option value="Basic"${u.subscriptionType==='Basic'?' selected':''}>Basic</option>
+            <option value="Pro"${u.subscriptionType==='Pro'?' selected':''}>Pro</option>
+            <option value="VIP"${u.subscriptionType==='VIP'?' selected':''}>VIP</option>
+          </select>
+        </td>
+        <td>
+          <select data-field="taskProgress" data-id="${u._id}">
+            ${[0,1,2,3,4,5,6].map(n=>`<option value="${n}"${Number(u.taskProgress||0)===n?' selected':''}>${n}/6</option>`).join('')}
+          </select>
+        </td>
+        <td class="nowrap">
+          <button class="btn small" data-action="save" data-id="${u._id}"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+        </td>
       `;
-    }
-    window.editNews = function(n){
-      qs('#newsTitle').value = n.title||'';
-      qs('#newsImage').value = n.image||'';
-      qs('#newsText').value = n.text||'';
-      qs('#newsBtnLabel').value = n.buttonLabel||'';
-      qs('#newsBtnUrl').value = n.buttonUrl||'';
-      qs('#createNews').dataset.editId = n._id;
-      qs('#createNews').textContent = 'Update';
-    }
-    window.deleteNews = async function(id){
-      if(!confirm('Delete this news item?')) return;
-      try{
-        await api('/api/admin/news/'+id, { method:'DELETE' });
-        await loadNews();
-      }catch(e){ alert(e.message); }
-    }
-    qs('#createNews').addEventListener('click', async ()=>{
-      const payload = {
-        title: qs('#newsTitle').value.trim(),
-        image: qs('#newsImage').value.trim(),
-        text: qs('#newsText').value.trim(),
-        buttonLabel: qs('#newsBtnLabel').value.trim(),
-        buttonUrl: qs('#newsBtnUrl').value.trim(),
-      };
-      try{
-        const editId = qs('#createNews').dataset.editId;
-        if(editId){
-          await api('/api/admin/news/'+editId, { method:'PUT', body: JSON.stringify(payload) });
-          qs('#createNews').textContent = 'Publish';
-          delete qs('#createNews').dataset.editId;
-        }else{
-          await api('/api/admin/news', { method:'POST', body: JSON.stringify(payload) });
-        }
-        clearNewsForm();
-        await loadNews();
-      }catch(e){ alert(e.message); }
+      tb.appendChild(tr);
     });
 
-    // ===== Content =====
-    async function loadContent(){
-      const r = await api('/api/content'); // expected: JSON blob of fields
-      state.content = r || {};
-      // paint form
-      const set = (id,val)=>{ const el=qs('#'+id); if(el) el.value = val || '' }
-      set('c_heroTitle', r.heroTitle);
-      set('c_mainButton', r.mainButton);
-      set('c_heroSubtitle', r.heroSubtitle);
-      set('c_heroImage', r.heroImage);
-      set('c_aboutImage', r.aboutImage);
-      set('c_aboutText', r.aboutText);
-      set('c_slide1Url', r.slide1Url);
-      set('c_slide1Title', r.slide1Title);
-      set('c_slide2Url', r.slide2Url);
-      set('c_slide2Title', r.slide2Title);
-      set('c_partners', typeof r.partners==='string'? r.partners : JSON.stringify(r.partners||[]));
-      set('c_countries', typeof r.countries==='string'? r.countries : JSON.stringify(r.countries||[]));
-    }
-    async function saveContent(){
-      const payload = {
-        heroTitle: qs('#c_heroTitle').value.trim(),
-        mainButton: qs('#c_mainButton').value.trim(),
-        heroSubtitle: qs('#c_heroSubtitle').value.trim(),
-        heroImage: qs('#c_heroImage').value.trim(),
-        aboutImage: qs('#c_aboutImage').value.trim(),
-        aboutText: qs('#c_aboutText').value.trim(),
-        slide1Url: qs('#c_slide1Url').value.trim(),
-        slide1Title: qs('#c_slide1Title').value.trim(),
-        slide2Url: qs('#c_slide2Url').value.trim(),
-        slide2Title: qs('#c_slide2Title').value.trim(),
-        partners: qs('#c_partners').value.trim(),
-        countries: qs('#c_countries').value.trim(),
-      };
-      try{
-        await api('/api/admin/content', { method:'PUT', body: JSON.stringify(payload) });
-        alert('Content saved.');
-      }catch(e){ alert(e.message); }
-    }
-    qs('#saveContent').addEventListener('click', saveContent);
-    qs('#reloadContent').addEventListener('click', loadContent);
+    // save handlers
+    tb.querySelectorAll('button[data-action="save"]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.id;
+        const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
+        const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
+        const taskProgress = Number(tb.querySelector(`select[data-field="taskProgress"][data-id="${id}"]`).value || 0);
 
-    // ===== Boot =====
-    qsa('.sidebar .nav-link').forEach(a=>{
-      a.addEventListener('click', (e)=>{
-        qsa('.nav-link').forEach(x=>x.classList.remove('active'));
-        a.classList.add('active');
-        switchPanel(a.getAttribute('href'));
+        btn.disabled = true; btn.textContent = 'Saving…';
+        const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
+          method: 'PATCH',
+          headers: authHeaders(true),
+          body: JSON.stringify({ balance, subscriptionType, taskProgress })
+        });
+        btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save';
+        if (r._error){
+          alert('Update failed: ' + r.message);
+        } else {
+          alert('Saved!');
+        }
+      });
+    });
+  }
+  $('#btnReloadUsers').addEventListener('click', loadUsers);
+  $('#userSearch').addEventListener('input', loadUsers);
+
+  // ========= WITHDRAWALS =========
+  async function loadWithdrawals(){
+    const tb = $('#withdrawalsTbody');
+    tb.innerHTML = '<tr><td colspan="5" class="muted">Loading…</td></tr>';
+    const r = await safeFetch(API_BASE + '/api/admin/withdrawals', { headers: authHeaders(false) });
+    if (r._error){
+      tb.innerHTML = '<tr><td colspan="5"><div class="notice">'+ r.message +'</div></td></tr>';
+      return;
+    }
+    const rows = r.withdrawals || [];
+    if (!rows.length){
+      tb.innerHTML = '<tr><td colspan="5" class="muted">No withdrawal requests.</td></tr>';
+      return;
+    }
+    tb.innerHTML = '';
+    rows.forEach(w=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <div><strong>${(w.user && w.user.username) || w.username || '-'}</strong></div>
+          <div class="small muted mono">${(w.user && w.user._id) || w.userId || ''}</div>
+        </td>
+        <td>${Number(w.amount||0)}</td>
+        <td class="mono">${w.walletAddress||'-'}</td>
+        <td>${w.status ? '<span class="chip">'+w.status+'</span>' : '-'}</td>
+        <td class="nowrap">
+          <button class="btn-ok small" data-approve="${w._id}"><i class="fa-solid fa-check"></i> Approve</button>
+          <button class="btn-danger small" data-reject="${w._id}"><i class="fa-solid fa-xmark"></i> Reject</button>
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    tb.querySelectorAll('button[data-approve]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        const id = b.dataset.approve;
+        b.disabled = true; b.textContent = 'Approving…';
+        const r = await safeFetch(API_BASE + '/api/admin/withdrawals/'+id+'/approve', {
+          method:'POST', headers: authHeaders(false)
+        });
+        b.disabled = false; b.innerHTML = '<i class="fa-solid fa-check"></i> Approve';
+        if (r._error) alert('Approve failed: ' + r.message);
+        else { alert('Approved'); loadWithdrawals(); }
+      });
+    });
+    tb.querySelectorAll('button[data-reject]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        const id = b.dataset.reject;
+        b.disabled = true; b.textContent = 'Rejecting…';
+        const r = await safeFetch(API_BASE + '/api/admin/withdrawals/'+id+'/reject', {
+          method:'POST', headers: authHeaders(false)
+        });
+        b.disabled = false; b.innerHTML = '<i class="fa-solid fa-xmark"></i> Reject';
+        if (r._error) alert('Reject failed: ' + r.message);
+        else { alert('Rejected'); loadWithdrawals(); }
+      });
+    });
+  }
+  $('#btnReloadWithdrawals').addEventListener('click', loadWithdrawals);
+
+  // ========= NEWS =========
+  function updateNewsPreview(){
+    const url = $('#newsImage').value.trim();
+    $('#newsPreview').src = url || '';
+  }
+  $('#newsImage').addEventListener('input', updateNewsPreview);
+  updateNewsPreview();
+
+  async function loadNewsList(){
+    const list = $('#newsList');
+    list.innerHTML = '<div class="muted">Loading…</div>';
+    const r = await safeFetch(API_BASE + '/api/admin/news', { headers: authHeaders(false) });
+    if (r._error){
+      list.innerHTML = '';
+      list.appendChild(el('div',{class:'notice'},[r.message]));
+      return;
+    }
+    const items = r.news || [];
+    if (!items.length){
+      list.innerHTML = '<div class="muted">No news yet.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    items.forEach(n=>{
+      const card = el('div', {class:'card'}, [
+        el('div', {class:'row'}, [
+          el('div', {class:'col'}, [
+            el('div', {class:'title', style:'font-size:15px'}, [n.title || '(no title)']),
+            el('div', {class:'muted small'}, [n._id || '']),
+            el('div', {style:'margin-top:6px'}, [n.body || ''])
+          ]),
+          el('div', {class:'col'}, [
+            n.imageUrl ? el('img', {src:n.imageUrl, class:'img-preview'}) : el('div', {class:'muted small'}, ['No image']),
+            el('div', {class:'small muted', style:'margin-top:6px'}, ['Button: ', (n.buttonText||'-'), ' → ', (n.buttonLink||'-')])
+          ])
+        ]),
+        el('div', {class:'row', style:'margin-top:8px'}, [
+          el('button', {class:'btn small', 'data-edit': n._id}, [el('i',{class:'fa-solid fa-pen'}), document.createTextNode(' Edit')]),
+          el('button', {class:'btn-danger small', 'data-del': n._id}, [el('i',{class:'fa-solid fa-trash'}), document.createTextNode(' Delete')])
+        ])
+      ]);
+      list.appendChild(card);
+    });
+
+    list.querySelectorAll('button[data-del]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        if (!confirm('Delete this news item?')) return;
+        const id = b.getAttribute('data-del');
+        b.disabled = true; b.textContent = 'Deleting…';
+        const r = await safeFetch(API_BASE + '/api/admin/news/'+id, {
+          method:'DELETE', headers: authHeaders(false)
+        });
+        if (r._error) alert('Delete failed: ' + r.message);
+        loadNewsList();
       });
     });
 
-    (async function init(){
-      switchPanel(location.hash || '#overview');
-      if(state.token){
-        setLoggedInUI('Admin');
-        try{
-          await Promise.all([loadUsers(), loadWithdrawals(), loadNews(), loadContent(), paintOverview()]);
-        }catch(e){
-          // If token invalid
-          console.error(e);
-          localStorage.removeItem(LS_ADMIN_TOKEN);
-          state.token = null;
-          setLoggedOutUI();
-        }
-      }else{
-        setLoggedOutUI();
-      }
-    })();
-  </script>
+    list.querySelectorAll('button[data-edit]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        const id = b.getAttribute('data-edit');
+        const title = prompt('Title?'); if (title===null) return;
+        const body = prompt('Body?'); if (body===null) return;
+        const imageUrl = prompt('Image URL? (optional)', '') ?? '';
+        const buttonText = prompt('Button text?', 'Read more') ?? '';
+        const buttonLink = prompt('Button link URL?', 'https://') ?? '';
+        b.disabled = true; b.textContent = 'Saving…';
+        const r = await safeFetch(API_BASE + '/api/admin/news/'+id, {
+          method:'PUT', headers: authHeaders(true),
+          body: JSON.stringify({ title, body, imageUrl, buttonText, buttonLink })
+        });
+        if (r._error) alert('Update failed: ' + r.message);
+        b.disabled = false; b.innerHTML = '<i class="fa-solid fa-pen"></i> Edit';
+        loadNewsList();
+      });
+    });
+  }
+  $('#btnCreateNews').addEventListener('click', async ()=>{
+    const title = $('#newsTitle').value.trim();
+    const body = $('#newsBody').value.trim();
+    const imageUrl = $('#newsImage').value.trim();
+    const buttonText = $('#newsBtnText').value.trim();
+    const buttonLink = $('#newsBtnLink').value.trim();
+    $('#newsCreateMsg').textContent = 'Creating…';
+    const r = await safeFetch(API_BASE + '/api/admin/news', {
+      method:'POST', headers: authHeaders(true),
+      body: JSON.stringify({ title, body, imageUrl, buttonText, buttonLink })
+    });
+    if (r._error) $('#newsCreateMsg').innerHTML = '<span class="danger">'+ r.message +'</span>';
+    else {
+      $('#newsCreateMsg').innerHTML = '<span class="ok">Created</span>';
+      $('#newsTitle').value = ''; $('#newsBody').value=''; $('#newsImage').value=''; $('#newsBtnText').value=''; $('#newsBtnLink').value='';
+      updateNewsPreview();
+      loadNewsList();
+    }
+  });
+  $('#btnReloadNews').addEventListener('click', loadNewsList);
+
+  // ========= CONTENT =========
+  async function loadContentAdmin(){
+    const r = await safeFetch(API_BASE + '/api/admin/content', { headers: authHeaders(false) });
+    if (r._error){
+      $('#tickerMsg').textContent = r.message;
+      $('#slidesMsg').textContent = r.message;
+      return;
+    }
+    $('#tickerText').value = r.tickerText || '';
+    $('#slide1Url').value = r.slide1Url || '';
+    $('#slide1Title').value = r.slide1Title || '';
+    $('#slide2Url').value = r.slide2Url || '';
+    $('#slide2Title').value = r.slide2Title || '';
+  }
+  $('#btnSaveTicker').addEventListener('click', async ()=>{
+    const r = await safeFetch(API_BASE + '/api/admin/content', {
+      method:'PUT', headers: authHeaders(true),
+      body: JSON.stringify({ tickerText: $('#tickerText').value })
+    });
+    $('#tickerMsg').textContent = r._error ? r.message : 'Saved';
+  });
+  $('#btnSaveSlides').addEventListener('click', async ()=>{
+    const payload = {
+      slide1Url: $('#slide1Url').value.trim(),
+      slide1Title: $('#slide1Title').value.trim(),
+      slide2Url: $('#slide2Url').value.trim(),
+      slide2Title: $('#slide2Title').value.trim(),
+    };
+    const r = await safeFetch(API_BASE + '/api/admin/content', {
+      method:'PUT', headers: authHeaders(true),
+      body: JSON.stringify(payload)
+    });
+    $('#slidesMsg').textContent = r._error ? r.message : 'Saved';
+  });
+
+  // ========= INIT =========
+  updateAuthUI();
+
+  // Auto-load after login if token exists
+  if (isSigned()){
+    loadStats();
+    loadUsers();
+    loadWithdrawals();
+    loadNewsList();
+    loadContentAdmin();
+  }
+
+  // If the admin navigates into tabs while not signed, we keep UI friendly
+  document.addEventListener('click', (e)=>{
+    const tab = e.target.closest('.navbtn')?.dataset?.tab || '';
+    const needAuthTabs = ['tab-stats','tab-users','tab-withdrawals','tab-news','tab-content'];
+    if (tab && needAuthTabs.includes(tab) && !isSigned()){
+      setTimeout(()=>{ alert('Please sign in as admin first.'); }, 0);
+    }
+  });
+</script>
 </body>
 </html>
