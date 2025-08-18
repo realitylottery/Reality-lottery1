@@ -72,7 +72,28 @@ async function authMiddleware(req, res, next) {
 }
 
 // ================= ROUTES =================
+const NewsTicker = require("./models/NewsTicker");
 
+// Get all tickers (public)
+app.get("/api/ticker", async (req, res) => {
+  const tickers = await NewsTicker.find().sort({ createdAt: -1 });
+  res.json({ tickers });
+});
+
+// Admin add ticker
+app.post("/api/admin/ticker", authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  const ticker = new NewsTicker({ text: req.body.text });
+  await ticker.save();
+  res.json({ message: "Ticker added", ticker });
+});
+
+// Admin delete ticker
+app.delete("/api/admin/ticker/:id", authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  await NewsTicker.findByIdAndDelete(req.params.id);
+  res.json({ message: "Ticker deleted" });
+});
 
 const Banner = require("./models/Banner");
 
@@ -343,6 +364,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
