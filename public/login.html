@@ -2,64 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>RealityLottery - Login</title>
+  <title>Login - RealityLottery</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
-    body{background:#000;color:#fff;display:flex;flex-direction:column;min-height:100vh;}
-    header{padding:20px;background:#111;border-bottom:2px solid #ffd700;text-align:center;}
-    .logo{font-size:28px;font-weight:bold;color:#ffd700;}
-    .form-container{flex:1;display:flex;justify-content:center;align-items:center;padding:30px;}
-    form{background:#111;padding:30px;border-radius:10px;width:100%;max-width:400px;border:1px solid #ffd700;}
-    form h2{margin-bottom:20px;color:#ffd700;}
-    input{width:100%;padding:12px;margin:10px 0;border:none;border-radius:6px;}
-    button{width:100%;padding:12px;background:linear-gradient(45deg,#ffd700,#ffa500);border:none;border-radius:6px;font-weight:bold;cursor:pointer;}
-    button:hover{background:linear-gradient(45deg,#ffa500,#ffd700);}
-    footer{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:2px solid #ffd700;padding:10px 0;display:flex;justify-content:space-around;align-items:center;}
-    footer a{color:#ffd700;text-decoration:none;font-size:14px;font-weight:bold;display:flex;flex-direction:column;align-items:center;}
-    footer a i{font-size:18px;margin-bottom:4px;}
-    footer a:hover{color:#ffa500;}
+    body{background:#000;color:#fff;font-family:Arial, sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;}
+    .box{background:#111;padding:30px;border-radius:10px;border:2px solid #ffd700;max-width:400px;width:100%;text-align:center;}
+    input{width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;}
+    button{padding:10px 20px;background:linear-gradient(45deg,#ffd700,#ffa500);border:none;border-radius:6px;font-weight:bold;cursor:pointer;}
+    button:hover{opacity:0.9;}
   </style>
 </head>
 <body>
-  <header>
-    <div class="logo">RealityLottery</div>
-  </header>
-
-  <div class="form-container">
-    <form id="loginForm">
-      <h2>Login</h2>
-      <input type="text" id="usernameOrEmail" placeholder="Username or Email" required>
-      <input type="password" id="password" placeholder="Password" required>
-      <button type="submit">Login</button>
-    </form>
+  <div class="box">
+    <h2>Login</h2>
+    <input type="text" id="usernameOrEmail" placeholder="Username or Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p id="msg"></p>
   </div>
 
-  <footer>
-    <a href="index.html"><i class="fas fa-home"></i>Home</a>
-    <a href="login.html"><i class="fas fa-sign-in-alt"></i>Login</a>
-    <a href="register.html"><i class="fas fa-user-plus"></i>Register</a>
-    <a href="subscribe.html"><i class="fas fa-star"></i>Subscribe</a>
-  </footer>
-
   <script>
-    const API_BASE = "https://realitylottery.koyeb.app/api";
-    document.getElementById("loginForm").addEventListener("submit", async (e)=>{
-      e.preventDefault();
+    const API_BASE = "https://realitylottery.koyeb.app";
+
+    async function login(){
       const usernameOrEmail=document.getElementById("usernameOrEmail").value;
       const password=document.getElementById("password").value;
-      try{
-        const res=await fetch(API_BASE+"/auth/login",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({usernameOrEmail,password})
-        });
-        const data=await res.json();
-        if(res.ok){ alert("Login successful!"); localStorage.setItem("token",data.token); window.location="index.html";}
-        else{ alert(data.message||"Login failed"); }
-      }catch(err){ alert("Network error"); }
-    });
+      const res=await fetch(API_BASE+"/api/auth/login",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({usernameOrEmail,password})
+      });
+      const data=await res.json();
+      if(res.ok){
+        localStorage.setItem("rl_token",data.token);
+        location.href="profile.html";
+      }else{
+        document.getElementById("msg").textContent=data.message;
+      }
+    }
   </script>
 </body>
 </html>
