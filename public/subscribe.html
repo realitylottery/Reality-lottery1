@@ -1,372 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RealityLottery - Subscription Plans</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: #000;
-            color: #fff;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        
-        .logo {
-            font-size: 36px;
-            font-weight: 800;
-            color: #ffd700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-        }
-        
-        .page-title {
-            color: #ffd700;
-            font-size: 28px;
-            margin-bottom: 20px;
-        }
-        
-        .page-description {
-            color: #aaa;
-            max-width: 800px;
-            margin: 0 auto 30px;
-            line-height: 1.6;
-        }
-        
-        .plans-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-            margin-top: 40px;
-        }
-        
-        .plan-card {
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid #ffd700;
-            border-radius: 15px;
-            padding: 30px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .plan-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(255, 215, 0, 0.2);
-        }
-        
-        .plan-badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #ffd700;
-            color: #000;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        
-        .plan-name {
-            color: #ffd700;
-            font-size: 24px;
-            margin-bottom: 15px;
-            font-weight: 700;
-        }
-        
-        .plan-price {
-            font-size: 42px;
-            font-weight: 800;
-            color: #fff;
-            margin-bottom: 20px;
-        }
-        
-        .plan-price span {
-            font-size: 16px;
-            color: #aaa;
-            font-weight: normal;
-        }
-        
-        .plan-features {
-            margin-bottom: 30px;
-        }
-        
-        .feature-item {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 15px;
-        }
-        
-        .feature-icon {
-            color: #ffd700;
-            margin-right: 10px;
-            margin-top: 3px;
-        }
-        
-        .feature-text {
-            color: #ddd;
-        }
-        
-        .referral-bonuses {
-            background: rgba(255, 215, 0, 0.1);
-            border-left: 3px solid #ffd700;
-            padding: 15px;
-            margin-bottom: 25px;
-            border-radius: 0 5px 5px 0;
-        }
-        
-        .referral-title {
-            color: #ffd700;
-            font-weight: 600;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .referral-title i {
-            margin-right: 8px;
-        }
-        
-        .bonus-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            padding-bottom: 8px;
-            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-        }
-        
-        .bonus-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        
-        .bonus-amount {
-            color: #ffd700;
-            font-weight: 600;
-        }
-        
-        .subscribe-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(45deg, #ffd700, #ffa500);
-            color: #000;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        .subscribe-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
-        }
-        
-        .info-note {
-            color: #aaa;
-            font-size: 14px;
-            margin-top: 40px;
-            text-align: center;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-            line-height: 1.6;
-        }
-        
-        .info-note strong {
-            color: #ffd700;
-        }
-        
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .plans-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .page-title {
-                font-size: 24px;
-            }
-            
-            .plan-card {
-                padding: 25px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>RealityLottery - Subscription Plans</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+    body{background:#000;color:#fff;min-height:100vh;display:flex;flex-direction:column;}
+    .container{flex:1;padding:20px;}
+    header{text-align:center;margin-bottom:40px;}
+    .logo{font-size:36px;font-weight:800;color:#ffd700;text-transform:uppercase;letter-spacing:2px;}
+    .page-title{color:#ffd700;font-size:28px;margin:15px 0;}
+    .page-description{color:#aaa;max-width:800px;margin:0 auto 30px;line-height:1.6;}
+    .plans-container{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px;margin-top:20px;}
+    .plan-card{background:#111;border:1px solid #ffd700;border-radius:15px;padding:20px;transition:.3s;}
+    .plan-card:hover{transform:translateY(-10px);box-shadow:0 10px 25px rgba(255,215,0,0.2);}
+    .plan-badge{position:absolute;top:15px;right:15px;background:#ffd700;color:#000;padding:4px 12px;border-radius:15px;font-weight:bold;font-size:12px;}
+    .plan-name{color:#ffd700;font-size:22px;font-weight:700;margin-bottom:10px;}
+    .plan-price{font-size:32px;font-weight:800;color:#fff;margin-bottom:20px;}
+    .plan-features{margin-bottom:20px;}
+    .feature-item{display:flex;align-items:center;margin-bottom:10px;}
+    .feature-item i{color:#ffd700;margin-right:10px;}
+    .subscribe-btn{width:100%;padding:12px;background:linear-gradient(45deg,#ffd700,#ffa500);color:#000;border:none;border-radius:8px;font-weight:bold;font-size:16px;cursor:pointer;}
+    .subscribe-btn:hover{transform:translateY(-3px);box-shadow:0 5px 15px rgba(255,215,0,0.4);}
+    footer{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:2px solid #ffd700;padding:10px 0;display:flex;justify-content:space-around;align-items:center;}
+    footer a{color:#ffd700;text-decoration:none;font-size:14px;font-weight:bold;display:flex;flex-direction:column;align-items:center;}
+    footer a i{font-size:18px;margin-bottom:4px;}
+    footer a:hover{color:#ffa500;}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">Reality<span>Lottery</span></div>
-            <h1 class="page-title">Choose Your One-Time Subscription</h1>
-            <p class="page-description">
-                Increase your chances to win big with our premium subscription plans. 
-                Pay once and enjoy all benefits until the lottery draw date.
-            </p>
-        </header>
-        
-        <div class="plans-container">
-            <!-- Plan 1 -->
-            <div class="plan-card">
-                <div class="plan-badge">Basic</div>
-                <h2 class="plan-name">Starter Plan</h2>
-                <div class="plan-price">$10 <span>one-time payment</span></div>
-                
-                <div class="plan-features">
-                    <div class="feature-item">
-                        <i class="fas fa-check-circle feature-icon"></i>
-                        <span class="feature-text">1 lottery entry with your name</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-check-circle feature-icon"></i>
-                        <span class="feature-text">1 spin in our prize wheel</span>
-                    </div>
-                </div>
-                
-                <div class="referral-bonuses">
-                    <h3 class="referral-title"><i class="fas fa-gift"></i> Referral Bonuses</h3>
-                    <div class="bonus-item">
-                        <span>Invite 2 friends:</span>
-                        <span class="bonus-amount">+$5</span>
-                    </div>
-                    <div class="bonus-item">
-                        <span>Invite 3 friends:</span>
-                        <span class="bonus-amount">+$10</span>
-                    </div>
-                    <div class="bonus-item">
-                        <span>Invite 6 friends:</span>
-                        <span class="bonus-amount">+$20</span>
-                    </div>
-                </div>
-                
-                <button class="subscribe-btn">
-                    <i class="fas fa-arrow-right"></i> Subscribe Now
-                </button>
-            </div>
-            
-            <!-- Plan 2 -->
-            <div class="plan-card">
-                <div class="plan-badge">Popular</div>
-                <h2 class="plan-name">Premium Plan</h2>
-                <div class="plan-price">$20 <span>one-time payment</span></div>
-                
-                <div class="plan-features">
-                    <div class="feature-item">
-                        <i class="fas fa-check-circle feature-icon"></i>
-                        <span class="feature-text">3 lottery entries with your name</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-check-circle feature-icon"></i>
-                        <span class="feature-text">1 spin in our prize wheel</span>
-                    </div>
-                </div>
-                
-                <div class="referral-bonuses">
-                    <h3 class="referral-title"><i class="fas fa-gift"></i> Referral Bonuses</h3>
-                    <div class="bonus-item">
-                        <span>Invite 2 friends:</span>
-                        <span class="bonus-amount">+$15</span>
-                    </div>
-                    <div class="bonus-item">
-                        <span>Invite 3 friends:</span>
-                        <span class="bonus-amount">+$25</span>
-                    </div>
-                    <div class="bonus-item">
-                        <span>Invite 6 friends:</span>
-                        <span class="bonus-amount">+$55</span>
-                    </div>
-                </div>
-                
-                <button class="subscribe-btn">
-                    <i class="fas fa-arrow-right"></i> Subscribe Now
-                </button>
-            </div>
-            
-            <!-- Plan 3 -->
-            <div class="plan-card">
-                <div class="plan-badge">VIP</div>
-                <h2 class="plan-name">Elite Plan</h2>
-                <div class="plan-price">$30 <span>one-time payment</span></div>
-                
-                <div class="plan-features">
-                    <div class="feature-item">
-                        <i class="fas fa-check-circle feature-icon"></i>
-                        <span class="feature-text">7 lottery entries with your name</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-check-circle feature-icon"></i>
-                        <span class="feature-text">1 spin in our prize wheel</span>
-                    </div>
-                </div>
-                
-                <div class="referral-bonuses">
-                    <h3 class="referral-title"><i class="fas fa-gift"></i> Referral Bonuses</h3>
-                    <div class="bonus-item">
-                        <span>Invite 2 friends:</span>
-                        <span class="bonus-amount">+$20</span>
-                    </div>
-                    <div class="bonus-item">
-                        <span>Invite 3 friends:</span>
-                        <span class="bonus-amount">+$35</span>
-                    </div>
-                    <div class="bonus-item">
-                        <span>Invite 6 friends:</span>
-                        <span class="bonus-amount">+$80</span>
-                    </div>
-                </div>
-                
-                <button class="subscribe-btn">
-                    <i class="fas fa-arrow-right"></i> Subscribe Now
-                </button>
-            </div>
-        </div>
-        
-        <div class="info-note">
-            <p><strong>Note 1:</strong> When you withdraw referral earnings, the task counter will be reset.</p>
-            <p><strong>Note 2:</strong> Each successful referral adds +1 entry with your name to the lottery.</p>
-            <p><strong>Note 3:</strong> Referrals must be under the same subscription plan as yours, otherwise your friend's plan conditions will apply.</p>
-            <p><strong>Note 4:</strong> All subscriptions are one-time payments valid until the lottery draw date.</p>
-        </div>
-    </div>
+  <div class="container">
+    <header>
+      <div class="logo">RealityLottery</div>
+      <h1 class="page-title">Choose Your One-Time Subscription</h1>
+      <p class="page-description">Increase your chances to win big with our premium subscription plans. Pay once and enjoy all benefits until the lottery draw date.</p>
+    </header>
 
-    <script>
-        // Add click event for all subscribe buttons
-        document.querySelectorAll('.subscribe-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const planName = this.closest('.plan-card').querySelector('.plan-name').textContent;
-                const planPrice = this.closest('.plan-card').querySelector('.plan-price').textContent;
-                
-                alert(`You have selected the ${planName} (${planPrice}). Redirecting to payment...`);
-                
-                // In a real app, you would redirect to payment page
-                // window.location.href = 'payment.html?plan=' + encodeURIComponent(planName);
-            });
-        });
-    </script>
+    <div class="plans-container">
+      <div class="plan-card">
+        <h2 class="plan-name">Starter Plan</h2>
+        <div class="plan-price">$10 <span>one-time</span></div>
+        <div class="plan-features">
+          <div class="feature-item"><i class="fas fa-check-circle"></i><span>1 lottery entry</span></div>
+          <div class="feature-item"><i class="fas fa-check-circle"></i><span>1 spin in prize wheel</span></div>
+        </div>
+        <button class="subscribe-btn">Subscribe Now</button>
+      </div>
+
+      <div class="plan-card">
+        <h2 class="plan-name">Premium Plan</h2>
+        <div class="plan-price">$20 <span>one-time</span></div>
+        <div class="plan-features">
+          <div class="feature-item"><i class="fas fa-check-circle"></i><span>3 lottery entries</span></div>
+          <div class="feature-item"><i class="fas fa-check-circle"></i><span>1 spin in prize wheel</span></div>
+        </div>
+        <button class="subscribe-btn">Subscribe Now</button>
+      </div>
+
+      <div class="plan-card">
+        <h2 class="plan-name">Elite Plan</h2>
+        <div class="plan-price">$30 <span>one-time</span></div>
+        <div class="plan-features">
+          <div class="feature-item"><i class="fas fa-check-circle"></i><span>7 lottery entries</span></div>
+          <div class="feature-item"><i class="fas fa-check-circle"></i><span>1 spin in prize wheel</span></div>
+        </div>
+        <button class="subscribe-btn">Subscribe Now</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <a href="index.html"><i class="fas fa-home"></i>Home</a>
+    <a href="login.html"><i class="fas fa-sign-in-alt"></i>Login</a>
+    <a href="register.html"><i class="fas fa-user-plus"></i>Register</a>
+    <a href="subscribe.html"><i class="fas fa-star"></i>Subscribe</a>
+  </footer>
+</body>
+</html>          <h3 class="referral-title"><i class="fas fa-gift"></i> Referral Bonuses</h3>
+          <div class="bonus-item"><span>Invite 2 friends:</span><span class="bonus-amount">+$20</span></div>
+          <div class="bonus-item"><span>Invite 3 friends:</span><span class="bonus-amount">+$35</span></div>
+          <div class="bonus-item"><span>Invite 6 friends:</span><span class="bonus-amount">+$80</span></div>
+        </div>
+        
+        <button class="subscribe-btn"><i class="fas fa-arrow-right"></i> Subscribe Now</button>
+      </div>
+    </div>
+    
+    <div class="info-note">
+      <p><strong>Note 1:</strong> When you withdraw referral earnings, the task counter will be reset.</p>
+      <p><strong>Note 2:</strong> Each successful referral adds +1 entry with your name to the lottery.</p>
+      <p><strong>Note 3:</strong> Referrals must be under the same subscription plan as yours, otherwise your friend's plan conditions will apply.</p>
+      <p><strong>Note 4:</strong> All subscriptions are one-time payments valid until the lottery draw date.</p>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://realitylottery.koyeb.app';
+
+    document.querySelectorAll('.subscribe-btn').forEach(button => {
+      button.addEventListener('click', async function() {
+        const token = localStorage.getItem('rl_token');
+        if (!token) {
+          alert('Please login first to subscribe.');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const planCard = this.closest('.plan-card');
+        const planName = planCard.querySelector('.plan-name').textContent;
+        const planPrice = planCard.querySelector('.plan-price').textContent;
+
+        try {
+          const res = await fetch(API_BASE + '/api/subscribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ plan: planName })
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            alert(data.message || 'Subscription failed');
+            return;
+          }
+
+          alert(`You have successfully selected the ${planName} (${planPrice}). Redirecting to payment...`);
+          window.location.href = 'payment.html?plan=' + encodeURIComponent(planName);
+        } catch (err) {
+          console.error(err);
+          alert('Network error. Try again later.');
+        }
+      });
+    });
+  </script>
 </body>
 </html>
