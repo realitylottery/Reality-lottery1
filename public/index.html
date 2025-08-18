@@ -41,6 +41,7 @@
       position: sticky;
       top: 0;
       z-index: 100;
+      flex-wrap: wrap;
     }
 
     .logo {
@@ -50,24 +51,29 @@
       letter-spacing: 1px;
     }
 
-    .auth-buttons {
+    nav {
       display: flex;
-      gap: 15px;
+      align-items: center;
+      gap: 20px;
     }
 
-    .auth-btn {
+    .nav-link {
       color: var(--primary-color);
       text-decoration: none;
       font-weight: bold;
-      background: none;
-      border: none;
-      cursor: pointer;
       transition: color 0.3s;
       font-size: clamp(0.9rem, 2vw, 1rem);
     }
 
-    .auth-btn:hover {
+    .nav-link:hover {
       color: var(--secondary-color);
+      text-decoration: underline;
+    }
+
+    #userBox {
+      margin-left: 15px;
+      font-weight: bold;
+      color: var(--primary-color);
     }
 
     /* News Ticker Styles */
@@ -170,6 +176,9 @@
       font-size: 1rem;
       border: none;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .cta-btn:hover {
@@ -259,7 +268,14 @@
 
     @media (max-width: 768px) {
       header {
+        flex-direction: column;
+        gap: 15px;
         padding: 15px;
+      }
+      
+      nav {
+        width: 100%;
+        justify-content: center;
       }
       
       .hero {
@@ -295,12 +311,12 @@
 <body>
   <header>
     <div class="logo">RealityLottery</div>
-    <div class="auth-buttons">
-      <a href="login.html" class="auth-btn" id="loginBtn">Login</a>
-      <a href="register.html" class="auth-btn" id="registerBtn">Register</a>
-      <span id="userInfo" class="auth-btn" style="display:none;"></span>
-      <button id="logoutBtn" class="auth-btn" style="display:none;">Logout</button>
-    </div>
+    <nav>
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="login.html" class="nav-link" id="loginLink">Login</a>
+      <a href="register.html" class="nav-link" id="registerLink">Register</a>
+      <span id="userBox"></span>
+    </nav>
   </header>
 
   <div id="news-ticker">
@@ -320,8 +336,8 @@
     </p>
     
     <div class="cta-buttons">
-      <a href="register.html" class="cta-btn">Get Started</a>
-      <a href="how-it-works.html" class="cta-btn">How It Works</a>
+      <a href="register.html" class="cta-btn"><i class="fas fa-user-plus"></i> Get Started</a>
+      <a href="subscribe.html" class="cta-btn"><i class="fas fa-star"></i> View Plans</a>
     </div>
 
     <div id="banner-slider" class="banner-slider"></div>
@@ -338,29 +354,39 @@
     document.addEventListener('DOMContentLoaded', function() {
       const API_BASE = 'https://realitylottery.koyeb.app';
       const token = localStorage.getItem('rl_token');
-      const user = localStorage.getItem('rl_user') ? JSON.parse(localStorage.getItem('rl_user')) : null;
-      const loginBtn = document.getElementById('loginBtn');
-      const registerBtn = document.getElementById('registerBtn');
-      const userInfo = document.getElementById('userInfo');
-      const logoutBtn = document.getElementById('logoutBtn');
+      const loginLink = document.getElementById('loginLink');
+      const registerLink = document.getElementById('registerLink');
+      const userBox = document.getElementById('userBox');
 
       // Handle authentication state
       function updateAuthUI() {
-        if (token && user) {
-          loginBtn.style.display = 'none';
-          registerBtn.style.display = 'none';
-          userInfo.style.display = 'inline';
-          userInfo.textContent = user.username || user.fullName || "User";
-          logoutBtn.style.display = 'inline';
+        if (token) {
+          fetch(`${API_BASE}/api/auth/me`, {
+            headers: { Authorization: "Bearer " + token }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.user) {
+              loginLink.style.display = 'none';
+              registerLink.style.display = 'none';
+              userBox.innerHTML = `
+                👤 ${data.user.username} | 
+                <a href="#" id="logoutBtn" style="color:var(--secondary-color)">Logout</a>`;
+              
+              document.getElementById('logoutBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('rl_token');
+                localStorage.removeItem('rl_user');
+                window.location.href = 'index.html';
+              });
+            }
+          })
+          .catch(() => {
+            // If token is invalid, clear it
+            localStorage.removeItem('rl_token');
+          });
         }
       }
-
-      // Logout functionality
-      logoutBtn?.addEventListener('click', function(e) {
-        e.preventDefault();
-        localStorage.clear();
-        window.location.href = 'index.html';
-      });
 
       // Load banners
       async function loadBanners() {
@@ -372,7 +398,7 @@
           const container = document.getElementById('banner-slider');
           
           if (data.banners && data.banners.length > 0) {
-            container.innerHTML = ''; // Clear loading state
+            container.innerHTML = '';
             data.banners.forEach(banner => {
               const bannerCard = document.createElement('div');
               bannerCard.className = 'banner-card';
@@ -410,10 +436,9 @@
             
             tickerText.innerHTML = tickerItems;
             
-            // Adjust animation duration based on content length
             const textWidth = tickerText.scrollWidth;
             const containerWidth = document.getElementById('ticker-content').offsetWidth;
-            const duration = Math.max(30, textWidth / 50); // 50px per second
+            const duration = Math.max(30, textWidth / 50);
             
             tickerText.style.animationDuration = `${duration}s`;
             tickerText.style.animationName = 'ticker';
