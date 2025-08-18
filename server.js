@@ -6,7 +6,8 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const path = require('path');
 const User = require('./models/User');
-
+const News = require('./models/News');
+const Withdrawal = require('./models/Withdrawal');
 const app = express();
 app.use(express.json());
 
@@ -364,6 +365,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
