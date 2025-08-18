@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>RealityLottery - Admin Panel</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
+    body{background:#121212;color:#fff;min-height:100vh;display:flex;justify-content:center;align-items:center}
+    .admin-container{width:100%;max-width:1200px;padding:20px}
+    .login-form{background:rgba(0,0,0,0.8);border:1px solid #ffd700;border-radius:10px;padding:40px;max-width:500px;margin:0 auto;box-shadow:0 10px 30px rgba(0,0,0,0.5);text-align:center}
+    .login-form h1{color:#ffd700;margin-bottom:30px;font-size:28px}
+    .form-group{margin-bottom:20px;text-align:left}
+    .form-group label{display:block;margin-bottom:8px;color:#ffd700}
+    .form-group input,.form-control{width:100%;padding:12px 15px;border-radius:5px;border:1px solid #444;background:#222;color:#fff;font-size:16px}
+    .login-btn{background:linear-gradient(45deg,#ffd700,#ffa500);color:#000;border:none;padding:12px 30px;border-radius:5px;font-weight:bold;font-size:16px;cursor:pointer;transition:all .3s;width:100%;margin-top:10px}
+    .login-btn:hover{transform:translateY(-3px);box-shadow:0 5px 15px rgba(255,215,0,0.4)}
+    .admin-panel{display:none;background:rgba(0,0,0,0.8);border:1px solid #ffd700;border-radius:10px;padding:30px;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
+    .admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid rgba(255,215,0,0.3)}
+    .admin-title{color:#ffd700;font-size:24px}
+    .logout-btn{background:transparent;color:#ff6b6b;border:1px solid #ff6b6b;padding:8px 15px;border-radius:5px;cursor:pointer;transition:all .3s}
+    .logout-btn:hover{background:rgba(255,107,107,0.1)}
+    .admin-sections{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:20px}
+    .admin-section{background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.3);border-radius:10px;padding:20px}
+    .section-title{color:#ffd700;margin-bottom:15px;font-size:18px;display:flex;align-items:center;gap:10px}
+    textarea.form-control{min-height:100px;resize:vertical}
+    .save-btn{background:linear-gradient(45deg,#ffd700,#ffa500);color:#000;border:none;padding:10px 20px;border-radius:5px;font-weight:bold;cursor:pointer;transition:all .3s;width:100%}
+    .save-btn:hover{transform:translateY(-3px);box-shadow:0 5px 15px rgba(255,215,0,0.4)}
+    .error-message{color:#ff6b6b;margin-top:10px;text-align:center;display:none}
+    .user-list{max-height:200px;overflow-y:auto;margin-bottom:15px;border:1px solid rgba(255,215,0,0.3);border-radius:5px;padding:10px}
+    .user-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1)}
+    .user-item:last-child{border-bottom:none}
+    .user-actions a{color:#ff6b6b;margin-left:10px;cursor:pointer}
+    .user-actions a.edit-user{color:#ffd700}
+    .image-upload-container{border:2px dashed rgba(255,215,0,0.5);padding:20px;text-align:center;border-radius:8px;margin-bottom:15px;cursor:pointer;transition:all .3s}
+    .image-upload-container:hover{border-color:#ffd700;background:rgba(255,215,0,0.05)}
+    .image-preview{max-width:100%;max-height:200px;margin-top:10px;display:none;border-radius:5px}
+    .status-message{text-align:center;padding:10px;margin-top:10px;border-radius:5px;display:none}
+    .status-success{background:rgba(46,204,113,0.2);color:#2ecc71;border:1px solid #2ecc71}
+    .status-error{background:rgba(231,76,60,0.2);color:#e74c3c;border:1px solid #e74c3c}
+    .payment-requests{max-height:400px;overflow-y:auto;margin-bottom:15px}
+    .payment-item{background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.3);border-radius:8px;padding:15px;margin-bottom:15px}
+    .payment-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .payment-id{font-weight:bold;color:#ffd700;font-size:16px}
+    .payment-amount{font-weight:bold;font-size:18px;color:#2ecc71}
+    .payment-status{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:bold}
+    .status-pending{background:rgba(241,196,15,0.2);color:#f1c40f}
+    .status-completed{background:rgba(46,204,113,0.2);color:#2ecc71}
+    .status-rejected{background:rgba(231,76,60,0.2);color:#e74c3c}
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <div class="login-form" id="loginForm">
+      <h1><i class="fas fa-lock"></i> Admin Login</h1>
+      <div class="form-group"><label>Username</label><input id="username" placeholder="Enter admin username"/></div>
+      <div class="form-group"><label>Password</label><input id="password" placeholder="Enter admin password" type="password"/></div>
+      <button class="login-btn" onclick="login()">Login</button>
+      <div class="error-message" id="errorMessage">Invalid credentials. Please try again.</div>
+    </div>
+
+    <div class="admin-panel" id="adminPanel">
+      <div class="admin-header">
+        <h2 class="admin-title"><i class="fas fa-cog"></i> RealityLottery Admin Panel</h2>
+        <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+
+      <div class="admin-sections">
+        <!-- Payments -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-money-bill-wave"></i> Payment Requests</h3>
+          <div class="payment-requests" id="paymentRequests"></div>
+          <button class="save-btn" onclick="fetchPayments()"><i class="fas fa-sync"></i> Refresh Payments</button>
+        </div>
+
+        <!-- Content -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-edit"></i> Content Management</h3>
+          <div id="contentManagement"></div>
+          <div style="margin-top:16px;border-top:1px solid rgba(255,215,0,0.3);padding-top:16px">
+            <h3 class="section-title"><i class="fas fa-plus"></i> Add New Content</h3>
+            <div class="form-group"><label>Content Key</label><input class="form-control" id="newContentKey" placeholder="Example: heroTitle"/></div>
+            <div class="form-group"><label>Content Value</label><textarea class="form-control" id="newContentValue" placeholder="Enter content..."></textarea></div>
+            <button class="save-btn" onclick="addContentItem()">Add Content Item</button>
+          </div>
+          <div id="contentStatus" class="status-message"></div>
+        </div>
+
+        <!-- Images -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-images"></i> Image Management</h3>
+          <div class="form-group">
+            <label>Homepage Background Image</label>
+            <div class="image-upload-container" onclick="document.getElementById('heroImageInput').click()">
+              <p>Click to upload image (max 5MB)</p>
+              <img id="heroImagePreview" class="image-preview" alt="Hero Preview">
+              <input type="file" id="heroImageInput" accept="image/*" style="display:none" onchange="previewImage(this,'heroImagePreview')">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>About Us Image</label>
+            <div class="image-upload-container" onclick="document.getElementById('aboutImageInput').click()">
+              <p>Click to upload image (max 5MB)</p>
+              <img id="aboutImagePreview" class="image-preview" alt="About Preview">
+              <input type="file" id="aboutImageInput" accept="image/*" style="display:none" onchange="previewImage(this,'aboutImagePreview')">
+            </div>
+          </div>
+          <button class="save-btn" onclick="saveImages()">Save Images</button>
+          <div id="imageStatus" class="status-message"></div>
+        </div>
+
+        <!-- Users -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-users"></i> User Management</h3>
+          <div id="userList" class="user-list"></div>
+        </div>
+
+        <!-- Lottery Settings -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-ticket-alt"></i> Lottery Settings</h3>
+          <div class="form-group"><label>Jackpot Amount ($)</label><input id="jackpotAmount" class="form-control" type="number" value="1000000"></div>
+          <div class="form-group"><label>Next Draw Date</label><input id="nextDrawDate" class="form-control" type="datetime-local"></div>
+          <div class="form-group"><label>Ticket Price ($)</label><input id="ticketPrice" class="form-control" type="number" step="0.01" value="5"></div>
+          <button class="save-btn" onclick="saveLotterySettings()">Update Settings</button>
+        </div>
+
+        <!-- Carousel -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-images"></i> Carousel Slides</h3>
+          <div class="form-group"><label>Slide 1 Image URL</label><input id="slide1Url" class="form-control"></div>
+          <div class="form-group"><label>Slide 1 Title</label><input id="slide1Title" class="form-control"></div>
+          <div class="form-group"><label>Slide 2 Image URL</label><input id="slide2Url" class="form-control"></div>
+          <div class="form-group"><label>Slide 2 Title</label><input id="slide2Title" class="form-control"></div>
+          <button class="save-btn" onclick="saveSlides()">Save Slides</button>
+        </div>
+
+        <!-- Countries -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-globe"></i> Countries</h3>
+          <div class="form-group"><label>Countries JSON</label>
+            <textarea id="countriesJson" class="form-control" placeholder='[{"code":"US","participants":12045}]'></textarea>
+          </div>
+          <button class="save-btn" onclick="saveCountries()">Save Countries</button>
+        </div>
+
+        <!-- Partners -->
+        <div class="admin-section">
+          <h3 class="section-title"><i class="fas fa-handshake"></i> Partners</h3>
+          <div class="form-group"><label>Partners JSON</label>
+            <textarea id="partnersJson" class="form-control" placeholder='[{"name":"GoldenTrust","logo":"https://..."}]'></textarea>
+          </div>
+          <button class="save-btn" onclick="savePartners()">Save Partners</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const API_BASE = '';
+  let contentData = {};
+
+  function login(){
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const errorMessage = document.getElementById('errorMessage');
+    fetch(API_BASE+'/api/admin/login',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password })
+    }).then(async r=>{
+      const body = await r.json();
+      if(!r.ok){
+        errorMessage.style.display='block';
+        errorMessage.textContent = body.message || 'Invalid credentials';
+        document.getElementById('password').value='';
+      }else{
+        localStorage.setItem('rl_admin_token', body.token);
+        document.getElementById('loginForm').style.display='none';
+        document.getElementById('adminPanel').style.display='block';
+        setCurrentDateTime();
+        fetchUsers();
+        fetchContent();
+        fetchPayments();
+      }
+    }).catch(()=>alert('Network error'));
+  }
+  function logout(){
+    localStorage.removeItem('rl_admin_token');
+    document.getElementById('loginForm').style.display='block';
+    document.getElementById('adminPanel').style.display='none';
+  }
+  function setCurrentDateTime(){
+    const now = new Date();
+    const y=now.getFullYear(), m=String(now.getMonth()+1).padStart(2,'0'), d=String(now.getDate()).padStart(2,'0');
+    const H=String(now.getHours()).padStart(2,'0'), M=String(now.getMinutes()).padStart(2,'0');
+    const input = document.getElementById('nextDrawDate');
+    if(input) input.value = `${y}-${m}-${d}T${H}:${M}`;
+  }
+
+  async function fetchUsers(){
+    const token = localStorage.getItem('rl_admin_token'); if(!token) return;
+    const r = await fetch(API_BASE+'/api/admin/users',{ headers:{Authorization:'Bearer '+token}});
+    const d = await r.json();
+    if(!r.ok){ alert(d.message||'Failed to fetch users'); return; }
+    const list = document.getElementById('userList'); list.innerHTML='';
+    d.users.forEach(u=>{
+      const div = document.createElement('div');
+      div.className='user-item';
+      div.innerHTML = `<span>${u.fullName} (${u.username})</span>
+        <div class="user-actions">
+          <a class="edit-user" title="Edit disabled"><i class="fas fa-edit"></i></a>
+        </div>`;
+      list.appendChild(div);
+    });
+  }
+
+  async function fetchContent(){
+    const token = localStorage.getItem('rl_admin_token'); if(!token) return;
+    try{
+      const r = await fetch(API_BASE+'/api/content',{ headers:{Authorization:'Bearer '+token}});
+      contentData = await r.json();
+      renderContentItems();
+      // Fill specific inputs
+      slide1Url.value = contentData.slide1Url || '';
+      slide1Title.value = contentData.slide1Title || '';
+      slide2Url.value = contentData.slide2Url || '';
+      slide2Title.value = contentData.slide2Title || '';
+      jackpotAmount.value = contentData.jackpotAmount || 1000000;
+      ticketPrice.value = contentData.ticketPrice || 5;
+      nextDrawDate.value = (contentData.nextDrawDate ? new Date(contentData.nextDrawDate) : new Date()).toISOString().slice(0,16);
+      countriesJson.value = contentData.countries || '';
+      partnersJson.value = contentData.partners || '';
+    }catch(e){
+      console.error(e);
+      showStatus('contentStatus','Error loading content','error');
+    }
+  }
+
+  function renderContentItems(){
+    const container = document.getElementById('contentManagement');
+    container.innerHTML = '';
+    Object.entries(contentData).forEach(([key,val])=>{
+      const wrap = document.createElement('div'); wrap.className='form-group';
+      wrap.innerHTML = `<label>${key}</label>
+        <textarea class="form-control content-value" data-key="${key}">${typeof val==='string'?val:JSON.stringify(val)}</textarea>
+        <button class="save-btn" style="margin-top:8px" onclick="updateContentItem('${key}')">Update</button>`;
+      container.appendChild(wrap);
+    });
+  }
+
+  async function updateContentItem(key){
+    const token = localStorage.getItem('rl_admin_token'); if(!token) return;
+    const value = document.querySelector(`.content-value[data-key="${key}"]`).value;
+    const body = {}; body[key]=value;
+    try{
+      const r = await fetch(API_BASE+'/api/admin/content',{
+        method:'PUT',
+        headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+        body: JSON.stringify(body)
+      });
+      if(!r.ok) throw new Error('Failed to update content');
+      showStatus('contentStatus',`"${key}" updated successfully!`,'success');
+      contentData[key]=value;
+    }catch(e){ console.error(e); showStatus('contentStatus','Error: '+e.message,'error'); }
+  }
+
+  async function addContentItem(){
+    const token = localStorage.getItem('rl_admin_token'); if(!token) return;
+    const key = newContentKey.value.trim(); const value = newContentValue.value.trim();
+    if(!key || !value) return showStatus('contentStatus','Both key and value are required','error');
+    const body={}; body[key]=value;
+    try{
+      const r = await fetch(API_BASE+'/api/admin/content',{
+        method:'PUT',
+        headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+        body: JSON.stringify(body)
+      });
+      if(!r.ok) throw new Error('Failed to add content item');
+      contentData[key]=value; renderContentItems();
+      newContentKey.value=''; newContentValue.value='';
+      showStatus('contentStatus',`"${key}" added successfully!`,'success');
+    }catch(e){ showStatus('contentStatus','Error adding item: '+e.message,'error'); }
+  }
+
+  function previewImage(input, previewId){
+    const file = input.files[0]; if(!file) return;
+    if(file.size > 5*1024*1024) return showStatus('imageStatus','File size exceeds 5MB limit','error');
+    const reader = new FileReader();
+    reader.onload = e => { const img=document.getElementById(previewId); img.src=e.target.result; img.style.display='block'; };
+    reader.readAsDataURL(file);
+  }
+
+  async function uploadOne(inputId, keyName){
+    const token = localStorage.getItem('rl_admin_token'); if(!token) return '';
+    const file = document.getElementById(inputId).files[0]; if(!file) return '';
+    const fd = new FormData(); fd.append('image', file);
+    const r = await fetch(API_BASE+'/api/admin/upload',{ method:'POST', headers:{Authorization:'Bearer '+token}, body: fd });
+    if(!r.ok) throw new Error('Upload failed');
+    const data = await r.json(); // { imagePath }
+    const body={}; body[keyName]=data.imagePath;
+    await fetch(API_BASE+'/api/admin/content',{ method:'PUT', headers:{'Content-Type':'application/json',Authorization:'Bearer '+token}, body: JSON.stringify(body) });
+    return data.imagePath;
+  }
+
+  async function saveImages(){
+    try{
+      let changed=0;
+      if(heroImageInput.files.length){ await uploadOne('heroImageInput','heroImage'); changed++; }
+      if(aboutImageInput.files.length){ await uploadOne('aboutImageInput','aboutImage'); changed++; }
+      showStatus('imageStatus', changed? 'Images saved successfully!' : 'No changes', 'success');
+    }catch(e){ console.error(e); showStatus('imageStatus','Error: '+e.message,'error'); }
+  }
+
+  // Lottery settings save (write to content keys)
+  async function saveLotterySettings(){
+    const token = localStorage.getItem('rl_admin_token'); if(!token) return;
+    const body = {
+      jackpotAmount: String(jackpotAmount.value||'1000000'),
+      ticketPrice: String(ticketPrice.value||'5'),
+      nextDrawDate: new Date(nextDrawDate.value).toISOString()
+    };
+    const r = await fetch(API_BASE+'/api/admin/content',{ method:'PUT', headers:{'Content-Type':'application/json', Authorization:'Bearer '+token}, body: JSON.stringify(body) });
+    if(!r.ok) return alert('Failed to save settings');
+    alert('Settings updated');
+  }
+
+  async function saveSlides(){
+    const token = localStorage.getItem('rl_admin_token'); if(!token) return;
+    const body = {
+      slide1Url: slide1Url.value, slide1Title: slide1Title.value,
+      slide2Url: slide2Url.value, slide2Title: slide2Title.value
+    };
+    const r = await fetch(API_BASE+'/api/admin/content',{ method:'PUT', headers:{'Content-Type':'application/json', Authorization:'Bearer '+token}, body: JSON.stringify(body) });
+    if(!r.ok) return alert('Failed to save slides'); alert('Slides saved');
+  }
+
+  async function saveCountries(){
+    const token = localStorage.getItem('rl_admin_token'); if(!token) return;
+    const body = { countries: countriesJson.value };
+    const r = await fetch(API_BASE+'/api/admin/content',{ method:'PUT', headers:{'Content-Type':'application/json', Authorization:'Bearer '+token}, body: JSON.stringify(body) });
+    if(!r.ok) return alert('Failed'); alert('Countries saved');
+  }
+
+  async function savePartners(){
+    const token = localStorage.getItem('rl_admin_token'); if(!token) return;
+    const body = { partners: partnersJson.value };
+    const r = await fetch(API_BASE+'/api/admin/content',{ method:'PUT', headers:{'Content-Type':'application/json', Authorization:'Bearer '+token}, body: JSON.stringify(body) });
+    if(!r.ok) return alert('Failed'); alert('Partners saved');
+  }
+
+  // Payments (admin)
+  async function fetchPayments(){
+    const token = localStorage.getItem('rl_admin_token'); if(!token) return;
+    const r = await fetch(API_BASE+'/api/admin/payments?status=pending',{ headers:{Authorization:'Bearer '+token}});
+    const d = await r.json();
+    const wrap = document.getElementById('paymentRequests'); wrap.innerHTML='';
+    const arr = (d.payments||[]).filter(p=>p.status==='pending');
+    if(arr.length===0){ wrap.innerHTML='<div class="status-message status-success" style="display:block">No pending payment requests</div>'; return; }
+    arr.forEach(p=>{
+      const div = document.createElement('div'); div.className='payment-item';
+      div.innerHTML = `
+        <div class="payment-header">
+          <span class="payment-id">#${p.reference||p._id}</span>
+          <span class="payment-amount">$${Number(p.amount||0).toFixed(2)}</span>
+          <span class="payment-status status-pending">Pending</span>
+        </div>
+        <div>Method: ${p.method||'-'} | Type: ${p.type||'-'}</div>
+        <div>Date: ${new Date(p.createdAt).toLocaleString()}</div>
+      `;
+      wrap.appendChild(div);
+    });
+  }
+
+  function showStatus(id,msg,type){
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = `status-message status-${type}`;
+    el.style.display='block';
+    setTimeout(()=>{ el.style.display='none'; }, 5000);
+  }
+
+  window.onload = function(){
+    const token = localStorage.getItem('rl_admin_token');
+    if(token){
+      document.getElementById('loginForm').style.display='none';
+      document.getElementById('adminPanel').style.display='block';
+      setCurrentDateTime(); fetchUsers(); fetchContent(); fetchPayments();
+    }
+    document.getElementById('password').addEventListener('keypress', function(e){ if(e.key==='Enter') login(); });
+  }
+</script>
+</body>
+</html>
