@@ -1,60 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Profile - RealityLottery</title>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <style>
-    body{background:#000;color:#fff;font-family:Arial, sans-serif;padding:20px;}
-    .box{background:#111;padding:20px;border-radius:10px;border:2px solid #ffd700;max-width:600px;margin:auto;}
-    h2{color:#ffd700;}
-    ul{list-style:none;padding:0;}
-    li{padding:8px 0;border-bottom:1px solid #333;}
-    .step{margin:5px 0;padding:8px;border-radius:6px;}
-    .done{background:#2e7d32;}
-    .pending{background:#7b1fa2;}
-  </style>
+  <title>User Profile</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="main.js" defer></script>
 </head>
 <body>
-  <div class="box">
-    <h2>My Profile</h2>
-    <div id="profileInfo">Loading...</div>
-    <h3>My Tasks</h3>
-    <div id="tasks"></div>
-  </div>
+  <!-- ===== FIXED HEADER ===== -->
+  <header class="top-nav">
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="news.html">News</a>
+      <a href="withdrawal.html">Withdrawal</a>
+      <button id="login-btn">Login</button>
+      <button id="profile-btn" style="display:none;">Profile</button>
+      <button id="logout-btn" style="display:none;">Logout</button>
+    </nav>
+  </header>
+
+  <!-- ===== PROFILE CONTENT ===== -->
+  <main class="page-content">
+    <h2>User Profile</h2>
+    <div id="profile-info">
+      <!-- This will be filled with user data from API -->
+      <p><strong>Email:</strong> <span id="profile-email"></span></p>
+      <p><strong>Balance:</strong> <span id="profile-balance"></span></p>
+    </div>
+  </main>
+
+  <!-- ===== FIXED FOOTER ===== -->
+  <footer class="bottom-nav">
+    <nav>
+      <a href="index.html">🏠 Home</a>
+      <a href="news.html">📰 News</a>
+      <a href="withdrawal.html">💳 Withdrawal</a>
+      <a href="profile.html">👤 Profile</a>
+    </nav>
+  </footer>
 
   <script>
-    const API_BASE="https://realitylottery.koyeb.app";
-    const token=localStorage.getItem("rl_token");
-    if(!token){location.href="login.html";}
-
-    async function loadProfile(){
-      const res=await fetch(API_BASE+"/api/auth/me",{headers:{Authorization:"Bearer "+token}});
-      if(!res.ok){localStorage.removeItem("rl_token");location.href="login.html";return;}
-      const data=await res.json();
-      const u=data.user;
-      document.getElementById("profileInfo").innerHTML=`
-        <ul>
-          <li><b>Username:</b> ${u.username}</li>
-          <li><b>Email:</b> ${u.email}</li>
-          <li><b>Subscription:</b> ${u.subscriptionType||"None"}</li>
-          <li><b>Balance:</b> ${u.balance||0} USDT</li>
-        </ul>
-      `;
-      renderTasks(u);
-    }
-
-    function renderTasks(user){
-      const steps=6;
-      let done= user.completedSteps || 0;
-      let html="";
-      for(let i=1;i<=steps;i++){
-        html+=`<div class="step ${i<=done?'done':'pending'}">Step ${i} - ${i<=done?'Completed':'Pending'}</div>`;
+    // Fetch profile data
+    document.addEventListener("DOMContentLoaded", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("You must login first");
+        window.location.href = "login.html";
+        return;
       }
-      document.getElementById("tasks").innerHTML=html;
-    }
 
-    loadProfile();
+      try {
+        const res = await fetch("/api/profile", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById("profile-email").textContent = data.email;
+          document.getElementById("profile-balance").textContent = data.balance;
+        } else {
+          alert(data.message || "Error loading profile");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Network error");
+      }
+    });
   </script>
 </body>
 </html>
