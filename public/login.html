@@ -1,82 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>RealityLottery - Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* copy same CSS as in your original login.html (kept identical) */
-    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, Verdana, sans-serif; }
-    body { background:#000; color:#fff; min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1516245834210-c4c142a335d3?auto=format&fit=crop&w=1200&q=80'); background-size:cover; background-position:center; }
-    .login-container{ width:100%; max-width:500px; background:rgba(0,0,0,0.8); border:1px solid #ffd700; border-radius:10px; padding:40px; box-shadow:0 10px 30px rgba(255,215,0,0.1); backdrop-filter: blur(5px); }
-    .logo{ text-align:center; margin-bottom:30px; font-size:28px; font-weight:800; color:#ffd700; text-transform:uppercase; letter-spacing:2px;}
-    .login-title{ text-align:center; margin-bottom:30px; color:#ffd700; font-size:24px; }
-    .form-group{ margin-bottom:20px; }
-    .form-group label{ display:block; margin-bottom:8px; color:#ffd700; font-weight:500; }
-    .form-control{ width:100%; padding:12px 15px; border-radius:5px; border:1px solid #444; background:#222; color:#fff; font-size:16px; transition:all .3s; }
-    .form-control:focus{ border-color:#ffd700; outline:none; box-shadow:0 0 0 2px rgba(255,215,0,0.2); }
-    .login-btn{ width:100%; padding:14px; background: linear-gradient(45deg,#ffd700,#ffa500); color:#000; border:none; border-radius:5px; font-weight:bold; font-size:16px; cursor:pointer; transition:all .3s; margin-top:10px; margin-bottom:20px; }
-    .login-btn:hover{ transform:translateY(-3px); box-shadow:0 5px 15px rgba(255,215,0,0.4); }
-    .register-link{ text-align:center; color:#aaa; }
-    .register-link a{ color:#ffd700; text-decoration:none; transition:all .3s; }
-    .register-link a:hover{ text-decoration:underline; }
-    .forgot-password{ text-align:right; margin-bottom:20px; }
-    .forgot-password a{ color:#aaa; text-decoration:none; font-size:14px; }
-    .forgot-password a:hover{ color:#ffd700; }
-    @media (max-width:768px){ .login-container{ padding:30px 20px; } }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+    body{background:#000;color:#fff;display:flex;flex-direction:column;min-height:100vh;}
+    header{padding:20px;background:#111;border-bottom:2px solid #ffd700;text-align:center;}
+    .logo{font-size:28px;font-weight:bold;color:#ffd700;}
+    .form-container{flex:1;display:flex;justify-content:center;align-items:center;padding:30px;}
+    form{background:#111;padding:30px;border-radius:10px;width:100%;max-width:400px;border:1px solid #ffd700;}
+    form h2{margin-bottom:20px;color:#ffd700;}
+    input{width:100%;padding:12px;margin:10px 0;border:none;border-radius:6px;}
+    button{width:100%;padding:12px;background:linear-gradient(45deg,#ffd700,#ffa500);border:none;border-radius:6px;font-weight:bold;cursor:pointer;}
+    button:hover{background:linear-gradient(45deg,#ffa500,#ffd700);}
+    footer{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:2px solid #ffd700;padding:10px 0;display:flex;justify-content:space-around;align-items:center;}
+    footer a{color:#ffd700;text-decoration:none;font-size:14px;font-weight:bold;display:flex;flex-direction:column;align-items:center;}
+    footer a i{font-size:18px;margin-bottom:4px;}
+    footer a:hover{color:#ffa500;}
   </style>
 </head>
 <body>
-  <div class="login-container">
-    <div class="logo">Reality<span>Lottery</span></div>
-    <h2 class="login-title">Welcome Back</h2>
+  <header>
+    <div class="logo">RealityLottery</div>
+  </header>
 
+  <div class="form-container">
     <form id="loginForm">
-      <div class="form-group"><label for="username">Username or Email</label>
-        <input type="text" id="username" class="form-control" placeholder="Enter your username or email" required></div>
-      <div class="form-group"><label for="password">Password</label>
-        <input type="password" id="password" class="form-control" placeholder="Enter your password" required></div>
-
-      <div class="forgot-password"><a href="forgot-password.html">Forgot password?</a></div>
-
-      <button type="submit" class="login-btn">Login</button>
-
-      <div class="register-link">Don't have an account? <a href="register.html">Create one</a></div>
+      <h2>Login</h2>
+      <input type="text" id="usernameOrEmail" placeholder="Username or Email" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button type="submit">Login</button>
     </form>
   </div>
 
+  <footer>
+    <a href="index.html"><i class="fas fa-home"></i>Home</a>
+    <a href="login.html"><i class="fas fa-sign-in-alt"></i>Login</a>
+    <a href="register.html"><i class="fas fa-user-plus"></i>Register</a>
+    <a href="subscribe.html"><i class="fas fa-star"></i>Subscribe</a>
+  </footer>
+
   <script>
-    const API_BASE = 'https://realitylottery.koyeb.app';
-
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    const API_BASE = "https://realitylottery.koyeb.app/api";
+    document.getElementById("loginForm").addEventListener("submit", async (e)=>{
       e.preventDefault();
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-      if (!username || !password) { alert('Please fill in all fields'); return; }
-
-      try {
-        const res = await fetch(API_BASE + '/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ usernameOrEmail: username, password })
+      const usernameOrEmail=document.getElementById("usernameOrEmail").value;
+      const password=document.getElementById("password").value;
+      try{
+        const res=await fetch(API_BASE+"/auth/login",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({usernameOrEmail,password})
         });
-        const data = await res.json();
-        if (!res.ok) { alert(data.message || 'Login failed'); return; }
-
-        localStorage.setItem('rl_token', data.token);
-        localStorage.setItem('rl_user', JSON.stringify(data.user));
-
-        alert('Login successful! Redirecting...');
-        window.location.href = 'index.html';
-      } catch (err) {
-        console.error(err);
-        alert('Network error. Try again later.');
-      }
-    });
-
-    document.getElementById('password').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') { document.getElementById('loginForm').dispatchEvent(new Event('submit')); }
+        const data=await res.json();
+        if(res.ok){ alert("Login successful!"); localStorage.setItem("token",data.token); window.location="index.html";}
+        else{ alert(data.message||"Login failed"); }
+      }catch(err){ alert("Network error"); }
     });
   </script>
 </body>
