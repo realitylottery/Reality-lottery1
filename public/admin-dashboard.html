@@ -490,6 +490,25 @@
   $('#btnReloadUsers').addEventListener('click', loadUsers);
   $('#userSearch').addEventListener('input', loadUsers);
 
+  async function updateUser(userId) {
+  const subscriptionType = document.getElementById("sub-" + userId).value;
+  const balance = document.getElementById("bal-" + userId).value;
+  const isActive = document.getElementById("active-" + userId).checked;
+
+  const res = await fetch(`/api/admin/updateUser/${userId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ subscriptionType, balance, isActive })
+  });
+
+  const data = await res.json();
+  if (res.ok) {
+    alert("User updated successfully!");
+  } else {
+    alert("Error: " + data.message);
+  }
+  }
+  
   // ========= WITHDRAWALS =========
   async function loadWithdrawals(){
     const tb = $('#withdrawalsTbody');
