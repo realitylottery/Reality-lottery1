@@ -56,6 +56,29 @@
       Join our exciting lottery platform where every subscription increases your chances to win amazing rewards!  
       Invite friends, earn referral bonuses, and be part of the ultimate lottery experience.  
     </p>
+<div id="banner-slider" style="display:flex;overflow-x:auto;gap:10px;"></div>
+
+<script>
+fetch("/api/banners")
+  .then(res => res.json())
+  .then(data => {
+    const container = document.getElementById("banner-slider");
+    data.banners.forEach(b => {
+      const div = document.createElement("div");
+      div.style.minWidth = "250px";
+      div.style.background = "#222";
+      div.style.color = "white";
+      div.style.padding = "10px";
+      div.innerHTML = `
+        <img src="${b.image}" style="width:100%;border-radius:10px;">
+        <h3>${b.title || ""}</h3>
+        <p>${b.description || ""}</p>
+        ${b.buttonText ? `<a href="${b.buttonLink}" style="color:gold;">${b.buttonText}</a>` : ""}
+      `;
+      container.appendChild(div);
+    });
+  });
+</script>
     <div id="banner-slider" style="display:flex;overflow-x:auto;gap:10px;"></div>
 
 <script>
