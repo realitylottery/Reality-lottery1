@@ -1,71 +1,303 @@
+<!-- FILE: public/profile.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>User Profile</title>
-  <link rel="stylesheet" href="styles.css"/>
-  <script src="main.js" defer></script>
+  <title>RealityLottery - Profile</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>
+    :root{
+      --bg:#000; --panel:#0f0f0f; --muted:#b9b9b9; --gold:#ffd700; --gold2:#ffa500; --red:#ff5252; --green:#23d18b;
+    }
+    *{box-sizing:border-box; font-family:Arial, Helvetica, sans-serif;}
+    body{margin:0;background:var(--bg);color:#fff;min-height:100vh;display:flex;flex-direction:column;}
+    a{color:var(--gold);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    header{position:sticky;top:0;z-index:20;padding:16px 14px;background:#111;border-bottom:2px solid var(--gold);display:flex;align-items:center;gap:12px}
+    .logo{font-weight:900;letter-spacing:1px;color:var(--gold)}
+    .grow{flex:1}
+    .top-actions{display:flex;align-items:center;gap:8px}
+    .btn{background:linear-gradient(45deg,var(--gold),var(--gold2));color:#000;border:none;border-radius:8px;padding:8px 12px;font-weight:700;cursor:pointer;box-shadow:0 4px 10px rgba(255,215,0,.25);transition:.15s}
+    .btn:hover{transform:translateY(-1px)}
+    .btn-outline{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+    .btn-small{padding:6px 10px;font-size:13px;border-radius:7px}
+    .chip{display:inline-block;border:1px solid rgba(255,215,0,.35);color:var(--gold);padding:3px 8px;border-radius:999px;font-size:12px}
+
+    main{flex:1;padding:16px}
+    .grid{display:grid;gap:12px}
+    @media(min-width:900px){ .grid-2{grid-template-columns:1fr 1fr} }
+    .card{background:#0f0f0f;border:1px solid rgba(255,215,0,.25);border-radius:12px;padding:14px}
+    .title{color:var(--gold);font-weight:800;margin-bottom:8px;display:flex;gap:8px;align-items:center}
+    .muted{color:var(--muted)}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace}
+
+    .field{display:grid;gap:6px;margin:8px 0}
+    .field label{font-size:12px;color:var(--muted)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .copy-wrap{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+    /* Task steps */
+    .steps{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
+    .step{background:#101010;border:1px solid rgba(255,215,0,.2);padding:10px;border-radius:10px;text-align:center}
+    .step .n{font-size:12px;color:var(--muted)}
+    .step .label{font-size:13px;margin-top:4px}
+    .step.done{border-color:#0f6;box-shadow:0 0 0 1px rgba(0,255,120,.15) inset}
+    .progress-bar{height:10px;background:#181818;border:1px solid rgba(255,215,0,.25);border-radius:999px;overflow:hidden}
+    .progress-fill{height:100%;width:0;background:linear-gradient(90deg,#0f6,#7dffb2);transition:width .25s}
+
+    /* Bottom nav */
+    footer.navbar{
+      position:fixed;bottom:0;left:0;right:0;background:#111;border-top:2px solid var(--gold);
+      padding:8px 6px;display:flex;justify-content:space-around;align-items:center;z-index:20
+    }
+    footer.navbar a{color:var(--gold);font-size:13px;text-decoration:none;display:flex;flex-direction:column;align-items:center}
+    footer.navbar a i{font-size:18px;margin-bottom:3px}
+    footer.navbar a:hover{color:var(--gold2)}
+    .pagepad{height:62px} /* spacer for fixed footer */
+  </style>
 </head>
 <body>
-  <!-- ===== FIXED HEADER ===== -->
-  <header class="top-nav">
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="news.html">News</a>
-      <a href="withdrawal.html">Withdrawal</a>
-      <button id="login-btn">Login</button>
-      <button id="profile-btn" style="display:none;">Profile</button>
-      <button id="logout-btn" style="display:none;">Logout</button>
-    </nav>
+  <header>
+    <div class="logo"><i class="fa-solid fa-crown"></i> RealityLottery</div>
+    <div class="grow"></div>
+
+    <!-- When logged out -->
+    <div id="auth-guest" class="top-actions" style="display:none">
+      <a href="login.html" class="btn btn-small"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+      <a href="register.html" class="btn btn-outline btn-small"><i class="fa-solid fa-user-plus"></i> Register</a>
+    </div>
+
+    <!-- When logged in -->
+    <div id="auth-user" class="top-actions" style="display:none">
+      <span class="chip"><i class="fa-solid fa-user"></i> <span id="top-username">User</span></span>
+      <button id="btnLogout" class="btn-outline btn btn-small"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+    </div>
   </header>
 
-  <!-- ===== PROFILE CONTENT ===== -->
-  <main class="page-content">
-    <h2>User Profile</h2>
-    <div id="profile-info">
-      <!-- This will be filled with user data from API -->
-      <p><strong>Email:</strong> <span id="profile-email"></span></p>
-      <p><strong>Balance:</strong> <span id="profile-balance"></span></p>
+  <main>
+    <div class="grid grid-2">
+      <!-- Profile / Subscription -->
+      <section class="card">
+        <div class="title"><i class="fa-solid fa-id-card"></i> Profile</div>
+        <div id="profileWrap" class="muted">Loading…</div>
+      </section>
+
+      <!-- Balance & Referral -->
+      <section class="card">
+        <div class="title"><i class="fa-solid fa-wallet"></i> Balance & Referral</div>
+
+        <div class="field">
+          <label>Current Balance</label>
+          <div><strong id="balanceAmount">0</strong> <span class="muted">USD</span></div>
+        </div>
+
+        <div class="field">
+          <label>Subscription</label>
+          <div id="subType">None</div>
+        </div>
+
+        <div class="field">
+          <label>Your Referral Link</label>
+          <div class="copy-wrap">
+            <input id="refLink" class="mono" readonly style="flex:1;min-width:220px;background:#0b0b0b;border:1px solid rgba(255,215,0,.25);border-radius:8px;padding:8px;color:#fff" />
+            <button id="btnCopyRef" class="btn btn-small"><i class="fa-regular fa-copy"></i> Copy</button>
+          </div>
+          <div class="muted" style="font-size:12px;margin-top:6px">
+            Share this link. Each friend who registers and pays their subscription advances your task progress.
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <a href="withdrawal.html" class="btn btn-small"><i class="fa-solid fa-arrow-up-right-from-square"></i> Withdrawal</a>
+          <a href="subscribe.html" class="btn btn-outline btn-small"><i class="fa-solid fa-star"></i> Plans</a>
+        </div>
+      </section>
     </div>
+
+    <!-- Task Progress -->
+    <section class="card" style="margin-top:12px">
+      <div class="title"><i class="fa-solid fa-list-check"></i> 6-Step Task</div>
+      <div class="muted">Step 1 is completed automatically once you have an active subscription. Steps 2–6 advance when invited users pay their subscription. (Admin view updates your progress.)</div>
+
+      <div class="row" style="margin:12px 0 8px">
+        <div class="progress-bar" style="flex:1">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+        <div class="chip"><span id="progressText">0/6</span></div>
+      </div>
+
+      <div id="stepsWrap" class="steps">
+        <div class="step" data-step="1">
+          <div class="n">Step 1</div>
+          <div class="label">Active subscription</div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="n">Step 2</div>
+          <div class="label">1 paid invite</div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="n">Step 3</div>
+          <div class="label">2 paid invites</div>
+        </div>
+        <div class="step" data-step="4">
+          <div class="n">Step 4</div>
+          <div class="label">3 paid invites</div>
+        </div>
+        <div class="step" data-step="5">
+          <div class="n">Step 5</div>
+          <div class="label">4 paid invites</div>
+        </div>
+        <div class="step" data-step="6">
+          <div class="n">Step 6</div>
+          <div class="label">5 paid invites</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="pagepad"></div>
   </main>
 
-  <!-- ===== FIXED FOOTER ===== -->
-  <footer class="bottom-nav">
-    <nav>
-      <a href="index.html">🏠 Home</a>
-      <a href="news.html">📰 News</a>
-      <a href="withdrawal.html">💳 Withdrawal</a>
-      <a href="profile.html">👤 Profile</a>
-    </nav>
+  <!-- Bottom fixed nav -->
+  <footer class="navbar">
+    <a href="index.html"><i class="fa-solid fa-home"></i>Home</a>
+    <a href="news.html"><i class="fa-solid fa-newspaper"></i>News</a>
+    <a href="withdrawal.html"><i class="fa-solid fa-wallet"></i>Withdrawal</a>
+    <a href="profile.html"><i class="fa-solid fa-user"></i>Profile</a>
   </footer>
 
   <script>
-    // Fetch profile data
-    document.addEventListener("DOMContentLoaded", async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("You must login first");
-        window.location.href = "login.html";
+    // ====== CONFIG ======
+    const API_BASE = ''; // same-origin to avoid CORS/network issues
+    const LS_TOKEN = 'rl_token';
+
+    // ====== AUTH STATE (top bar) ======
+    function getToken(){ return localStorage.getItem(LS_TOKEN) || ''; }
+    function isSigned(){ return !!getToken(); }
+    function signOut(){ localStorage.removeItem(LS_TOKEN); location.href = 'login.html'; }
+
+    function updateTopAuth(user){
+      const guest = document.getElementById('auth-guest');
+      const auth  = document.getElementById('auth-user');
+      if (user){
+        guest.style.display = 'none';
+        auth.style.display  = 'flex';
+        document.getElementById('top-username').textContent = user.username || user.fullName || 'User';
+      }else{
+        guest.style.display = 'flex';
+        auth.style.display  = 'none';
+      }
+    }
+
+    document.getElementById('btnLogout').addEventListener('click', signOut);
+
+    // ====== SAFE FETCH ======
+    async function safeFetch(url, opts={}){
+      try{
+        const res = await fetch(url, opts);
+        const ct = res.headers.get('content-type') || '';
+        const data = ct.includes('application/json') ? await res.json() : await res.text();
+        if (!res.ok){
+          throw new Error((data && data.message) ? data.message : ('HTTP ' + res.status));
+        }
+        return data;
+      }catch(e){
+        console.warn('Fetch error:', url, e);
+        throw e;
+      }
+    }
+
+    // ====== LOAD PROFILE ======
+    async function loadProfile(){
+      if (!isSigned()){
+        // if not logged, go to login
+        location.href = 'login.html?next=profile.html';
         return;
       }
 
-      try {
-        const res = await fetch("/api/profile", {
-          headers: { Authorization: `Bearer ${token}` }
+      // get user
+      let me;
+      try{
+        me = await safeFetch(API_BASE + '/api/auth/me', {
+          headers: { 'Authorization':'Bearer ' + getToken() }
         });
-        const data = await res.json();
-        if (res.ok) {
-          document.getElementById("profile-email").textContent = data.email;
-          document.getElementById("profile-balance").textContent = data.balance;
-        } else {
-          alert(data.message || "Error loading profile");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Network error");
+      }catch(e){
+        alert('Network error or session expired. Please login again.');
+        signOut();
+        return;
       }
-    });
+
+      const user = me.user || me || {};
+      updateTopAuth(user);
+
+      // Profile details
+      const profileWrap = document.getElementById('profileWrap');
+      profileWrap.innerHTML = `
+        <div class="field">
+          <label>Username</label>
+          <div class="mono"><strong>${user.username || '-'}</strong></div>
+        </div>
+        <div class="field">
+          <label>Full Name</label>
+          <div>${user.fullName || '-'}</div>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <div>${user.email || '-'}</div>
+        </div>
+        <div class="field">
+          <label>User ID</label>
+          <div class="mono">${user._id || '-'}</div>
+        </div>
+      `;
+
+      // Balance & subscription
+      document.getElementById('balanceAmount').textContent = Number(user.balance || 0).toLocaleString();
+      const sub = user.subscriptionType || '';
+      document.getElementById('subType').innerHTML = sub ? 
+        `<span class="chip"><i class="fa-solid fa-star"></i> ${sub}</span>` : 
+        `<span class="muted">None</span>`;
+
+      // Referral link (uses username by default)
+      const refCode = encodeURIComponent(user.username || user._id || '');
+      const refLink = `${location.origin}/register.html?ref=${refCode}`;
+      const refInput = document.getElementById('refLink');
+      refInput.value = refLink;
+      document.getElementById('btnCopyRef').addEventListener('click', async ()=>{
+        try{
+          await navigator.clipboard.writeText(refInput.value);
+          const old = event.target.innerHTML;
+          event.target.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+          setTimeout(()=> event.target.innerHTML = old, 1200);
+        }catch(err){ alert('Copy failed'); }
+      });
+
+      // Task progress: 0..6, with step1 = has subscription
+      let progress = Number(user.taskProgress || 0);
+      const hasSub = !!sub;
+      // Ensure step 1 is considered done if there is a subscription
+      if (hasSub && progress < 1) progress = 1;
+      if (progress > 6) progress = 6;
+
+      // paint steps
+      document.querySelectorAll('.step').forEach(box=>{
+        const n = Number(box.getAttribute('data-step'));
+        if (n <= progress) box.classList.add('done');
+        else box.classList.remove('done');
+      });
+
+      // progress bar
+      const pct = (progress/6)*100;
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressText').textContent = `${progress}/6`;
+    }
+
+    // ====== INIT ======
+    // If token missing, show guest header immediately to avoid flicker
+    updateTopAuth(isSigned() ? {} : null);
+    window.addEventListener('load', loadProfile);
   </script>
 </body>
 </html>
