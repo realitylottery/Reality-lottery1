@@ -8,6 +8,9 @@ const path = require('path');
 const User = require('./models/User');
 const News = require('./models/News');
 const Withdrawal = require('./models/Withdrawal');
+const NewsTicker = require('./models/NewsTicker');
+const Banner = require('./models/Banner');
+
 const app = express();
 app.use(express.json());
 
@@ -17,8 +20,7 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:5000',
   'http://127.0.0.1:5500',
-  'http://localhost:5500',
-  'file://'
+  'http://localhost:5500'
 ];
 
 app.use(cors({
@@ -73,15 +75,12 @@ async function authMiddleware(req, res, next) {
 }
 
 // ================= ROUTES =================
-const NewsTicker = require("./models/NewsTicker");
-
-// Get all tickers (public)
+// News Ticker
 app.get("/api/ticker", async (req, res) => {
   const tickers = await NewsTicker.find().sort({ createdAt: -1 });
   res.json({ tickers });
 });
 
-// Admin add ticker
 app.post("/api/admin/ticker", authMiddleware, async (req, res) => {
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
   const ticker = new NewsTicker({ text: req.body.text });
@@ -89,22 +88,18 @@ app.post("/api/admin/ticker", authMiddleware, async (req, res) => {
   res.json({ message: "Ticker added", ticker });
 });
 
-// Admin delete ticker
 app.delete("/api/admin/ticker/:id", authMiddleware, async (req, res) => {
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
   await NewsTicker.findByIdAndDelete(req.params.id);
   res.json({ message: "Ticker deleted" });
 });
 
-const Banner = require("./models/Banner");
-
-// Get banners (public)
+// Banners
 app.get("/api/banners", async (req, res) => {
   const banners = await Banner.find().sort({ createdAt: -1 });
   res.json({ banners });
 });
 
-// Admin add banner
 app.post("/api/admin/banners", authMiddleware, async (req, res) => {
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
   const banner = new Banner(req.body);
@@ -112,15 +107,13 @@ app.post("/api/admin/banners", authMiddleware, async (req, res) => {
   res.json({ message: "Banner added", banner });
 });
 
-// Admin delete banner
 app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
   await Banner.findByIdAndDelete(req.params.id);
   res.json({ message: "Banner deleted" });
 });
 
-
-// User requests withdrawal
+// Withdrawals
 app.post("/api/withdrawals", authMiddleware, async (req, res) => {
   try {
     const { amount, wallet } = req.body;
@@ -140,7 +133,6 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
   }
 });
 
-// User views own withdrawals
 app.get("/api/withdrawals", authMiddleware, async (req, res) => {
   try {
     const withdrawals = await Withdrawal.find({ user: req.user.id }).sort({ createdAt: -1 });
@@ -151,7 +143,6 @@ app.get("/api/withdrawals", authMiddleware, async (req, res) => {
   }
 });
 
-// Admin manages withdrawals
 app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
   const all = await Withdrawal.find().populate("user", "username email").sort({ createdAt: -1 });
@@ -168,8 +159,7 @@ app.put("/api/admin/withdrawals/:id", authMiddleware, async (req, res) => {
   }
 });
 
-
-// Public get news
+// News
 app.get('/api/news', async (req, res) => {
   try {
     const news = await News.find().sort({ createdAt: -1 });
@@ -180,7 +170,6 @@ app.get('/api/news', async (req, res) => {
   }
 });
 
-// Admin add news
 app.post("/api/admin/news", authMiddleware, async (req, res) => {
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
   try {
@@ -192,7 +181,6 @@ app.post("/api/admin/news", authMiddleware, async (req, res) => {
   }
 });
 
-// Admin delete news
 app.delete("/api/admin/news/:id", authMiddleware, async (req, res) => {
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
   try {
@@ -208,7 +196,7 @@ app.get('/api/health', (req, res) =>
   res.json({ status: 'ok', time: new Date() })
 );
 
-// Register
+// Auth
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { fullName, email, phone, username, password, referral } = req.body;
@@ -254,7 +242,6 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// Login
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { usernameOrEmail, password } = req.body;
@@ -308,7 +295,6 @@ app.post('/api/admin/login', (req, res) => {
   }
 });
 
-// Admin protected route - list users
 app.get('/api/admin/users', authMiddleware, async (req, res) => {
   try {
     if (!req.user.roles || !req.user.roles.includes('admin')) {
@@ -322,7 +308,6 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
   }
 });
 
-// Get current user
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
@@ -351,23 +336,9 @@ app.use('/uploads', express.static(UPLOADS_PATH));
 const DOCS_PATH = process.env.DOCS_PATH || path.join(__dirname, 'docs');
 app.use('/docs', express.static(DOCS_PATH));
 
-// SPA fallback
+// SPA fallback (always last)
 app.get('*', (req, res) => {
   res.sendFile(path.join(FRONTEND_PATH, 'index.html'));
-  // Check login state on page load
-document.addEventListener("DOMContentLoaded", () => {
-    const user = localStorage.getItem("user"); // user data from login
-    const loginBtn = document.getElementById("login-btn");
-    const profileBtn = document.getElementById("profile-btn");
-
-    if (user) {
-        if (loginBtn) loginBtn.style.display = "none";
-        if (profileBtn) profileBtn.style.display = "block";
-    } else {
-        if (loginBtn) loginBtn.style.display = "block";
-        if (profileBtn) profileBtn.style.display = "none";
-    }
-});
 });
 
 // ================= START =================
@@ -376,11 +347,3 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
-
-
-
-
-
-
-
-
