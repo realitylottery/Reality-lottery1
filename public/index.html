@@ -2,140 +2,440 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RealityLottery - Home</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Join our exciting lottery platform and win amazing rewards">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; font-family: Arial, sans-serif; }
-    body { background:#000; color:#fff; text-align:center; min-height:100vh; display:flex; flex-direction:column; }
-
-    header { padding:15px; background:#111; border-bottom:2px solid #ffd700; display:flex; justify-content:space-between; align-items:center; }
-    .logo { font-size:26px; font-weight:bold; color:#ffd700; letter-spacing:1px; }
-    .auth-buttons a, .auth-buttons span, .auth-buttons button {
-      margin-left:15px; color:#ffd700; text-decoration:none; font-weight:bold;
-      background:none; border:none; cursor:pointer;
+    :root {
+      --primary-color: #ffd700;
+      --secondary-color: #ffa500;
+      --dark-bg: #000;
+      --header-bg: #111;
+      --text-light: #ccc;
     }
-    .auth-buttons button:hover, .auth-buttons a:hover { color:#ffa500; }
 
-    .hero { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; }
-    .hero h1 { font-size:38px; color:#ffd700; margin-bottom:20px; }
-    .hero p { font-size:18px; color:#ccc; max-width:700px; line-height:1.6; }
-
-    .cta-buttons { margin-top:30px; display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
-    .cta-buttons a {
-      padding:12px 25px; background:linear-gradient(45deg,#ffd700,#ffa500);
-      color:#000; border-radius:8px; font-weight:bold; text-decoration:none;
-      transition:all .3s ease; box-shadow:0 4px 10px rgba(255,215,0,0.3);
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Arial', sans-serif;
     }
-    .cta-buttons a:hover { transform:translateY(-3px); box-shadow:0 6px 15px rgba(255,215,0,0.5); }
+
+    body {
+      background: var(--dark-bg);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+    }
+
+    header {
+      padding: 15px 5%;
+      background: var(--header-bg);
+      border-bottom: 2px solid var(--primary-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: bold;
+      color: var(--primary-color);
+      letter-spacing: 1px;
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 15px;
+    }
+
+    .auth-btn {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: bold;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color 0.3s;
+      font-size: clamp(0.9rem, 2vw, 1rem);
+    }
+
+    .auth-btn:hover {
+      color: var(--secondary-color);
+    }
+
+    /* News Ticker Styles */
+    #news-ticker {
+      background: var(--header-bg);
+      color: var(--primary-color);
+      padding: 12px 0;
+      border-top: 1px solid var(--primary-color);
+      border-bottom: 1px solid var(--primary-color);
+      font-size: 14px;
+      position: relative;
+      z-index: 50;
+    }
+
+    .ticker-container {
+      display: flex;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .ticker-label {
+      background: var(--primary-color);
+      color: #000;
+      padding: 2px 10px;
+      margin-right: 15px;
+      font-weight: bold;
+      flex-shrink: 0;
+      border-radius: 3px;
+    }
+
+    #ticker-content {
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+      flex-grow: 1;
+    }
+
+    #ticker-text {
+      display: inline-block;
+      padding-left: 100%;
+      animation: ticker 30s linear infinite;
+    }
+
+    .ticker-item {
+      display: inline-block;
+    }
+
+    .ticker-separator {
+      margin: 0 20px;
+      color: rgba(255, 215, 0, 0.5);
+    }
+
+    @keyframes ticker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+
+    .hero {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 5%;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 2.5rem);
+      color: var(--primary-color);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero p {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--text-light);
+      max-width: 700px;
+      margin-bottom: 2rem;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .cta-btn {
+      padding: 12px 25px;
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      color: #000;
+      border-radius: 8px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+    }
+
+    .cta-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(255, 215, 0, 0.5);
+    }
+
+    .banner-slider {
+      width: 100%;
+      max-width: 1200px;
+      margin: 2rem auto;
+      display: flex;
+      overflow-x: auto;
+      gap: 15px;
+      padding: 10px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary-color) var(--header-bg);
+    }
+
+    .banner-slider::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .banner-slider::-webkit-scrollbar-track {
+      background: var(--header-bg);
+    }
+
+    .banner-slider::-webkit-scrollbar-thumb {
+      background-color: var(--primary-color);
+      border-radius: 4px;
+    }
+
+    .banner-card {
+      min-width: 250px;
+      background: #222;
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    .banner-card img {
+      width: 100%;
+      border-radius: 8px;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+
+    .banner-card h3 {
+      margin-bottom: 8px;
+      color: var(--primary-color);
+    }
+
+    .banner-card a {
+      color: var(--primary-color);
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 10px;
+    }
 
     footer {
-      position:fixed; bottom:0; left:0; right:0;
-      background:#111; border-top:2px solid #ffd700;
-      padding:10px 0; display:flex; justify-content:space-around; align-items:center;
+      background: var(--header-bg);
+      border-top: 2px solid var(--primary-color);
+      padding: 15px 5%;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
     }
-    footer a { color:#ffd700; text-decoration:none; font-size:14px; font-weight:bold; display:flex; flex-direction:column; align-items:center; }
-    footer a i { font-size:18px; margin-bottom:4px; }
-    footer a:hover { color:#ffa500; }
+
+    .footer-link {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: bold;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: clamp(0.8rem, 2vw, 0.9rem);
+    }
+
+    .footer-link i {
+      font-size: 1.2rem;
+      margin-bottom: 5px;
+    }
+
+    @media (max-width: 768px) {
+      header {
+        padding: 15px;
+      }
+      
+      .hero {
+        padding: 2rem 1rem;
+      }
+      
+      .cta-buttons {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .banner-card {
+        min-width: 200px;
+      }
+      
+      #news-ticker {
+        font-size: 12px;
+        padding: 8px 0;
+      }
+      
+      .ticker-label {
+        padding: 2px 6px;
+        margin-right: 8px;
+        font-size: 10px;
+      }
+      
+      .ticker-separator {
+        margin: 0 10px;
+      }
+    }
   </style>
 </head>
 <body>
   <header>
     <div class="logo">RealityLottery</div>
     <div class="auth-buttons">
-      <a href="login.html" id="loginBtn">Login</a>
-      <a href="register.html" id="registerBtn">Register</a>
-      <span id="userInfo" style="display:none;"></span>
-      <button id="logoutBtn" style="display:none;">Logout</button>
+      <a href="login.html" class="auth-btn" id="loginBtn">Login</a>
+      <a href="register.html" class="auth-btn" id="registerBtn">Register</a>
+      <span id="userInfo" class="auth-btn" style="display:none;"></span>
+      <button id="logoutBtn" class="auth-btn" style="display:none;">Logout</button>
     </div>
   </header>
 
-  <section class="hero">
+  <div id="news-ticker">
+    <div class="ticker-container">
+      <div class="ticker-label">LATEST NEWS</div>
+      <div id="ticker-content">
+        <div id="ticker-text">Loading news updates...</div>
+      </div>
+    </div>
+  </div>
+
+  <main class="hero">
     <h1>Welcome to RealityLottery</h1>
     <p>
       Join our exciting lottery platform where every subscription increases your chances to win amazing rewards!  
-      Invite friends, earn referral bonuses, and be part of the ultimate lottery experience.  
+      Invite friends, earn referral bonuses, and be part of the ultimate lottery experience.
     </p>
-<div id="banner-slider" style="display:flex;overflow-x:auto;gap:10px;"></div>
+    
+    <div class="cta-buttons">
+      <a href="register.html" class="cta-btn">Get Started</a>
+      <a href="how-it-works.html" class="cta-btn">How It Works</a>
+    </div>
 
-<script>
-fetch("/api/banners")
-  .then(res => res.json())
-  .then(data => {
-    const container = document.getElementById("banner-slider");
-    data.banners.forEach(b => {
-      const div = document.createElement("div");
-      div.style.minWidth = "250px";
-      div.style.background = "#222";
-      div.style.color = "white";
-      div.style.padding = "10px";
-      div.innerHTML = `
-        <img src="${b.image}" style="width:100%;border-radius:10px;">
-        <h3>${b.title || ""}</h3>
-        <p>${b.description || ""}</p>
-        ${b.buttonText ? `<a href="${b.buttonLink}" style="color:gold;">${b.buttonText}</a>` : ""}
-      `;
-      container.appendChild(div);
-    });
-  });
-</script>
-    <div id="banner-slider" style="display:flex;overflow-x:auto;gap:10px;"></div>
-
-<script>
-fetch("/api/banners")
-  .then(res => res.json())
-  .then(data => {
-    const container = document.getElementById("banner-slider");
-    data.banners.forEach(b => {
-      const div = document.createElement("div");
-      div.style.minWidth = "250px";
-      div.style.background = "#222";
-      div.style.color = "white";
-      div.style.padding = "10px";
-      div.innerHTML = `
-        <img src="${b.image}" style="width:100%;border-radius:10px;">
-        <h3>${b.title || ""}</h3>
-        <p>${b.description || ""}</p>
-        ${b.buttonText ? `<a href="${b.buttonLink}" style="color:gold;">${b.buttonText}</a>` : ""}
-      `;
-      container.appendChild(div);
-    });
-  });
-</script>
-  </section>
+    <div id="banner-slider" class="banner-slider"></div>
+  </main>
 
   <footer>
-    <a href="index.html"><i class="fas fa-home"></i>Home</a>
-    <a href="news.html"><i class="fas fa-newspaper"></i>News</a>
-    <a href="withdrawal.html"><i class="fas fa-wallet"></i>Withdrawal</a>
-    <a href="profile.html"><i class="fas fa-user"></i>Profile</a>
+    <a href="index.html" class="footer-link"><i class="fas fa-home"></i>Home</a>
+    <a href="news.html" class="footer-link"><i class="fas fa-newspaper"></i>News</a>
+    <a href="withdrawal.html" class="footer-link"><i class="fas fa-wallet"></i>Withdrawal</a>
+    <a href="profile.html" class="footer-link"><i class="fas fa-user"></i>Profile</a>
   </footer>
 
-<script>
-  const API_BASE = 'https://realitylottery.koyeb.app';
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const API_BASE = 'https://realitylottery.koyeb.app';
+      const token = localStorage.getItem('rl_token');
+      const user = localStorage.getItem('rl_user') ? JSON.parse(localStorage.getItem('rl_user')) : null;
+      const loginBtn = document.getElementById('loginBtn');
+      const registerBtn = document.getElementById('registerBtn');
+      const userInfo = document.getElementById('userInfo');
+      const logoutBtn = document.getElementById('logoutBtn');
 
-  // ======== Auth UI Handler ========
-  (function(){
-    const token = localStorage.getItem('rl_token');
-    const user = localStorage.getItem('rl_user') ? JSON.parse(localStorage.getItem('rl_user')) : null;
-    const loginBtn = document.getElementById('loginBtn');
-    const registerBtn = document.getElementById('registerBtn');
-    const userInfo = document.getElementById('userInfo');
-    const logoutBtn = document.getElementById('logoutBtn');
+      // Handle authentication state
+      function updateAuthUI() {
+        if (token && user) {
+          loginBtn.style.display = 'none';
+          registerBtn.style.display = 'none';
+          userInfo.style.display = 'inline';
+          userInfo.textContent = user.username || user.fullName || "User";
+          logoutBtn.style.display = 'inline';
+        }
+      }
 
-    if (token && user) {
-      loginBtn.style.display = 'none';
-      registerBtn.style.display = 'none';
-      userInfo.style.display = 'inline';
-      userInfo.textContent = user.username || user.fullName || "User";
-      logoutBtn.style.display = 'inline';
-      logoutBtn.addEventListener('click', (e)=>{
+      // Logout functionality
+      logoutBtn?.addEventListener('click', function(e) {
         e.preventDefault();
         localStorage.clear();
-        location.reload();
+        window.location.href = 'index.html';
       });
-    }
-  })();
-</script>
+
+      // Load banners
+      async function loadBanners() {
+        try {
+          const response = await fetch(`${API_BASE}/api/banners`);
+          if (!response.ok) throw new Error('Failed to fetch banners');
+          
+          const data = await response.json();
+          const container = document.getElementById('banner-slider');
+          
+          if (data.banners && data.banners.length > 0) {
+            container.innerHTML = ''; // Clear loading state
+            data.banners.forEach(banner => {
+              const bannerCard = document.createElement('div');
+              bannerCard.className = 'banner-card';
+              bannerCard.innerHTML = `
+                <img src="${banner.image}" alt="${banner.title || 'Promotional banner'}">
+                ${banner.title ? `<h3>${banner.title}</h3>` : ''}
+                ${banner.description ? `<p>${banner.description}</p>` : ''}
+                ${banner.buttonText ? `<a href="${banner.buttonLink || '#'}">${banner.buttonText}</a>` : ''}
+              `;
+              container.appendChild(bannerCard);
+            });
+          } else {
+            container.innerHTML = '<p>No banners available at the moment</p>';
+          }
+        } catch (error) {
+          console.error('Error loading banners:', error);
+          const container = document.getElementById('banner-slider');
+          container.innerHTML = '<p>Failed to load banners. Please try again later.</p>';
+        }
+      }
+
+      // Load news ticker
+      async function loadTicker() {
+        try {
+          const response = await fetch(`${API_BASE}/api/ticker`);
+          if (!response.ok) throw new Error('Failed to fetch ticker data');
+          
+          const data = await response.json();
+          const tickerText = document.getElementById('ticker-text');
+          
+          if (data.tickers && data.tickers.length > 0) {
+            const tickerItems = data.tickers.map(t => 
+              `<span class="ticker-item">${t.text}</span>`
+            ).join('<span class="ticker-separator"> ✦ </span>');
+            
+            tickerText.innerHTML = tickerItems;
+            
+            // Adjust animation duration based on content length
+            const textWidth = tickerText.scrollWidth;
+            const containerWidth = document.getElementById('ticker-content').offsetWidth;
+            const duration = Math.max(30, textWidth / 50); // 50px per second
+            
+            tickerText.style.animationDuration = `${duration}s`;
+            tickerText.style.animationName = 'ticker';
+          } else {
+            tickerText.textContent = 'No news updates available';
+            tickerText.style.animation = 'none';
+          }
+        } catch (error) {
+          console.error('Error loading ticker:', error);
+          document.getElementById('ticker-text').textContent = 'Latest news updates coming soon...';
+          document.getElementById('ticker-text').style.animation = 'none';
+        }
+      }
+
+      // Initialize all components
+      updateAuthUI();
+      loadBanners();
+      loadTicker();
+      
+      // Refresh ticker every 5 minutes
+      setInterval(loadTicker, 5 * 60 * 1000);
+    });
+  </script>
 </body>
 </html>
