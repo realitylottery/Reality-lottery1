@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RealityLottery - Payment</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body{background:#000;color:#fff;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+    .payment-container{background:rgba(0,0,0,0.85);border:1px solid #ffd700;border-radius:12px;padding:40px;max-width:500px;text-align:center;box-shadow:0 0 20px rgba(255,215,0,0.3)}
+    .logo{font-size:32px;font-weight:800;color:#ffd700;margin-bottom:20px;letter-spacing:2px}
+    .plan-name{font-size:24px;color:#ffd700;margin-bottom:10px}
+    .plan-price{font-size:20px;margin-bottom:20px;color:#fff}
+    .pay-btn{width:100%;padding:14px;background:linear-gradient(45deg,#ffd700,#ffa500);color:#000;border:none;border-radius:8px;font-weight:700;font-size:16px;cursor:pointer;transition:all .3s}
+    .pay-btn:hover{transform:translateY(-3px);box-shadow:0 5px 15px rgba(255,215,0,0.4)}
+    .note{color:#aaa;font-size:14px;margin-top:20px;line-height:1.6}
+  </style>
+</head>
+<body>
+  <div class="payment-container">
+    <div class="logo">Reality<span>Lottery</span></div>
+    <h2 class="plan-name" id="planName"></h2>
+    <p class="plan-price" id="planPrice"></p>
+    <button class="pay-btn" id="payBtn"><i class="fas fa-credit-card"></i> Proceed to Payment</button>
+    <p class="note">This is a demo payment flow. In production you will be redirected to a secure payment gateway (Stripe/PayPal).</p>
+  </div>
+
+<script>
+  const API_BASE='';
+  const urlParams = new URLSearchParams(location.search);
+  const plan = urlParams.get('plan') || 'Starter Plan';
+  const price = /elite/i.test(plan) ? 30 : /premium/i.test(plan) ? 20 : 10;
+  planName.textContent = plan;
+  planPrice.textContent = `$${price}`;
+
+  payBtn.onclick = async () => {
+    const token = localStorage.getItem('rl_token');
+    if(!token){ alert('You must be logged in'); location.href='login.html'; return; }
+    try{
+      let r = await fetch(API_BASE + '/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+        body: JSON.stringify({ plan })
+      });
+      let b = await r.json();
+      if(!r.ok) return alert(b.message || 'Failed to create subscription');
+
+      const ok = confirm('Simulated payment: Click OK to confirm success.');
+      r = await fetch(API_BASE + '/api/payment/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+        body: JSON.stringify({ success: ok })
+      });
+      b = await r.json();
+      if(!r.ok) return alert(b.message || 'Payment failed');
+
+      localStorage.setItem('rl_subscription', JSON.stringify(b.subscription));
+      alert('Payment successful! Subscription activated.');
+      location.href = 'index.html';
+    }catch(e){ console.error(e); alert('Network error'); }
+  };
+</script>
+</body>
+</html>
