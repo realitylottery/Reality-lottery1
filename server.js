@@ -168,7 +168,6 @@ app.put("/api/admin/withdrawals/:id", authMiddleware, async (req, res) => {
   }
 });
 
-const News = require("./models/News");
 
 // Public get news
 app.get('/api/news', async (req, res) => {
@@ -363,6 +362,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
