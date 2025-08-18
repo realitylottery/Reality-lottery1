@@ -1,4 +1,3 @@
-<!-- FILE: public/admin-dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -122,93 +121,10 @@
       </div>
       <div class="row" style="margin-top:12px">
         <button class="btn" id="btnRefreshStats"><i class="fa-solid fa-rotate"></i> Refresh</button>
-        <span class="muted">If endpoint is not ready, you’ll see a gentle message instead of an error.</span>
+        <span class="muted">If endpoint is not ready, you'll see a gentle message instead of an error.</span>
       </div>
     </section>
 
-    <h2>Admin Dashboard</h2>
-
-<!-- Manage balances -->
-<h3>Set User Balance</h3>
-<input type="text" id="userIdBalance" placeholder="User ID" />
-<input type="number" id="balanceAmount" placeholder="Balance" />
-<button id="setBalanceBtn">Update Balance</button>
-
-<!-- Manage withdrawals -->
-<h3>Pending Withdrawals</h3>
-<div id="withdrawRequests"></div>
-
-<!-- Manage News -->
-<h3>Add News</h3>
-<input type="text" id="newsTitle" placeholder="Title" />
-<textarea id="newsText" placeholder="Text"></textarea>
-<input type="text" id="newsImage" placeholder="Image URL" />
-<input type="text" id="newsLink" placeholder="Button link" />
-<input type="text" id="newsButtonText" placeholder="Button text" />
-<button id="addNewsBtn">Add News</button>
-
-<div id="newsList"></div>
-
-<script>
-document.getElementById("setBalanceBtn").addEventListener("click", () => {
-  fetch("/api/admin/setBalance", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      userId: document.getElementById("userIdBalance").value,
-      balance: document.getElementById("balanceAmount").value
-    })
-  });
-});
-
-// Load withdrawals
-fetch("/api/admin/withdrawals")
-  .then(res => res.json())
-  .then(data => {
-    const container = document.getElementById("withdrawRequests");
-    data.forEach(w => {
-      const div = document.createElement("div");
-      div.innerHTML = `
-        User ${w.userId} requested ${w.amount} to ${w.wallet} - Status: ${w.status}
-        <button onclick="approveWithdraw('${w.id}')">Approve</button>
-        <button onclick="rejectWithdraw('${w.id}')">Reject</button>
-      `;
-      container.appendChild(div);
-    });
-  });
-
-function approveWithdraw(id) {
-  fetch("/api/admin/withdraw/approve", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id })
-  }).then(() => location.reload());
-}
-
-function rejectWithdraw(id) {
-  fetch("/api/admin/withdraw/reject", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id })
-  }).then(() => location.reload());
-}
-
-// Add news
-document.getElementById("addNewsBtn").addEventListener("click", () => {
-  fetch("/api/admin/news", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      title: document.getElementById("newsTitle").value,
-      text: document.getElementById("newsText").value,
-      image: document.getElementById("newsImage").value,
-      link: document.getElementById("newsLink").value,
-      buttonText: document.getElementById("newsButtonText").value
-    })
-  }).then(() => location.reload());
-});
-</script>
-    
     <!-- USERS -->
     <section id="tab-users" class="section hidden">
       <div class="title"><i class="fa-solid fa-users"></i> Users Management</div>
@@ -261,7 +177,7 @@ document.getElementById("addNewsBtn").addEventListener("click", () => {
       </div>
       <div class="notice" style="margin-top:10px">
         This expects endpoints <span class="mono">GET /api/admin/withdrawals</span>, <span class="mono">POST /api/admin/withdrawals/:id/approve</span> and <span class="mono">POST /api/admin/withdrawals/:id/reject</span>.
-        If not implemented yet, you’ll see an informational message instead of an error.
+        If not implemented yet, you'll see an informational message instead of an error.
       </div>
     </section>
 
@@ -360,7 +276,6 @@ document.getElementById("addNewsBtn").addEventListener("click", () => {
         </div>
       </div>
     </section>
-
   </main>
 </div>
 
@@ -370,8 +285,7 @@ document.getElementById("addNewsBtn").addEventListener("click", () => {
 
 <script>
   // ========= CONFIG =========
-  // Use same-origin to avoid CORS/network errors:
-  const API_BASE = ''; // same domain (e.g., https://realitylottery.koyeb.app)
+  const API_BASE = ''; // same domain
   const LS_TOKEN = 'rl_admin_token';
 
   const $ = (q)=>document.querySelector(q);
@@ -481,7 +395,6 @@ document.getElementById("addNewsBtn").addEventListener("click", () => {
       wrap.appendChild(el('div', {class:'notice'}, [r.message]));
       return;
     }
-    // expected fields (adjust to your server): totalUsers, paidUsers, spins, successfulInvites, totalWithdrawals, pendingWithdrawals
     const items = [
       { label:'Total Users', value: r.totalUsers },
       { label:'Paid Users', value: r.paidUsers },
@@ -552,7 +465,6 @@ document.getElementById("addNewsBtn").addEventListener("click", () => {
       tb.appendChild(tr);
     });
 
-    // save handlers
     tb.querySelectorAll('button[data-action="save"]').forEach(btn=>{
       btn.addEventListener('click', async ()=>{
         const id = btn.dataset.id;
