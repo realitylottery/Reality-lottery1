@@ -120,8 +120,6 @@ app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
 });
 
 
-const Withdrawal = require("./models/Withdrawal");
-
 // User requests withdrawal
 app.post("/api/withdrawals", authMiddleware, async (req, res) => {
   try {
@@ -365,6 +363,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
