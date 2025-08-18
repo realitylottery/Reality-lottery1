@@ -72,6 +72,32 @@ async function authMiddleware(req, res, next) {
 }
 
 // ================= ROUTES =================
+
+
+const Banner = require("./models/Banner");
+
+// Get banners (public)
+app.get("/api/banners", async (req, res) => {
+  const banners = await Banner.find().sort({ createdAt: -1 });
+  res.json({ banners });
+});
+
+// Admin add banner
+app.post("/api/admin/banners", authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  const banner = new Banner(req.body);
+  await banner.save();
+  res.json({ message: "Banner added", banner });
+});
+
+// Admin delete banner
+app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  await Banner.findByIdAndDelete(req.params.id);
+  res.json({ message: "Banner deleted" });
+});
+
+
 const Withdrawal = require("./models/Withdrawal");
 
 // User requests withdrawal
@@ -317,5 +343,6 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
