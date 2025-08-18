@@ -354,6 +354,20 @@ app.use('/docs', express.static(DOCS_PATH));
 // SPA fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(FRONTEND_PATH, 'index.html'));
+  // Check login state on page load
+document.addEventListener("DOMContentLoaded", () => {
+    const user = localStorage.getItem("user"); // user data from login
+    const loginBtn = document.getElementById("login-btn");
+    const profileBtn = document.getElementById("profile-btn");
+
+    if (user) {
+        if (loginBtn) loginBtn.style.display = "none";
+        if (profileBtn) profileBtn.style.display = "block";
+    } else {
+        if (loginBtn) loginBtn.style.display = "block";
+        if (profileBtn) profileBtn.style.display = "none";
+    }
+});
 });
 
 // ================= START =================
@@ -362,6 +376,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
