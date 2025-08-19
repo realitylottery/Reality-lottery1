@@ -138,9 +138,7 @@ app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
 });
 
 // تأكد أنك مستورد express و jwt و لديك middleware للتحقق من الأدمن
-const express = require("express");
-const router = express.Router();
-const Withdrawal = require("./models/Withdrawal"); // موديل السحوبات
+; // موديل السحوبات
 const { authenticateAdmin } = require("./middleware/adminAuth");
 
 // جلب جميع طلبات السحب
@@ -419,5 +417,6 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
