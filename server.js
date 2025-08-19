@@ -113,12 +113,11 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { subscriptionType, balance, isActive, taskProgress } = req.body;
+    const { subscriptionType, balance, taskProgress } = req.body;
 
     const updateFields = {};
     if (subscriptionType !== undefined) updateFields.subscriptionType = subscriptionType;
     if (balance !== undefined) updateFields.balance = balance;
-    if (isActive !== undefined) updateFields.isActive = isActive;
     if (taskProgress !== undefined) updateFields.taskProgress = taskProgress;
 
     const user = await User.findByIdAndUpdate(
@@ -470,6 +469,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
