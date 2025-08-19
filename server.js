@@ -140,13 +140,12 @@ app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
 // جلب جميع طلبات السحب
 // ================= WITHDRAWALS ROUTES =================
 
-// Get all withdrawals
+// // Get all withdrawals (admin)
 app.get("/api/admin/withdrawals", async (req, res) => {
   try {
-    const withdrawals = await Withdrawal.find().populate("user");
+    const withdrawals = await Withdrawal.find().populate("user", "username email");
     res.json({ withdrawals });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Error fetching withdrawals" });
   }
 });
@@ -154,7 +153,7 @@ app.get("/api/admin/withdrawals", async (req, res) => {
 // Approve withdrawal
 app.post("/api/admin/withdrawals/:id/approve", async (req, res) => {
   try {
-    const withdrawal = await Withdrawal.findById(req.params.id);
+    const withdrawal = await Withdrawal.findById(req.params.id).populate("user");
     if (!withdrawal) return res.status(404).json({ message: "Not found" });
 
     withdrawal.status = "Approved";
@@ -162,7 +161,6 @@ app.post("/api/admin/withdrawals/:id/approve", async (req, res) => {
 
     res.json({ message: "Withdrawal approved" });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Error approving withdrawal" });
   }
 });
@@ -170,15 +168,19 @@ app.post("/api/admin/withdrawals/:id/approve", async (req, res) => {
 // Reject withdrawal
 app.post("/api/admin/withdrawals/:id/reject", async (req, res) => {
   try {
-    const withdrawal = await Withdrawal.findById(req.params.id);
+    const withdrawal = await Withdrawal.findById(req.params.id).populate("user");
     if (!withdrawal) return res.status(404).json({ message: "Not found" });
+
+    // استرجاع الرصيد للمستخدم عند الرفض
+    const user = await User.findById(withdrawal.user._id);
+    user.balance += withdrawal.amount;
+    await user.save();
 
     withdrawal.status = "Rejected";
     await withdrawal.save();
 
-    res.json({ message: "Withdrawal rejected" });
+    res.json({ message: "Withdrawal rejected, balance refunded" });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Error rejecting withdrawal" });
   }
 });
@@ -417,6 +419,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
