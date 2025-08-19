@@ -137,10 +137,8 @@ app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
   res.json({ message: "Banner deleted" });
 });
 
-
-
 // جلب جميع طلبات السحب
-router.get("/api/admin/withdrawals", authenticateAdmin, async (req, res) => {
+router.get("/api/admin/withdrawals", async (req, res) => {
   try {
     const withdrawals = await Withdrawal.find().populate("user");
     res.json({ withdrawals });
@@ -150,7 +148,7 @@ router.get("/api/admin/withdrawals", authenticateAdmin, async (req, res) => {
 });
 
 // الموافقة على السحب
-router.post("/api/admin/withdrawals/:id/approve", authenticateAdmin, async (req, res) => {
+router.post("/api/admin/withdrawals/:id/approve", async (req, res) => {
   try {
     const withdrawal = await Withdrawal.findById(req.params.id);
     if (!withdrawal) return res.status(404).json({ message: "Not found" });
@@ -165,7 +163,7 @@ router.post("/api/admin/withdrawals/:id/approve", authenticateAdmin, async (req,
 });
 
 // رفض السحب
-router.post("/api/admin/withdrawals/:id/reject", authenticateAdmin, async (req, res) => {
+router.post("/api/admin/withdrawals/:id/reject", async (req, res) => {
   try {
     const withdrawal = await Withdrawal.findById(req.params.id);
     if (!withdrawal) return res.status(404).json({ message: "Not found" });
@@ -415,6 +413,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
