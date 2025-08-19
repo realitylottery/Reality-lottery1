@@ -93,16 +93,22 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "Insufficient balance" });
     }
 
-    const withdrawal = new Withdrawal({ user: user._id, amount, wallet });
+    const withdrawal = new Withdrawal({
+      userId: user._id,
+      amount,
+      walletAddress: wallet
+    });
+
     await withdrawal.save();
 
     user.balance -= amount; // خصم الرصيد مؤقتًا
     await user.save();
 
     res.json({ message: "Withdrawal request submitted", withdrawal });
+
   } catch (err) {
     console.error("Withdraw error:", err);
-    res.status(500).json({ message: "Error submitting withdrawal" });
+    res.status(500).json({ message: err.message || "Error submitting withdrawal" });
   }
 });
 // Update user (Admin only)
@@ -451,6 +457,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
