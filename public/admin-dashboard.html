@@ -490,7 +490,7 @@
   $('#btnReloadUsers').addEventListener('click', loadUsers);
   $('#userSearch').addEventListener('input', loadUsers);
 
-  aasync function updateUser(id) {
+  async function updateUser(id) {
       const balance = document.getElementById(`balance-${id}`).value;
       const subscriptionType = document.getElementById(`sub-${id}`).value;
       const isActive = document.getElementById(`active-${id}`).value === "true";
