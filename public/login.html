@@ -34,7 +34,8 @@
       });
       const data=await res.json();
       if(res.ok){
-        localStorage.setItem("rl_token",data.token);
+        localStorage.setItem("rl_token", data.token);
+localStorage.setItem("rl_user", JSON.stringify(data.user));
         location.href="profile.html";
       }else{
         document.getElementById("msg").textContent=data.message;
