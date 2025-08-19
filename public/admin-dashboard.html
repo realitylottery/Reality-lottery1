@@ -490,32 +490,32 @@
   $('#btnReloadUsers').addEventListener('click', loadUsers);
   $('#userSearch').addEventListener('input', loadUsers);
 
-  async function updateUser(id) {
-  const subscriptionType = document.querySelector(`.subInput[data-id='${id}']`).value;
-  const balance = parseFloat(document.querySelector(`.balInput[data-id='${id}']`).value);
-  const isActive = document.querySelector(`.activeInput[data-id='${id}']`).value === 'true';
+  aasync function updateUser(id) {
+      const balance = document.getElementById(`balance-${id}`).value;
+      const subscriptionType = document.getElementById(`sub-${id}`).value;
+      const isActive = document.getElementById(`active-${id}`).value === "true";
 
-  try {
-    const res = await fetch(`/api/admin/updateUser/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ subscriptionType, balance, isActive })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      alert('User updated successfully');
-      fetchUsers(); // Refresh table
-    } else {
-      alert(data.message || 'Update failed');
-    }
-  } catch (err) {
-    alert('Error updating user');
-    console.error(err);
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/updateUser/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ balance, subscriptionType, isActive })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          alert("User updated successfully");
+        } else {
+          alert("Update failed: " + (data.message || "Unknown error"));
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Update failed: " + err.message);
+      }
   }
-}
 
   
   // ========= WITHDRAWALS =========
