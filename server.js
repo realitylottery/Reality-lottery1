@@ -106,7 +106,7 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
   }
 });
 // Update user (Admin only)
-app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
+app.put("/api/admin/users/${id}", authMiddleware, async (req, res) => {
   if (!req.user.roles?.includes("admin")) {
     return res.status(403).json({ message: "Forbidden" });
   }
@@ -464,6 +464,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
