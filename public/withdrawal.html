@@ -46,13 +46,14 @@
   <script>
     const API_BASE='https://realitylottery.koyeb.app';
     const token=localStorage.getItem('rl_token');
-    const user=localStorage.getItem('rl_user')?JSON.parse(localStorage.getItem('rl_user')):null;
 
     async function loadBalance(){
       try{
-        const res=await fetch(`${API_BASE}/api/user/balance`,{headers:{Authorization:`Bearer ${token}`}});
+        const res=await fetch(`${API_BASE}/api/user/balance`,{
+          headers:{Authorization:`Bearer ${token}`}
+        });
         const data=await res.json();
-        document.getElementById('balance').textContent=data.balance??0;
+        document.getElementById('balance').textContent=data.balance ?? 0;
       }catch(e){
         document.getElementById('balance').textContent='Error';
       }
@@ -65,7 +66,10 @@
       try{
         const res=await fetch(`${API_BASE}/api/withdrawals`,{
           method:'POST',
-          headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+          headers:{
+            'Content-Type':'application/json',
+            Authorization:`Bearer ${token}`
+          },
           body:JSON.stringify({amount,wallet})
         });
         const data=await res.json();
@@ -76,49 +80,6 @@
     });
 
     loadBalance();
-    <h2>Withdrawal</h2>
-<p>Your Balance: <span id="userBalance">0</span> USD</p>
-<input type="number" id="withdrawAmount" placeholder="Enter amount" />
-<input type="text" id="walletAddress" placeholder="Enter wallet address" />
-<button id="withdrawBtn">Withdraw</button>
-
-<div id="withdrawStatus"></div>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) {
-    document.getElementById("withdrawStatus").innerText = "Please login first.";
-    return;
-  }
-
-  // Load balance from backend
-  fetch(`/api/user/${user.id}/balance`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("userBalance").innerText = data.balance;
-    });
-
-  document.getElementById("withdrawBtn").addEventListener("click", () => {
-    const amount = document.getElementById("withdrawAmount").value;
-    const wallet = document.getElementById("walletAddress").value;
-    document.getElementById("withdrawStatus").innerText = "Processing...";
-
-    fetch("/api/withdraw", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user.id, amount, wallet })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        document.getElementById("withdrawStatus").innerText = "Pending approval...";
-      } else {
-        document.getElementById("withdrawStatus").innerText = "Error: " + data.message;
-      }
-    });
-  });
-});
   </script>
 </body>
 </html>
