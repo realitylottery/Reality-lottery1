@@ -223,25 +223,7 @@ app.post("/api/admin/withdrawals/:id/reject", async (req, res) => {
   }
 });
 
-// Withdrawals
-app.post("/api/withdrawals", authMiddleware, async (req, res) => {
-  try {
-    const { amount, wallet } = req.body;
-    if (!amount || !wallet) return res.status(400).json({ message: "Missing fields" });
-
-    const w = new Withdrawal({
-      user: req.user.id,
-      amount,
-      wallet
-    });
-    await w.save();
-
-    res.json({ message: "Withdrawal request submitted", withdrawal: w });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+// 
 
 app.get("/api/withdrawals", authMiddleware, async (req, res) => {
   try {
@@ -469,6 +451,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
