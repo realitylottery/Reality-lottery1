@@ -138,17 +138,21 @@ app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
 });
 
 // جلب جميع طلبات السحب
-router.get("/api/admin/withdrawals", async (req, res) => {
+// ================= WITHDRAWALS ROUTES =================
+
+// Get all withdrawals
+app.get("/api/admin/withdrawals", async (req, res) => {
   try {
     const withdrawals = await Withdrawal.find().populate("user");
     res.json({ withdrawals });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Error fetching withdrawals" });
   }
 });
 
-// الموافقة على السحب
-router.post("/api/admin/withdrawals/:id/approve", async (req, res) => {
+// Approve withdrawal
+app.post("/api/admin/withdrawals/:id/approve", async (req, res) => {
   try {
     const withdrawal = await Withdrawal.findById(req.params.id);
     if (!withdrawal) return res.status(404).json({ message: "Not found" });
@@ -158,12 +162,13 @@ router.post("/api/admin/withdrawals/:id/approve", async (req, res) => {
 
     res.json({ message: "Withdrawal approved" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Error approving withdrawal" });
   }
 });
 
-// رفض السحب
-router.post("/api/admin/withdrawals/:id/reject", async (req, res) => {
+// Reject withdrawal
+app.post("/api/admin/withdrawals/:id/reject", async (req, res) => {
   try {
     const withdrawal = await Withdrawal.findById(req.params.id);
     if (!withdrawal) return res.status(404).json({ message: "Not found" });
@@ -173,11 +178,10 @@ router.post("/api/admin/withdrawals/:id/reject", async (req, res) => {
 
     res.json({ message: "Withdrawal rejected" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Error rejecting withdrawal" });
   }
 });
-
-module.exports = router;
 
 // Withdrawals
 app.post("/api/withdrawals", authMiddleware, async (req, res) => {
@@ -413,6 +417,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
