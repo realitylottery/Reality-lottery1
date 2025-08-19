@@ -10,7 +10,8 @@ const UserSchema = new mongoose.Schema({
   roles: { type: [String], default: [] },
   registeredAt: { type: Date, default: Date.now },
   // الحقول الجديدة
-  balance: { type: Number, default: 0 },          // رصيد افتراضي = 0
+  balance: { type: Number, default: 0 },
+  taskProgress: { type: Number, default: 0 },
   subscription: { type: String, default: "Free" } // نوع الاشتراك افتراضي = "Free"
 });
 
