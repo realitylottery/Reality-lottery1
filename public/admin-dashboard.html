@@ -496,7 +496,7 @@
       const isActive = document.getElementById(`active-${id}`).value === "true";
 
       try {
-        const res = await fetch(`${API_BASE}/api/admin/updateUser/${id}`, {
+        const res = await fetch(`${API_BASE}/api/admin/users/${id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
