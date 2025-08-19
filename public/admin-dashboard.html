@@ -502,7 +502,7 @@
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify({ balance, subscriptionType, TaskProgress })
+          body: JSON.stringify({ balance, subscriptionType, taskProgress })
         });
 
         const data = await res.json();
