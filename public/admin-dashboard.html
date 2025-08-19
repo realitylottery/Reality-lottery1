@@ -496,13 +496,13 @@
       const isActive = document.getElementById(`active-${id}`).value === "true";
 
       try {
-        const res = await fetch(`${API_BASE}/api/admin/users/${id}`, {
+        const res = await fetch(`${API_BASE}/api/admin/users/:id`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify({ balance, subscriptionType, isActive })
+          body: JSON.stringify({ balance, subscriptionType, TaskProgress })
         });
 
         const data = await res.json();
