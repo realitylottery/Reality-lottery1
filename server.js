@@ -187,7 +187,7 @@ app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
 // // Get all withdrawals (admin)
 app.get("/api/admin/withdrawals", async (req, res) => {
   try {
-    const withdrawals = await Withdrawal.find().populate("user", "username email");
+    const withdrawals = await Withdrawal.find().populate("userId", "username email");
     res.json({ withdrawals });
   } catch (err) {
     res.status(500).json({ message: "Error fetching withdrawals" });
@@ -197,7 +197,7 @@ app.get("/api/admin/withdrawals", async (req, res) => {
 // Approve withdrawal
 app.post("/api/admin/withdrawals/:id/approve", async (req, res) => {
   try {
-    const withdrawal = await Withdrawal.findById(req.params.id).populate("user");
+    const withdrawal = await Withdrawal.findById(req.params.id).populate("userId");
     if (!withdrawal) return res.status(404).json({ message: "Not found" });
 
     withdrawal.status = "Approved";
@@ -212,7 +212,7 @@ app.post("/api/admin/withdrawals/:id/approve", async (req, res) => {
 // Reject withdrawal
 app.post("/api/admin/withdrawals/:id/reject", async (req, res) => {
   try {
-    const withdrawal = await Withdrawal.findById(req.params.id).populate("user");
+    const withdrawal = await Withdrawal.findById(req.params.id).populate("userId");
     if (!withdrawal) return res.status(404).json({ message: "Not found" });
 
     // استرجاع الرصيد للمستخدم عند الرفض
@@ -243,7 +243,7 @@ app.get("/api/withdrawals", authMiddleware, async (req, res) => {
 
 app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
-  const all = await Withdrawal.find().populate("user", "username email").sort({ createdAt: -1 });
+  const all = await Withdrawal.find().populate("userId", "username email").sort({ createdAt: -1 });
   res.json({ withdrawals: all });
 });
 
@@ -457,6 +457,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
