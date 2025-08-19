@@ -137,6 +137,54 @@ app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
   res.json({ message: "Banner deleted" });
 });
 
+// تأكد أنك مستورد express و jwt و لديك middleware للتحقق من الأدمن
+const express = require("express");
+const router = express.Router();
+const Withdrawal = require("./models/Withdrawal"); // موديل السحوبات
+const { authenticateAdmin } = require("./middleware/adminAuth");
+
+// جلب جميع طلبات السحب
+router.get("/api/admin/withdrawals", authenticateAdmin, async (req, res) => {
+  try {
+    const withdrawals = await Withdrawal.find().populate("user");
+    res.json({ withdrawals });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching withdrawals" });
+  }
+});
+
+// الموافقة على السحب
+router.post("/api/admin/withdrawals/:id/approve", authenticateAdmin, async (req, res) => {
+  try {
+    const withdrawal = await Withdrawal.findById(req.params.id);
+    if (!withdrawal) return res.status(404).json({ message: "Not found" });
+
+    withdrawal.status = "Approved";
+    await withdrawal.save();
+
+    res.json({ message: "Withdrawal approved" });
+  } catch (err) {
+    res.status(500).json({ message: "Error approving withdrawal" });
+  }
+});
+
+// رفض السحب
+router.post("/api/admin/withdrawals/:id/reject", authenticateAdmin, async (req, res) => {
+  try {
+    const withdrawal = await Withdrawal.findById(req.params.id);
+    if (!withdrawal) return res.status(404).json({ message: "Not found" });
+
+    withdrawal.status = "Rejected";
+    await withdrawal.save();
+
+    res.json({ message: "Withdrawal rejected" });
+  } catch (err) {
+    res.status(500).json({ message: "Error rejecting withdrawal" });
+  }
+});
+
+module.exports = router;
+
 // Withdrawals
 app.post("/api/withdrawals", authMiddleware, async (req, res) => {
   try {
@@ -371,4 +419,5 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
