@@ -107,7 +107,7 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 });
 
 // Update user subscription (Admin only)
-app.put("/api/admin/updateUser/:id", async (req, res) => {
+app.put("/api/admin/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { subscriptionType, balance, isActive } = req.body;
@@ -461,6 +461,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
