@@ -105,9 +105,12 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Error submitting withdrawal" });
   }
 });
+// Update user (Admin only)
+app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
 
-// Update user subscription (Admin only)
-app.put("/api/admin/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { subscriptionType, balance, isActive } = req.body;
@@ -116,7 +119,7 @@ app.put("/api/admin/users/:id", async (req, res) => {
       id,
       { subscriptionType, balance, isActive },
       { new: true }
-    );
+    ).select("-password");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -461,6 +464,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
