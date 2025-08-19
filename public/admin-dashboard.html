@@ -474,7 +474,7 @@
 
         btn.disabled = true; btn.textContent = 'Saving…';
         const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
-          method: 'PATCH',
+          method: 'PUT',
           headers: authHeaders(true),
           body: JSON.stringify({ balance, subscriptionType, taskProgress })
         });
