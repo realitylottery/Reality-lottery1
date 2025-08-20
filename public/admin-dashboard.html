@@ -82,6 +82,7 @@
     <button class="navbtn" data-tab="tab-users"><i class="fa-solid fa-users"></i> Users</button>
     <button class="navbtn" data-tab="tab-withdrawals"><i class="fa-solid fa-wallet"></i> Withdrawals</button>
     <button class="navbtn" data-tab="tab-news"><i class="fa-solid fa-newspaper"></i> News</button>
+    <button class="navbtn" data-tab="tab-banners"><i class="fa-solid fa-image"></i> Banners</button>
     <button class="navbtn" data-tab="tab-content"><i class="fa-solid fa-pen-ruler"></i> Site Content</button>
     <div class="divider"></div>
     <div class="small muted">All actions require admin token.</div>
@@ -237,6 +238,56 @@
       </div>
     </section>
 
+    <!-- BANNERS -->
+    <section id="tab-banners" class="section hidden">
+      <div class="title"><i class="fa-solid fa-image"></i> Banner Management</div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="title" style="font-size:16px"><i class="fa-solid fa-plus"></i> New Banner</div>
+          <div class="row">
+            <div class="col">
+              <label>Title</label>
+              <input id="bannerTitle" placeholder="Banner title…" />
+            </div>
+            <div class="col">
+              <label>Button Text</label>
+              <input id="bannerBtnText" placeholder="Click here" />
+            </div>
+          </div>
+          <label style="margin-top:8px">Description</label>
+          <textarea id="bannerDescription" placeholder="Banner description…"></textarea>
+          <div class="row" style="margin-top:8px">
+            <div class="col">
+              <label>Image URL</label>
+              <input id="bannerImage" placeholder="https://…" />
+            </div>
+            <div class="col">
+              <label>Button Link URL</label>
+              <input id="bannerBtnLink" placeholder="https://…" />
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px; align-items:flex-start">
+            <div class="col"><img id="bannerPreview" class="img-preview" alt="Preview" /></div>
+            <div class="col">
+              <button class="btn" id="btnCreateBanner"><i class="fa-solid fa-floppy-disk"></i> Create</button>
+              <div class="small muted" id="bannerCreateMsg" style="margin-top:6px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="title" style="font-size:16px"><i class="fa-solid fa-list"></i> Existing Banners</div>
+          <div id="bannerList" class="grid" style="grid-template-columns:1fr; gap:10px;">
+            <div class="muted">Loading…</div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="btnReloadBanners"><i class="fa-solid fa-rotate"></i> Reload</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- CONTENT -->
     <section id="tab-content" class="section hidden">
       <div class="title"><i class="fa-solid fa-pen-ruler"></i> Site Content Controls</div>
@@ -285,7 +336,7 @@
 
 <script>
   // ========= CONFIG =========
-  const API_BASE = ''; // same domain
+  const API_BASE = 'https://realitylottery.koyeb.app';
   const LS_TOKEN = 'rl_admin_token';
 
   const $ = (q)=>document.querySelector(q);
@@ -392,6 +443,7 @@
       loadUsers();
       loadWithdrawals();
       loadNewsList();
+      loadBannerList();
       loadContentAdmin();
     }
   });
@@ -581,71 +633,125 @@
   async function loadNewsList(){
     const list = $('#newsList');
     list.innerHTML = '<div class="muted">Loading…</div>';
-    const r = await safeFetch(API_BASE + '/api/admin/news', { headers: authHeaders(false) });
-    if (r._error){
+    
+    try {
+      const r = await safeFetch(API_BASE + '/api/admin/news', { headers: authHeaders(false) });
+      
+      if (r._error){
+        list.innerHTML = '';
+        list.appendChild(el('div',{class:'notice'},[r.message]));
+        return;
+      }
+      
+      const items = r.news || [];
+      if (!items.length){
+        list.innerHTML = '<div class="muted">No news yet.</div>';
+        return;
+      }
+      
       list.innerHTML = '';
-      list.appendChild(el('div',{class:'notice'},[r.message]));
-      return;
-    }
-    const items = r.news || [];
-    if (!items.length){
-      list.innerHTML = '<div class="muted">No news yet.</div>';
-      return;
-    }
-    list.innerHTML = '';
-    items.forEach(n=>{
-      const card = el('div', {class:'card'}, [
-        el('div', {class:'row'}, [
-          el('div', {class:'col'}, [
-            el('div', {class:'title', style:'font-size:15px'}, [n.title || '(no title)']),
-            el('div', {class:'muted small'}, [n._id || '']),
-            el('div', {style:'margin-top:6px'}, [n.body || ''])
+      items.forEach(n=>{
+        const card = el('div', {class:'card'}, [
+          el('div', {class:'row'}, [
+            el('div', {class:'col'}, [
+              el('div', {class:'title', style:'font-size:15px'}, [n.title || '(no title)']),
+              el('div', {class:'muted small'}, [n._id || '']),
+              el('div', {style:'margin-top:6px'}, [n.body || ''])
+            ]),
+            el('div', {class:'col'}, [
+              n.imageUrl ? el('img', {src:n.imageUrl, class:'img-preview'}) : el('div', {class:'muted small'}, ['No image']),
+              el('div', {class:'small muted', style:'margin-top:6px'}, ['Button: ', (n.buttonText||'-'), ' → ', (n.buttonLink||'-')])
+            ])
           ]),
-          el('div', {class:'col'}, [
-            n.imageUrl ? el('img', {src:n.imageUrl, class:'img-preview'}) : el('div', {class:'muted small'}, ['No image']),
-            el('div', {class:'small muted', style:'margin-top:6px'}, ['Button: ', (n.buttonText||'-'), ' → ', (n.buttonLink||'-')])
+          el('div', {class:'row', style:'margin-top:8px'}, [
+            el('button', {class:'btn small', 'data-edit-news': n._id}, [el('i',{class:'fa-solid fa-pen'}), document.createTextNode(' Edit')]),
+            el('button', {class:'btn-danger small', 'data-del-news': n._id}, [el('i',{class:'fa-solid fa-trash'}), document.createTextNode(' Delete')])
           ])
-        ]),
-        el('div', {class:'row', style:'margin-top:8px'}, [
-          el('button', {class:'btn small', 'data-edit': n._id}, [el('i',{class:'fa-solid fa-pen'}), document.createTextNode(' Edit')]),
-          el('button', {class:'btn-danger small', 'data-del': n._id}, [el('i',{class:'fa-solid fa-trash'}), document.createTextNode(' Delete')])
-        ])
-      ]);
-      list.appendChild(card);
-    });
-
-    list.querySelectorAll('button[data-del]').forEach(b=>{
-      b.addEventListener('click', async ()=>{
-        if (!confirm('Delete this news item?')) return;
-        const id = b.getAttribute('data-del');
-        b.disabled = true; b.textContent = 'Deleting…';
-        const r = await safeFetch(API_BASE + '/api/admin/news/'+id, {
-          method:'DELETE', headers: authHeaders(false)
-        });
-        if (r._error) alert('Delete failed: ' + r.message);
-        loadNewsList();
+        ]);
+        list.appendChild(card);
       });
-    });
 
-    list.querySelectorAll('button[data-edit]').forEach(b=>{
-      b.addEventListener('click', async ()=>{
-        const id = b.getAttribute('data-edit');
-        const title = prompt('Title?'); if (title===null) return;
-        const body = prompt('Body?'); if (body===null) return;
-        const imageUrl = prompt('Image URL? (optional)', '') ?? '';
-        const buttonText = prompt('Button text?', 'Read more') ?? '';
-        const buttonLink = prompt('Button link URL?', 'https://') ?? '';
-        b.disabled = true; b.textContent = 'Saving…';
-        const r = await safeFetch(API_BASE + '/api/admin/news/'+id, {
-          method:'PUT', headers: authHeaders(true),
-          body: JSON.stringify({ title, body, imageUrl, buttonText, buttonLink })
+      // Add event listeners
+      list.querySelectorAll('button[data-del-news]').forEach(b=>{
+        b.addEventListener('click', async ()=>{
+          if (!confirm('Delete this news item?')) return;
+          const id = b.getAttribute('data-del-news');
+          b.disabled = true; 
+          b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting…';
+          
+          const r = await safeFetch(API_BASE + '/api/admin/news/' + id, {
+            method: 'DELETE', 
+            headers: authHeaders(false)
+          });
+          
+          if (r._error) {
+            alert('Delete failed: ' + r.message);
+            b.disabled = false;
+            b.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+          } else {
+            loadNewsList();
+          }
         });
-        if (r._error) alert('Update failed: ' + r.message);
-        b.disabled = false; b.innerHTML = '<i class="fa-solid fa-pen"></i> Edit';
-        loadNewsList();
       });
-    });
+
+      list.querySelectorAll('button[data-edit-news]').forEach(b=>{
+        b.addEventListener('click', async ()=>{
+          const id = b.getAttribute('data-edit-news');
+          const newsItem = items.find(item => item._id === id);
+          
+          if (!newsItem) return;
+          
+          // Fill form with existing data
+          $('#newsTitle').value = newsItem.title || '';
+          $('#newsBody').value = newsItem.body || '';
+          $('#newsImage').value = newsItem.imageUrl || '';
+          $('#newsBtnText').value = newsItem.buttonText || '';
+          $('#newsBtnLink').value = newsItem.buttonLink || '';
+          updateNewsPreview();
+          
+          // Change create button to update button temporarily
+          const createBtn = $('#btnCreateNews');
+          const originalHtml = createBtn.innerHTML;
+          createBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Update';
+          
+          const originalHandler = createBtn.onclick;
+          createBtn.onclick = async () => {
+            const title = $('#newsTitle').value.trim();
+            const body = $('#newsBody').value.trim();
+            const imageUrl = $('#newsImage').value.trim();
+            const buttonText = $('#newsBtnText').value.trim();
+            const buttonLink = $('#newsBtnLink').value.trim();
+            
+            const r = await safeFetch(API_BASE + '/api/admin/news/' + id, {
+              method: 'PUT',
+              headers: authHeaders(true),
+              body: JSON.stringify({ title, body, imageUrl, buttonText, buttonLink })
+            });
+            
+            if (r._error) {
+              alert('Update failed: ' + r.message);
+            } else {
+              alert('News updated successfully!');
+              // Reset form and button
+              $('#newsTitle').value = '';
+              $('#newsBody').value = '';
+              $('#newsImage').value = '';
+              $('#newsBtnText').value = '';
+              $('#newsBtnLink').value = '';
+              updateNewsPreview();
+              createBtn.innerHTML = originalHtml;
+              createBtn.onclick = originalHandler;
+              loadNewsList();
+            }
+          };
+        });
+      });
+      
+    } catch (error) {
+      list.innerHTML = '<div class="notice">Error loading news: ' + error.message + '</div>';
+    }
   }
+
   $('#btnCreateNews').addEventListener('click', async ()=>{
     const title = $('#newsTitle').value.trim();
     const body = $('#newsBody').value.trim();
@@ -666,6 +772,168 @@
     }
   });
   $('#btnReloadNews').addEventListener('click', loadNewsList);
+
+  // ========= BANNERS =========
+  function updateBannerPreview(){
+    const url = $('#bannerImage').value.trim();
+    $('#bannerPreview').src = url || 'https://via.placeholder.com/300x150?text=Banner+Preview';
+  }
+  $('#bannerImage').addEventListener('input', updateBannerPreview);
+  updateBannerPreview();
+
+  async function loadBannerList(){
+    const list = $('#bannerList');
+    list.innerHTML = '<div class="muted">Loading…</div>';
+    const r = await safeFetch(API_BASE + '/api/admin/banners', { headers: authHeaders(false) });
+    
+    if (r._error){
+      list.innerHTML = '';
+      list.appendChild(el('div',{class:'notice'},[r.message]));
+      return;
+    }
+    
+    const items = r.banners || [];
+    if (!items.length){
+      list.innerHTML = '<div class="muted">No banners yet.</div>';
+      return;
+    }
+    
+    list.innerHTML = '';
+    items.forEach(banner=>{
+      const card = el('div', {class:'card'}, [
+        el('div', {class:'row'}, [
+          el('div', {class:'col'}, [
+            el('div', {class:'title', style:'font-size:15px'}, [banner.title || '(no title)']),
+            el('div', {class:'muted small'}, [banner._id || '']),
+            el('div', {style:'margin-top:6px'}, [banner.description || ''])
+          ]),
+          el('div', {class:'col'}, [
+            banner.image ? el('img', {src:banner.image, class:'img-preview'}) : el('div', {class:'muted small'}, ['No image']),
+            el('div', {class:'small muted', style:'margin-top:6px'}, ['Button: ', (banner.buttonText||'-'), ' → ', (banner.buttonLink||'-')])
+          ])
+        ]),
+        el('div', {class:'row', style:'margin-top:8px'}, [
+          el('button', {class:'btn small', 'data-edit-banner': banner._id}, [el('i',{class:'fa-solid fa-pen'}), document.createTextNode(' Edit')]),
+          el('button', {class:'btn-danger small', 'data-del-banner': banner._id}, [el('i',{class:'fa-solid fa-trash'}), document.createTextNode(' Delete')])
+        ])
+      ]);
+      list.appendChild(card);
+    });
+
+    // Add event listeners for delete buttons
+    list.querySelectorAll('button[data-del-banner]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        if (!confirm('Delete this banner?')) return;
+        const id = b.getAttribute('data-del-banner');
+        b.disabled = true; 
+        b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting…';
+        
+        const r = await safeFetch(API_BASE + '/api/admin/banners/' + id, {
+          method: 'DELETE', 
+          headers: authHeaders(false)
+        });
+        
+        if (r._error) {
+          alert('Delete failed: ' + r.message);
+          b.disabled = false;
+          b.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+        } else {
+          loadBannerList();
+        }
+      });
+    });
+
+    // Add event listeners for edit buttons
+    list.querySelectorAll('button[data-edit-banner]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        const id = b.getAttribute('data-edit-banner');
+        const banner = items.find(item => item._id === id);
+        
+        if (!banner) return;
+        
+        // Fill form with existing data
+        $('#bannerTitle').value = banner.title || '';
+        $('#bannerDescription').value = banner.description || '';
+        $('#bannerImage').value = banner.image || '';
+        $('#bannerBtnText').value = banner.buttonText || '';
+        $('#bannerBtnLink').value = banner.buttonLink || '';
+        updateBannerPreview();
+        
+        // Change create button to update button temporarily
+        const createBtn = $('#btnCreateBanner');
+        const originalHtml = createBtn.innerHTML;
+        createBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Update';
+        createBtn.onclick = async () => {
+          const title = $('#bannerTitle').value.trim();
+          const description = $('#bannerDescription').value.trim();
+          const image = $('#bannerImage').value.trim();
+          const buttonText = $('#bannerBtnText').value.trim();
+          const buttonLink = $('#bannerBtnLink').value.trim();
+          
+          const r = await safeFetch(API_BASE + '/api/admin/banners/' + id, {
+            method: 'PUT',
+            headers: authHeaders(true),
+            body: JSON.stringify({ title, description, image, buttonText, buttonLink })
+          });
+          
+          if (r._error) {
+            alert('Update failed: ' + r.message);
+          } else {
+            alert('Banner updated successfully!');
+            // Reset form and button
+            $('#bannerTitle').value = '';
+            $('#bannerDescription').value = '';
+            $('#bannerImage').value = '';
+            $('#bannerBtnText').value = '';
+            $('#bannerBtnLink').value = '';
+            updateBannerPreview();
+            createBtn.innerHTML = originalHtml;
+            createBtn.onclick = createBannerHandler;
+            loadBannerList();
+          }
+        };
+      });
+    });
+  }
+
+  // Handler for creating banners
+  async function createBannerHandler() {
+    const title = $('#bannerTitle').value.trim();
+    const description = $('#bannerDescription').value.trim();
+    const image = $('#bannerImage').value.trim();
+    const buttonText = $('#bannerBtnText').value.trim();
+    const buttonLink = $('#bannerBtnLink').value.trim();
+    
+    $('#bannerCreateMsg').textContent = 'Creating…';
+    
+    const r = await safeFetch(API_BASE + '/api/admin/banners', {
+      method: 'POST', 
+      headers: authHeaders(true),
+      body: JSON.stringify({ title, description, image, buttonText, buttonLink })
+    });
+    
+    if (r._error) {
+      $('#bannerCreateMsg').innerHTML = '<span class="danger">'+ r.message +'</span>';
+    } else {
+      $('#bannerCreateMsg').innerHTML = '<span class="ok">Banner created successfully!</span>';
+      // Clear form
+      $('#bannerTitle').value = '';
+      $('#bannerDescription').value = '';
+      $('#bannerImage').value = '';
+      $('#bannerBtnText').value = '';
+      $('#bannerBtnLink').value = '';
+      updateBannerPreview();
+      loadBannerList();
+      
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        $('#bannerCreateMsg').textContent = '';
+      }, 3000);
+    }
+  }
+
+  $('#btnCreateBanner').addEventListener('click', createBannerHandler);
+  $('#btnReloadBanners').addEventListener('click', loadBannerList);
 
   // ========= CONTENT =========
   async function loadContentAdmin(){
@@ -711,13 +979,14 @@
     loadUsers();
     loadWithdrawals();
     loadNewsList();
+    loadBannerList();
     loadContentAdmin();
   }
 
   // If the admin navigates into tabs while not signed, we keep UI friendly
   document.addEventListener('click', (e)=>{
     const tab = e.target.closest('.navbtn')?.dataset?.tab || '';
-    const needAuthTabs = ['tab-stats','tab-users','tab-withdrawals','tab-news','tab-content'];
+    const needAuthTabs = ['tab-stats','tab-users','tab-withdrawals','tab-news','tab-banners','tab-content'];
     if (tab && needAuthTabs.includes(tab) && !isSigned()){
       setTimeout(()=>{ alert('Please sign in as admin first.'); }, 0);
     }
