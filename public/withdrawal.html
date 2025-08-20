@@ -223,15 +223,16 @@
         }
         
         const data = await res.json();
-        
-        if (!data || data.length === 0) {
-          withdrawalsList.innerHTML = '<div class="empty-history">No withdrawal history found</div>';
-          return;
-        }
-        
-        // عرض طلبات السحب
-        withdrawalsList.innerHTML = '';
-        data.forEach(withdrawal => {
+const withdrawals = data.withdrawals || [];
+
+if (withdrawals.length === 0) {
+  withdrawalsList.innerHTML = '<div class="empty-history">No withdrawal history found</div>';
+  return;
+}
+
+// عرض طلبات السحب
+withdrawalsList.innerHTML = '';
+withdrawals.forEach(withdrawal => {
           const item = document.createElement('div');
           item.className = 'withdrawal-item';
           
