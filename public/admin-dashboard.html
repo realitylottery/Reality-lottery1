@@ -511,9 +511,9 @@
       const tr = document.createElement('tr');
 tr.innerHTML = `
   <td><strong>${w.userId?.username || '-'}</strong></td>
-  <td>${Number(w.amount || 0)}</td>
-  <td class="mono">${w.walletAddress || '-'}</td>
-  <td>${getStatusChip(w.status)}</td>
+<td>${Number(w.amount || 0)}</td>
+<td class="mono">${w.walletAddress || '-'}</td>
+<td>${getStatusChip(w.status)}</td>
   <td class="nowrap">
     <button class="btn-ok small" data-approve="${w._id}">
       <i class="fa-solid fa-check"></i> Approve
