@@ -1,7 +1,7 @@
 // createAdmin.js
 require("dotenv").config();
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const User = require("./models/User");
 
 (async () => {
