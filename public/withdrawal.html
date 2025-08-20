@@ -6,34 +6,168 @@
   <title>RealityLottery - Withdrawal</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body{background:#000;color:#fff;font-family:Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column}
-    header,footer{background:#111;padding:15px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #ffd700}
-    .logo{color:#ffd700;font-weight:bold}
-    .withdraw-container{flex:1;max-width:600px;margin:20px auto;padding:20px;background:#222;border-radius:10px}
-    label{display:block;margin-top:10px;font-weight:bold}
-    input{width:100%;padding:10px;margin-top:5px;border-radius:5px;border:none}
-    button{margin-top:15px;padding:12px;width:100%;background:#ffd700;color:#000;font-weight:bold;border:none;border-radius:8px;cursor:pointer}
-    .status{margin-top:15px;padding:10px;border-radius:5px;background:#333}
-    footer{border-top:2px solid #ffd700;gap:20px;flex-wrap:wrap}
-    .footer-link{color:#ffd700;text-decoration:none;display:flex;flex-direction:column;align-items:center}
+    body {
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+    }
+    header, footer {
+      background: #111;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #ffd700;
+    }
+    .logo {
+      color: #ffd700;
+      font-weight: bold;
+      font-size: 1.5rem;
+    }
+    .withdraw-container {
+      flex: 1;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #222;
+      border-radius: 10px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: none;
+      background: #333;
+      color: white;
+    }
+    button {
+      margin-top: 15px;
+      padding: 12px;
+      width: 100%;
+      background: #ffd700;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #ffcc00;
+    }
+    .status {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      background: #333;
+    }
+    footer {
+      border-top: 2px solid #ffd700;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .footer-link {
+      color: #ffd700;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .withdrawal-history {
+      margin-top: 30px;
+      background: #222;
+      border-radius: 10px;
+      padding: 15px;
+    }
+    .withdrawal-item {
+      background: #333;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status-pending {
+      color: #ffcc00;
+    }
+    .status-approved {
+      color: #00cc66;
+    }
+    .status-rejected {
+      color: #ff3333;
+    }
+    .history-title {
+      border-bottom: 1px solid #ffd700;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+    .refresh-btn {
+      background: #444;
+      color: #ffd700;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .loading {
+      text-align: center;
+      color: #ffd700;
+      padding: 20px;
+    }
+    .empty-history {
+      text-align: center;
+      color: #888;
+      padding: 20px;
+    }
   </style>
 </head>
 <body>
   <header>
     <div class="logo">RealityLottery</div>
-    <a href="index.html" style="color:#ffd700;">Back</a>
+    <a href="index.html" style="color:#ffd700; text-decoration: none;">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
   </header>
 
   <main class="withdraw-container">
     <h2>Your Balance: <span id="balance">Loading...</span></h2>
+    
     <form id="withdrawForm">
       <label>Amount</label>
-      <input type="number" id="amount" required>
+      <input type="number" id="amount" required min="1">
+      
       <label>Wallet Address</label>
       <input type="text" id="wallet" required>
+      
       <button type="submit">Withdraw</button>
     </form>
+    
     <div class="status" id="status"></div>
+    
+    <div class="withdrawal-history">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 class="history-title">Withdrawal History</h3>
+        <button class="refresh-btn" id="refreshBtn">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+      </div>
+      <div id="withdrawalsList" class="loading">
+        Loading your withdrawal history...
+      </div>
+    </div>
   </main>
 
   <footer>
@@ -44,42 +178,132 @@
   </footer>
 
   <script>
-    const API_BASE='https://realitylottery.koyeb.app';
-    const token=localStorage.getItem('rl_token');
+    const API_BASE = 'https://realitylottery.koyeb.app';
+    const token = localStorage.getItem('rl_token');
+    
+    // التحقق من وجود التوكن
+    if (!token) {
+      window.location.href = 'login.html';
+    }
 
-    async function loadBalance(){
-      try{
-        const res=await fetch(`${API_BASE}/api/user/balance`,{
-          headers:{Authorization:`Bearer ${token}`}
+    async function loadBalance() {
+      try {
+        const res = await fetch(`${API_BASE}/api/user/balance`, {
+          headers: { Authorization: `Bearer ${token}` }
         });
-        const data=await res.json();
-        document.getElementById('balance').textContent=data.balance ?? 0;
-      }catch(e){
-        document.getElementById('balance').textContent='Error';
+        
+        if (res.status === 401) {
+          // إذا كان التوكن غير صالح
+          localStorage.removeItem('rl_token');
+          window.location.href = 'login.html';
+          return;
+        }
+        
+        const data = await res.json();
+        document.getElementById('balance').textContent = data.balance ?? 0;
+      } catch (e) {
+        document.getElementById('balance').textContent = 'Error';
+        console.error('Failed to load balance:', e);
       }
     }
 
-    document.getElementById('withdrawForm').addEventListener('submit',async e=>{
-      e.preventDefault();
-      const amount=document.getElementById('amount').value;
-      const wallet=document.getElementById('wallet').value;
-      try{
-        const res=await fetch(`${API_BASE}/api/withdrawals`,{
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json',
-            Authorization:`Bearer ${token}`
-          },
-          body:JSON.stringify({amount,wallet})
+    async function loadWithdrawals() {
+      const withdrawalsList = document.getElementById('withdrawalsList');
+      withdrawalsList.innerHTML = '<div class="loading">Loading your withdrawal history...</div>';
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/withdrawals`, {
+          headers: { Authorization: `Bearer ${token}` }
         });
-        const data=await res.json();
-        document.getElementById('status').textContent=data.message||'Request submitted, pending approval';
-      }catch(err){
-        document.getElementById('status').textContent='Error submitting withdrawal';
+        
+        if (res.status === 401) {
+          localStorage.removeItem('rl_token');
+          window.location.href = 'login.html';
+          return;
+        }
+        
+        const data = await res.json();
+        
+        if (!data || data.length === 0) {
+          withdrawalsList.innerHTML = '<div class="empty-history">No withdrawal history found</div>';
+          return;
+        }
+        
+        // عرض طلبات السحب
+        withdrawalsList.innerHTML = '';
+        data.forEach(withdrawal => {
+          const item = document.createElement('div');
+          item.className = 'withdrawal-item';
+          
+          const statusClass = `status-${withdrawal.status || 'pending'}`;
+          
+          item.innerHTML = `
+            <div>
+              <strong>Amount: ${withdrawal.amount}</strong><br>
+              <small>Wallet: ${withdrawal.wallet}</small><br>
+              <small>Date: ${new Date(withdrawal.createdAt || Date.now()).toLocaleDateString()}</small>
+            </div>
+            <div class="${statusClass}">
+              ${(withdrawal.status || 'pending').toUpperCase()}
+            </div>
+          `;
+          
+          withdrawalsList.appendChild(item);
+        });
+      } catch (e) {
+        console.error('Failed to load withdrawals:', e);
+        withdrawalsList.innerHTML = '<div class="empty-history">Error loading withdrawal history</div>';
+      }
+    }
+
+    document.getElementById('withdrawForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const amount = document.getElementById('amount').value;
+      const wallet = document.getElementById('wallet').value;
+      const statusDiv = document.getElementById('status');
+      
+      statusDiv.textContent = 'Processing your request...';
+      statusDiv.style.color = '#ffcc00';
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/withdrawals`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ amount, wallet })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          statusDiv.textContent = data.message || 'Request submitted, pending approval';
+          statusDiv.style.color = '#00cc66';
+          
+          // إعادة تعيين النموذج
+          document.getElementById('withdrawForm').reset();
+          
+          // تحديث الرصيد وقائمة الطلبات
+          loadBalance();
+          loadWithdrawals();
+        } else {
+          statusDiv.textContent = data.message || 'Error submitting withdrawal';
+          statusDiv.style.color = '#ff3333';
+        }
+      } catch (err) {
+        console.error('Withdrawal error:', err);
+        statusDiv.textContent = 'Error submitting withdrawal';
+        statusDiv.style.color = '#ff3333';
       }
     });
 
+    // إضافة حدث للزر تحديث
+    document.getElementById('refreshBtn').addEventListener('click', loadWithdrawals);
+
+    // تحميل البيانات الأولية
     loadBalance();
+    loadWithdrawals();
   </script>
 </body>
 </html>
