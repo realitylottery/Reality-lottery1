@@ -398,7 +398,7 @@ app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
     const token = jwt.sign(
-      { username, roles: ['admin'] },
+      { id: username, roles: ['admin'] },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -460,6 +460,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
