@@ -1,15 +1,58 @@
 const mongoose = require('mongoose');
-const { Schema } = mongoose;
 
-const PaymentSchema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  subscriptionId: { type: Schema.Types.ObjectId, ref: 'Subscription' },
-  amount: { type: Number, required: true },
-  currency: { type: String, default: 'USD' },
-  method: { type: String, default: 'Demo' },
-  type: { type: String, default: 'Subscription' },
-  reference: { type: String },
-  status: { type: String, enum: ['pending','completed','rejected'], default: 'pending' }
-}, { timestamps: true });
+const PaymentSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  plan: {
+    type: String,
+    required: true,
+    enum: ['BASIC', 'PRO', 'VIP']
+  },
+  amount: {
+    type: Number,
+    required: true
+  },
+  transactionId: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  phone: {
+    type: String,
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'verified', 'rejected'],
+    default: 'pending'
+  },
+  verifiedAt: {
+    type: Date
+  },
+  verifiedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  rejectedAt: {
+    type: Date
+  },
+  rejectedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  rejectionReason: {
+    type: String
+  }
+}, {
+  timestamps: true
+});
+
+// Index for better query performance
+PaymentSchema.index({ userId: 1, createdAt: -1 });
+PaymentSchema.index({ status: 1 });
+PaymentSchema.index({ transactionId: 1 }, { unique: true });
 
 module.exports = mongoose.model('Payment', PaymentSchema);
