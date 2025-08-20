@@ -516,20 +516,21 @@ tb.appendChild(tr);
     tb.innerHTML = '';
     rows.forEach(w=>{
       const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>
-          <div><strong>${(w.user && w.user.username) || w.username || '-'}</strong></div>
-          <div class="small muted mono">${(w.user && w.user._id) || w.userId || ''}</div>
-        </td>
-        <td>${Number(w.amount||0)}</td>
-        <td class="mono">${w.walletAddress||'-'}</td>
-        <td>${w.status ? '<span class="chip">'+w.status+'</span>' : '-'}</td>
-        <td class="nowrap">
-          <button class="btn-ok small" data-approve="${w._id}"><i class="fa-solid fa-check"></i> Approve</button>
-          <button class="btn-danger small" data-reject="${w._id}"><i class="fa-solid fa-xmark"></i> Reject</button>
-        </td>
-      `;
-      tb.appendChild(tr);
+tr.innerHTML = `
+  <td><strong>${w.userId?.username || '-'}</strong></td>
+  <td>${Number(w.amount || 0)}</td>
+  <td class="mono">${w.walletAddress || '-'}</td>
+  <td>${getStatusChip(w.status)}</td>
+  <td class="nowrap">
+    <button class="btn-ok small" data-approve="${w._id}">
+      <i class="fa-solid fa-check"></i> Approve
+    </button>
+    <button class="btn-danger small" data-reject="${w._id}">
+      <i class="fa-solid fa-xmark"></i> Reject
+    </button>
+  </td>
+`;
+tb.appendChild(tr);
     });
 
     tb.querySelectorAll('button[data-approve]').forEach(b=>{
