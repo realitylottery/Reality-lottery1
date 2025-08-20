@@ -613,7 +613,7 @@
   async function loadPayments(){
     const tb = $('#paymentsTbody');
     tb.innerHTML = '<tr><td colspan="8" class="muted">Loading…</td></tr>';
-    const r = await safeFetch(API_BASE + '/api/admin/payments', { headers: authHeaders(false) });
+    const r = await safeFetch(API_BASE + '/api/payments', { headers: authHeaders(false) });
     if (r._error){
       tb.innerHTML = '<tr><td colspan="8"><div class="notice">'+ r.message +'</div></td></tr>';
       return;
