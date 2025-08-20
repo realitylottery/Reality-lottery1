@@ -10,7 +10,7 @@
 />
 <style>
   :root{
-    --bg:#000; --panel:#0f0f0f; --muted:#b9b9b9; --gold:#ffd700; --gold2:#ffa500; --red:#ff5252; --green:#23d18b;
+    --bg:#000; --panel:#0f0f0f; --muted:#b9b9b9; --gold:#ffd700; --gold2:#ffa500; --red:#ff5252; --green:#23d18b; --blue:#4f8ff7;
   }
   *{box-sizing:border-box; font-family: Arial, Helvetica, sans-serif;}
   body{margin:0; background:var(--bg); color:#fff; min-height:100vh; display:flex; flex-direction:column;}
@@ -28,6 +28,7 @@
   .btn-outline{background:transparent; border:1px solid var(--gold); color:var(--gold);}
   .btn-danger{background:#2b0000; border:1px solid #900; color:#f88;}
   .btn-ok{background:#092; border:1px solid #0f6; color:#eaffea;}
+  .btn-info{background:#004080; border:1px solid #4f8ff7; color:#e0f0ff;}
   .row{display:flex; gap:12px; flex-wrap:wrap;}
   .col{flex:1 1 240px; min-width:220px;}
   input, select, textarea{
@@ -50,6 +51,7 @@
   .hidden{display:none !important;}
   .danger{color:#ff8b8b}
   .ok{color:#9effb3}
+  .info{color:#4f8ff7}
   .notice{background:#141414; border:1px dashed rgba(255,215,0,.35); border-radius:10px; padding:10px; color:var(--muted); font-size:13px;}
   .top-actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
   .small{font-size:12px;}
@@ -64,6 +66,8 @@
   .nowrap{white-space:nowrap;}
   .right{margin-left:auto}
   .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  .filter-bar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px;}
+  .filter-select{background:#0f0f0f; border:1px solid rgba(255,215,0,.25); color:#fff; padding:6px 10px; border-radius:6px;}
 </style>
 </head>
 <body>
@@ -80,6 +84,7 @@
     <button class="navbtn active" data-tab="tab-login"><i class="fa-solid fa-lock"></i> Admin Sign-in</button>
     <button class="navbtn" data-tab="tab-stats"><i class="fa-solid fa-chart-line"></i> Stats</button>
     <button class="navbtn" data-tab="tab-users"><i class="fa-solid fa-users"></i> Users</button>
+    <button class="navbtn" data-tab="tab-payments"><i class="fa-solid fa-credit-card"></i> Payments</button>
     <button class="navbtn" data-tab="tab-withdrawals"><i class="fa-solid fa-wallet"></i> Withdrawals</button>
     <button class="navbtn" data-tab="tab-news"><i class="fa-solid fa-newspaper"></i> News</button>
     <button class="navbtn" data-tab="tab-banners"><i class="fa-solid fa-image"></i> Banners</button>
@@ -150,6 +155,46 @@
             <tr><td colspan="6" class="muted">Loading…</td></tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- PAYMENTS -->
+    <section id="tab-payments" class="section hidden">
+      <div class="title"><i class="fa-solid fa-credit-card"></i> Payment Management</div>
+      
+      <div class="filter-bar">
+        <select id="paymentFilter" class="filter-select">
+          <option value="all">All Payments</option>
+          <option value="pending">Pending</option>
+          <option value="verified">Verified</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <input id="paymentSearch" placeholder="Search by user or transaction ID..." />
+        <button class="btn" id="btnReloadPayments"><i class="fa-solid fa-rotate"></i> Reload</button>
+      </div>
+      
+      <div class="row" style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Plan</th>
+              <th>Amount</th>
+              <th>Transaction ID</th>
+              <th>Phone</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th class="nowrap">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="paymentsTbody">
+            <tr><td colspan="8" class="muted">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="notice" style="margin-top:12px">
+        This section allows you to manage user payment verifications. Verify payments to activate user subscriptions.
       </div>
     </section>
 
@@ -441,6 +486,7 @@
       // Auto-load data after successful login
       loadStats();
       loadUsers();
+      loadPayments();
       loadWithdrawals();
       loadNewsList();
       loadBannerList();
@@ -464,6 +510,8 @@
       { label:'Successful Invites', value: r.successfulInvites },
       { label:'Total Withdrawals', value: r.totalWithdrawals },
       { label:'Pending Withdrawals', value: r.pendingWithdrawals },
+      { label:'Total Payments', value: r.totalPayments || 0 },
+      { label:'Pending Payments', value: r.pendingPayments || 0 },
     ];
     items.forEach(it=>{
       const card = el('div', {class:'stat'}, [
@@ -552,6 +600,99 @@
   $('#btnReloadUsers').addEventListener('click', loadUsers);
   $('#userSearch').addEventListener('input', loadUsers);
 
+  // ========= PAYMENTS =========
+  function getPaymentStatusChip(status) {
+    switch(status) {
+      case 'pending': return '<span class="chip" style="color:#ffa500">Pending</span>';
+      case 'verified': return '<span class="chip" style="color:#23d18b">Verified</span>';
+      case 'rejected': return '<span class="chip" style="color:#ff5252">Rejected</span>';
+      default: return '<span class="chip">' + status + '</span>';
+    }
+  }
+
+  async function loadPayments(){
+    const tb = $('#paymentsTbody');
+    tb.innerHTML = '<tr><td colspan="8" class="muted">Loading…</td></tr>';
+    const r = await safeFetch(API_BASE + '/api/admin/payments', { headers: authHeaders(false) });
+    if (r._error){
+      tb.innerHTML = '<tr><td colspan="8"><div class="notice">'+ r.message +'</div></td></tr>';
+      return;
+    }
+    const payments = (r.payments || []);
+    if (!payments.length){
+      tb.innerHTML = '<tr><td colspan="8" class="muted">No payment records yet.</td></tr>';
+      return;
+    }
+    
+    const statusFilter = $('#paymentFilter').value;
+    const searchQuery = $('#paymentSearch').value.trim().toLowerCase();
+    
+    const filtered = payments.filter(p => {
+      const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
+      const matchesSearch = !searchQuery || 
+        (p.userId?.username || '').toLowerCase().includes(searchQuery) ||
+        (p.transactionId || '').toLowerCase().includes(searchQuery);
+      return matchesStatus && matchesSearch;
+    });
+
+    tb.innerHTML = '';
+    filtered.forEach(p=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${p.userId?.username || p.userId || 'Unknown'}</strong></td>
+        <td>${p.plan || '-'}</td>
+        <td>$${Number(p.amount || 0)}</td>
+        <td class="mono small">${p.transactionId || 'No ID'}</td>
+        <td>${p.phone || '-'}</td>
+        <td class="small">${new Date(p.createdAt || Date.now()).toLocaleDateString()}</td>
+        <td>${getPaymentStatusChip(p.status || 'pending')}</td>
+        <td class="nowrap">
+          ${p.status === 'pending' ? `
+            <button class="btn-ok small" data-verify-payment="${p._id}">
+              <i class="fa-solid fa-check"></i> Verify
+            </button>
+            <button class="btn-danger small" data-reject-payment="${p._id}">
+              <i class="fa-solid fa-xmark"></i> Reject
+            </button>
+          ` : '<span class="muted small">No actions</span>'}
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    // Add event listeners for payment actions
+    tb.querySelectorAll('button[data-verify-payment]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        if (!confirm('Verify this payment? This will activate the user\'s subscription.')) return;
+        const id = b.dataset.verifyPayment;
+        b.disabled = true; b.textContent = 'Verifying…';
+        const r = await safeFetch(API_BASE + '/api/admin/payments/'+id+'/verify', {
+          method:'POST', headers: authHeaders(true)
+        });
+        b.disabled = false; b.innerHTML = '<i class="fa-solid fa-check"></i> Verify';
+        if (r._error) alert('Verification failed: ' + r.message);
+        else { alert('Payment verified! User subscription activated.'); loadPayments(); loadUsers(); }
+      });
+    });
+    
+    tb.querySelectorAll('button[data-reject-payment]').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        if (!confirm('Reject this payment? This will notify the user their payment was rejected.')) return;
+        const id = b.dataset.rejectPayment;
+        b.disabled = true; b.textContent = 'Rejecting…';
+        const r = await safeFetch(API_BASE + '/api/admin/payments/'+id+'/reject', {
+          method:'POST', headers: authHeaders(true)
+        });
+        b.disabled = false; b.innerHTML = '<i class="fa-solid fa-xmark"></i> Reject';
+        if (r._error) alert('Rejection failed: ' + r.message);
+        else { alert('Payment rejected! User notified.'); loadPayments(); }
+      });
+    });
+  }
+  $('#btnReloadPayments').addEventListener('click', loadPayments);
+  $('#paymentFilter').addEventListener('change', loadPayments);
+  $('#paymentSearch').addEventListener('input', loadPayments);
+
   // ========= WITHDRAWALS =========
   function getStatusChip(status) {
     switch(status) {
@@ -587,7 +728,7 @@
           <button class="btn-ok small" data-approve="${w._id}">
             <i class="fa-solid fa-check"></i> Approve
           </button>
-          <button class="btn-danger small" data-reject="${w._id}">
+                    <button class="btn-danger small" data-reject="${w._id}">
             <i class="fa-solid fa-xmark"></i> Reject
           </button>
         </td>
@@ -977,6 +1118,7 @@
   if (isSigned()){
     loadStats();
     loadUsers();
+    loadPayments();
     loadWithdrawals();
     loadNewsList();
     loadBannerList();
@@ -986,7 +1128,7 @@
   // If the admin navigates into tabs while not signed, we keep UI friendly
   document.addEventListener('click', (e)=>{
     const tab = e.target.closest('.navbtn')?.dataset?.tab || '';
-    const needAuthTabs = ['tab-stats','tab-users','tab-withdrawals','tab-news','tab-banners','tab-content'];
+    const needAuthTabs = ['tab-stats','tab-users','tab-payments','tab-withdrawals','tab-news','tab-banners','tab-content'];
     if (tab && needAuthTabs.includes(tab) && !isSigned()){
       setTimeout(()=>{ alert('Please sign in as admin first.'); }, 0);
     }
