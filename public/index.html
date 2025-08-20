@@ -715,8 +715,8 @@
         }
       }
 
-      // Display subscription status - MODIFIED TO READ subscriptionType FROM LOCALSTORAGE
-      function displaySubscriptionStatus() {
+      // Display subscription status - MODIFIED TO READ FROM API
+      async function displaySubscriptionStatus() {
         const statusElement = document.getElementById('subscriptionStatus');
         const messageElement = document.getElementById('statusMessage');
         statusElement.style.display = 'block';
@@ -728,16 +728,62 @@
           return;
         }
         
-        // Read subscriptionType data from user data in localStorage
-        if (userData.subscriptionType) {
-          messageElement.innerHTML = `
-            <span class="status-active">Active Subscription</span><br>
-            <strong>${userData.subscriptionType}</strong> - Valid until lottery draw date
-          `;
-          disableSubscriptionButtons(userData.subscriptionType);
-        } else {
-          messageElement.textContent = 'You do not have an active subscription';
-          messageElement.className = 'status-inactive';
+        try {
+          // Fetch latest subscription data from API
+          const response = await fetch(`${API_BASE}/api/auth/me`, {
+            headers: {
+              'Authorization': 'Bearer ' + token
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            
+            // Update localStorage with fresh data
+            if (data.user) {
+              localStorage.setItem('rl_user', JSON.stringify(data.user));
+              
+              // Read subscriptionType from updated user data
+              if (data.user.subscriptionType) {
+                messageElement.innerHTML = `
+                  <span class="status-active">Active Subscription</span><br>
+                  <strong>${data.user.subscriptionType}</strong> - Valid until lottery draw date
+                `;
+                disableSubscriptionButtons(data.user.subscriptionType);
+              } else {
+                messageElement.textContent = 'You do not have an active subscription';
+                messageElement.className = 'status-inactive';
+              }
+            } else {
+              messageElement.textContent = 'Error loading subscription data';
+              messageElement.className = 'status-inactive';
+            }
+          } else {
+            // Fallback to localStorage if API fails
+            if (userData.subscriptionType) {
+              messageElement.innerHTML = `
+                <span class="status-active">Active Subscription</span><br>
+                <strong>${userData.subscriptionType}</strong> - Valid until lottery draw date
+              `;
+              disableSubscriptionButtons(userData.subscriptionType);
+            } else {
+              messageElement.textContent = 'You do not have an active subscription';
+              messageElement.className = 'status-inactive';
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching subscription data:', error);
+          // Fallback to localStorage on error
+          if (userData.subscriptionType) {
+            messageElement.innerHTML = `
+              <span class="status-active">Active Subscription</span><br>
+              <strong>${userData.subscriptionType}</strong> - Valid until lottery draw date
+            `;
+            disableSubscriptionButtons(userData.subscriptionType);
+          } else {
+            messageElement.textContent = 'You do not have an active subscription';
+            messageElement.className = 'status-inactive';
+          }
         }
       }
       
@@ -777,12 +823,22 @@
           const planPrice = this.getAttribute('data-price');
           
           try {
-            // Check if user already has an active subscription from localStorage
-            if (userData.subscriptionType) {
-              alert(`You already have an active subscription: ${userData.subscriptionType}`);
-              this.innerHTML = originalText;
-              this.disabled = false;
-              return;
+            // Check if user already has an active subscription from API
+            const response = await fetch(`${API_BASE}/api/auth/me`, {
+              headers: {
+                'Authorization': 'Bearer ' + token
+              }
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              
+              if (data.user && data.user.subscriptionType) {
+                alert(`You already have an active subscription: ${data.user.subscriptionType}`);
+                this.innerHTML = originalText;
+                this.disabled = false;
+                return;
+              }
             }
             
             // Skip the API call to /api/subscribe and go directly to payment
