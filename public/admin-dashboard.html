@@ -496,7 +496,7 @@
   async function loadWithdrawals(){
     const tb = $('#withdrawalsTbody');
     tb.innerHTML = '<tr><td colspan="5" class="muted">Loading…</td></tr>';
-    const r = await safeFetch(API_BASE + '/api/admin/withdrawals', { headers: authHeaders(false) });
+    const r = await safeFetch(API_BASE + '/api/admin/withdrawals', { headers: authHeaders() });
     if (r._error){
       tb.innerHTML = '<tr><td colspan="5"><div class="notice">'+ r.message +'</div></td></tr>';
       return;
@@ -531,7 +531,7 @@ tb.appendChild(tr);
         const id = b.dataset.approve;
         b.disabled = true; b.textContent = 'Approving…';
         const r = await safeFetch(API_BASE + '/api/admin/withdrawals/'+id+'/approve', {
-          method:'POST', headers: authHeaders(false)
+          method:'POST', headers: authHeaders()
         });
         b.disabled = false; b.innerHTML = '<i class="fa-solid fa-check"></i> Approve';
         if (r._error) alert('Approve failed: ' + r.message);
@@ -543,7 +543,7 @@ tb.appendChild(tr);
         const id = b.dataset.reject;
         b.disabled = true; b.textContent = 'Rejecting…';
         const r = await safeFetch(API_BASE + '/api/admin/withdrawals/'+id+'/reject', {
-          method:'POST', headers: authHeaders(false)
+          method:'POST', headers: authHeaders()
         });
         b.disabled = false; b.innerHTML = '<i class="fa-solid fa-xmark"></i> Reject';
         if (r._error) alert('Reject failed: ' + r.message);
