@@ -266,7 +266,7 @@
       statusDiv.style.color = '#ffcc00';
       
       try {
-        const res = await fetch(`${API_BASE}/api/withdrawals`, {
+        const res = await fetch(`${API_BASE}/api/user/withdrawals`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
