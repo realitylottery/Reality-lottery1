@@ -12,7 +12,9 @@ const UserSchema = new mongoose.Schema({
   // الحقول الجديدة
   balance: { type: Number, default: 0 },
   taskProgress: { type: Number, default: 0 },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
   subscriptionType: { type: String, default: "Free" } // نوع الاشتراك افتراضي = "Free"
 });
 
 module.exports = mongoose.model('User', UserSchema);
+
