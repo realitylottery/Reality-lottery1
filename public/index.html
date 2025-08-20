@@ -157,36 +157,6 @@
       margin-bottom: 2rem;
     }
 
-    .cta-buttons {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 2rem;
-    }
-
-    .cta-btn {
-      padding: 12px 25px;
-      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-      color: #000;
-      border-radius: 8px;
-      font-weight: bold;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
-      font-size: 1rem;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .cta-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 15px rgba(255, 215, 0, 0.5);
-    }
-
     .banner-slider {
       width: 100%;
       max-width: 1200px;
@@ -498,11 +468,6 @@
         padding: 2rem 1rem;
       }
       
-      .cta-buttons {
-        flex-direction: column;
-        gap: 15px;
-      }
-      
       .banner-card {
         min-width: 200px;
       }
@@ -750,7 +715,7 @@
         }
       }
 
-      // Display subscription status - MODIFIED TO READ FROM LOCALSTORAGE
+      // Display subscription status - MODIFIED TO READ subscriptionType FROM LOCALSTORAGE
       function displaySubscriptionStatus() {
         const statusElement = document.getElementById('subscriptionStatus');
         const messageElement = document.getElementById('statusMessage');
@@ -763,23 +728,13 @@
           return;
         }
         
-        // Read subscription data from user data in localStorage
-        if (userData.subscription) {
-          if (userData.subscription.status === 'active') {
-            messageElement.innerHTML = `
-              <span class="status-active">Active Subscription</span><br>
-              <strong>${userData.subscription.plan}</strong> - Valid until lottery draw date
-            `;
-            disableSubscriptionButtons(userData.subscription.plan);
-          } else if (userData.subscription.status === 'pending') {
-            messageElement.innerHTML = `
-              <span class="status-pending">Pending Payment</span><br>
-              <strong>${userData.subscription.plan}</strong> - Please complete your payment
-            `;
-          } else {
-            messageElement.textContent = 'You do not have an active subscription';
-            messageElement.className = 'status-inactive';
-          }
+        // Read subscriptionType data from user data in localStorage
+        if (userData.subscriptionType) {
+          messageElement.innerHTML = `
+            <span class="status-active">Active Subscription</span><br>
+            <strong>${userData.subscriptionType}</strong> - Valid until lottery draw date
+          `;
+          disableSubscriptionButtons(userData.subscriptionType);
         } else {
           messageElement.textContent = 'You do not have an active subscription';
           messageElement.className = 'status-inactive';
@@ -823,8 +778,8 @@
           
           try {
             // Check if user already has an active subscription from localStorage
-            if (userData.subscription && userData.subscription.status === 'active') {
-              alert(`You already have an active subscription: ${userData.subscription.plan}`);
+            if (userData.subscriptionType) {
+              alert(`You already have an active subscription: ${userData.subscriptionType}`);
               this.innerHTML = originalText;
               this.disabled = false;
               return;
