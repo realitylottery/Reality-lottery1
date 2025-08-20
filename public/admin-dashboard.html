@@ -346,6 +346,10 @@
       const ct = res.headers.get('content-type') || '';
       const data = ct.includes('application/json') ? await res.json() : await res.text();
       if (!res.ok){
+        // Handle 403 Forbidden specifically
+        if (res.status === 403) {
+          return { _error: true, message: 'Access forbidden. Please check your admin privileges or token.' };
+        }
         throw new Error((data && data.message) ? data.message : ('HTTP ' + res.status));
       }
       return data;
@@ -383,6 +387,12 @@
     } else {
       setToken(r.token);
       $('#loginMsg').innerHTML = '<span class="ok">Success</span>';
+      // Auto-load data after successful login
+      loadStats();
+      loadUsers();
+      loadWithdrawals();
+      loadNewsList();
+      loadContentAdmin();
     }
   });
 
@@ -490,19 +500,20 @@
   $('#btnReloadUsers').addEventListener('click', loadUsers);
   $('#userSearch').addEventListener('input', loadUsers);
 
-  function authHeaders() {
-  const token = localStorage.getItem("token");
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {})
-  };
-  }
-  
   // ========= WITHDRAWALS =========
+  function getStatusChip(status) {
+    switch(status) {
+      case 'pending': return '<span class="chip" style="color:#ffa500">Pending</span>';
+      case 'approved': return '<span class="chip" style="color:#23d18b">Approved</span>';
+      case 'rejected': return '<span class="chip" style="color:#ff5252">Rejected</span>';
+      default: return '<span class="chip">' + status + '</span>';
+    }
+  }
+
   async function loadWithdrawals(){
     const tb = $('#withdrawalsTbody');
     tb.innerHTML = '<tr><td colspan="5" class="muted">Loading…</td></tr>';
-    const r = await safeFetch(API_BASE + '/api/admin/withdrawals', { headers: authHeaders() });
+    const r = await safeFetch(API_BASE + '/api/admin/withdrawals', { headers: authHeaders(false) });
     if (r._error){
       tb.innerHTML = '<tr><td colspan="5"><div class="notice">'+ r.message +'</div></td></tr>';
       return;
@@ -515,21 +526,21 @@
     tb.innerHTML = '';
     rows.forEach(w=>{
       const tr = document.createElement('tr');
-tr.innerHTML = `
-  <td><strong>${w.userId?.username || '-'}</strong></td>
-<td>${Number(w.amount || 0)}</td>
-<td class="mono">${w.walletAddress || '-'}</td>
-<td>${getStatusChip(w.status)}</td>
-  <td class="nowrap">
-    <button class="btn-ok small" data-approve="${w._id}">
-      <i class="fa-solid fa-check"></i> Approve
-    </button>
-    <button class="btn-danger small" data-reject="${w._id}">
-      <i class="fa-solid fa-xmark"></i> Reject
-    </button>
-  </td>
-`;
-tb.appendChild(tr);
+      tr.innerHTML = `
+        <td><strong>${w.userId?.username || '-'}</strong></td>
+        <td>${Number(w.amount || 0)}</td>
+        <td class="mono">${w.walletAddress || '-'}</td>
+        <td>${getStatusChip(w.status)}</td>
+        <td class="nowrap">
+          <button class="btn-ok small" data-approve="${w._id}">
+            <i class="fa-solid fa-check"></i> Approve
+          </button>
+          <button class="btn-danger small" data-reject="${w._id}">
+            <i class="fa-solid fa-xmark"></i> Reject
+          </button>
+        </td>
+      `;
+      tb.appendChild(tr);
     });
 
     tb.querySelectorAll('button[data-approve]').forEach(b=>{
@@ -537,7 +548,7 @@ tb.appendChild(tr);
         const id = b.dataset.approve;
         b.disabled = true; b.textContent = 'Approving…';
         const r = await safeFetch(API_BASE + '/api/admin/withdrawals/'+id+'/approve', {
-          method:'POST', headers: authHeaders()
+          method:'POST', headers: authHeaders(true)
         });
         b.disabled = false; b.innerHTML = '<i class="fa-solid fa-check"></i> Approve';
         if (r._error) alert('Approve failed: ' + r.message);
@@ -549,7 +560,7 @@ tb.appendChild(tr);
         const id = b.dataset.reject;
         b.disabled = true; b.textContent = 'Rejecting…';
         const r = await safeFetch(API_BASE + '/api/admin/withdrawals/'+id+'/reject', {
-          method:'POST', headers: authHeaders()
+          method:'POST', headers: authHeaders(true)
         });
         b.disabled = false; b.innerHTML = '<i class="fa-solid fa-xmark"></i> Reject';
         if (r._error) alert('Reject failed: ' + r.message);
