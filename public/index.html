@@ -829,7 +829,7 @@
         });
       }
       
-      // Handle subscription button clicks
+      // Handle subscription button clicks - MODIFIED TO GO DIRECTLY TO PAYMENT
       document.querySelectorAll('.subscribe-btn').forEach(button => {
         button.addEventListener('click', async function() {
           const token = localStorage.getItem('rl_token');
@@ -866,32 +866,15 @@
               }
             }
             
-            // Create subscription
-            const res = await fetch(API_BASE + '/api/subscribe', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-              },
-              body: JSON.stringify({ plan: planName })
-            });
-            
-            const data = await res.json();
-            
-            if (!res.ok) {
-              alert(data.message || 'Subscription failed');
-              this.innerHTML = originalText;
-              this.disabled = false;
-              return;
-            }
-            
-            alert(`You have successfully selected the ${planName}. Redirecting to payment...`);
+            // Skip the API call to /api/subscribe and go directly to payment
+            alert(`You have selected the ${planName}. Redirecting to payment...`);
             window.location.href = `payment.html?plan=${encodeURIComponent(planName)}&price=${planPrice}`;
+            
           } catch (err) {
             console.error(err);
-            alert('Network error. Try again later.');
-            this.innerHTML = originalText;
-            this.disabled = false;
+            // Even if there's an error checking status, still allow payment
+            alert(`You have selected the ${planName}. Redirecting to payment...`);
+            window.location.href = `payment.html?plan=${encodeURIComponent(planName)}&price=${planPrice}`;
           }
         });
       });
