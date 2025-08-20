@@ -554,10 +554,6 @@
       Join our exciting lottery platform where every subscription increases your chances to win amazing rewards!  
       Invite friends, earn referral bonuses, and be part of the ultimate lottery experience.
     </p>
-    
-    <div class="cta-buttons">
-      <a href="register.html" class="cta-btn"><i class="fas fa-user-plus"></i> Get Started</a>
-    </div>
 
     <div id="banner-slider" class="banner-slider"></div>
   </main>
@@ -666,36 +662,25 @@
     document.addEventListener('DOMContentLoaded', function() {
       const API_BASE = 'https://realitylottery.koyeb.app';
       const token = localStorage.getItem('rl_token');
+      const userData = JSON.parse(localStorage.getItem('rl_user') || '{}');
       const loginLink = document.getElementById('loginLink');
       const registerLink = document.getElementById('registerLink');
       const userBox = document.getElementById('userBox');
 
       // Handle authentication state
       function updateAuthUI() {
-        if (token) {
-          fetch(`${API_BASE}/api/auth/me`, {
-            headers: { Authorization: "Bearer " + token }
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.user) {
-              loginLink.style.display = 'none';
-              registerLink.style.display = 'none';
-              userBox.innerHTML = `
-                👤 ${data.user.username} | 
-                <a href="#" id="logoutBtn" style="color:var(--secondary-color)">Logout</a>`;
-              
-              document.getElementById('logoutBtn').addEventListener('click', (e) => {
-                e.preventDefault();
-                localStorage.removeItem('rl_token');
-                localStorage.removeItem('rl_user');
-                window.location.href = 'index.html';
-              });
-            }
-          })
-          .catch(() => {
-            // If token is invalid, clear it
+        if (token && userData.username) {
+          loginLink.style.display = 'none';
+          registerLink.style.display = 'none';
+          userBox.innerHTML = `
+            👤 ${userData.username} | 
+            <a href="#" id="logoutBtn" style="color:var(--secondary-color)">Logout</a>`;
+          
+          document.getElementById('logoutBtn').addEventListener('click', (e) => {
+            e.preventDefault();
             localStorage.removeItem('rl_token');
+            localStorage.removeItem('rl_user');
+            window.location.href = 'index.html';
           });
         }
       }
@@ -765,51 +750,38 @@
         }
       }
 
-      // Display subscription status
-      async function displaySubscriptionStatus() {
+      // Display subscription status - MODIFIED TO READ FROM LOCALSTORAGE
+      function displaySubscriptionStatus() {
         const statusElement = document.getElementById('subscriptionStatus');
         const messageElement = document.getElementById('statusMessage');
         statusElement.style.display = 'block';
         
-        try {
-          const token = localStorage.getItem('rl_token');
-          if (!token) {
-            messageElement.textContent = 'Please login to view your subscription status';
-            messageElement.className = 'status-inactive';
-            return;
-          }
-          
-          // Fetch user subscription status
-          const res = await fetch(API_BASE + '/api/auth/me', {
-            headers: {
-              'Authorization': 'Bearer ' + token
-            }
-          });
-          
-          if (res.ok) {
-            const data = await res.json();
-            
-            if (data.subscription && data.subscription.status === 'active') {
-              messageElement.innerHTML = `
-                <span class="status-active">Active Subscription</span><br>
-                <strong>${data.subscription.plan}</strong> - Valid until lottery draw date
-              `;
-              disableSubscriptionButtons(data.subscription.plan);
-            } else if (data.subscription && data.subscription.status === 'pending') {
-              messageElement.innerHTML = `
-                <span class="status-pending">Pending Payment</span><br>
-                <strong>${data.subscription.plan}</strong> - Please complete your payment
-              `;
-            } else {
-              messageElement.textContent = 'You do not have an active subscription';
-              messageElement.className = 'status-inactive';
-            }
+        // Check if user is logged in
+        if (!token || !userData.username) {
+          messageElement.textContent = 'Please login to view your subscription status';
+          messageElement.className = 'status-inactive';
+          return;
+        }
+        
+        // Read subscription data from user data in localStorage
+        if (userData.subscription) {
+          if (userData.subscription.status === 'active') {
+            messageElement.innerHTML = `
+              <span class="status-active">Active Subscription</span><br>
+              <strong>${userData.subscription.plan}</strong> - Valid until lottery draw date
+            `;
+            disableSubscriptionButtons(userData.subscription.plan);
+          } else if (userData.subscription.status === 'pending') {
+            messageElement.innerHTML = `
+              <span class="status-pending">Pending Payment</span><br>
+              <strong>${userData.subscription.plan}</strong> - Please complete your payment
+            `;
           } else {
-            messageElement.textContent = 'Error loading subscription status';
+            messageElement.textContent = 'You do not have an active subscription';
             messageElement.className = 'status-inactive';
           }
-        } catch (err) {
-          messageElement.textContent = 'Network error loading subscription status';
+        } else {
+          messageElement.textContent = 'You do not have an active subscription';
           messageElement.className = 'status-inactive';
         }
       }
@@ -822,9 +794,11 @@
           if (planName === activePlan) {
             button.innerHTML = '<i class="fas fa-check-circle"></i> Current Plan';
             button.classList.add('disabled');
+            button.disabled = true;
           } else {
             button.innerHTML = '<i class="fas fa-lock"></i> Upgrade Later';
             button.classList.add('disabled');
+            button.disabled = true;
           }
         });
       }
@@ -848,22 +822,12 @@
           const planPrice = this.getAttribute('data-price');
           
           try {
-            // Check if user already has an active subscription
-            const statusRes = await fetch(API_BASE + '/api/auth/me', {
-              headers: {
-                'Authorization': 'Bearer ' + token
-              }
-            });
-            
-            if (statusRes.ok) {
-              const statusData = await statusRes.json();
-              
-              if (statusData.subscription && statusData.subscription.status === 'active') {
-                alert(`You already have an active subscription: ${statusData.subscription.plan}`);
-                this.innerHTML = originalText;
-                this.disabled = false;
-                return;
-              }
+            // Check if user already has an active subscription from localStorage
+            if (userData.subscription && userData.subscription.status === 'active') {
+              alert(`You already have an active subscription: ${userData.subscription.plan}`);
+              this.innerHTML = originalText;
+              this.disabled = false;
+              return;
             }
             
             // Skip the API call to /api/subscribe and go directly to payment
