@@ -233,7 +233,7 @@ app.post("/api/admin/withdrawals/:id/reject", async (req, res) => {
 
 app.get("/api/withdrawals", authMiddleware, async (req, res) => {
   try {
-    const withdrawals = await Withdrawal.find({ user: req.user.id }).sort({ createdAt: -1 });
+    const withdrawals = await Withdrawal.find({ userId: req.user.id }).sort({ createdAt: -1 });
     res.json({ withdrawals });
   } catch (err) {
     console.error(err);
@@ -457,6 +457,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
