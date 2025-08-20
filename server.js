@@ -187,7 +187,7 @@ app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
 // // Get all withdrawals (admin)
 app.get("/api/admin/withdrawals", async (req, res) => {
   try {
-    const withdrawals = await Withdrawal.find().populate("userId", "username email");
+    const withdrawals = await Withdrawal.find().populate("userId", "username");
     res.json({ withdrawals });
   } catch (err) {
     res.status(500).json({ message: "Error fetching withdrawals" });
@@ -457,6 +457,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
