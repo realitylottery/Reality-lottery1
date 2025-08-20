@@ -435,41 +435,34 @@
 
     tb.innerHTML = '';
     filtered.forEach(u=>{
-      const getStatusChip = (status) => {
-  if (!status) return '-';
-  let colorClass = '';
-  switch (status.toLowerCase()) {
-    case 'pending':
-      colorClass = 'chip pending'; // اصفر
-      break;
-    case 'approved':
-      colorClass = 'chip approved'; // اخضر
-      break;
-    case 'rejected':
-      colorClass = 'chip rejected'; // احمر
-      break;
-    default:
-      colorClass = 'chip';
-  }
-  return `<span class="${colorClass}">${status}</span>`;
-};
-
-const tr = document.createElement('tr');
-tr.innerHTML = `
-  <td><strong>${w.userId?.username || '-'}</strong></td>
-  <td>${Number(w.amount || 0)}</td>
-  <td class="mono">${w.walletAddress || '-'}</td>
-  <td>${getStatusChip(w.status)}</td>
-  <td class="nowrap">
-    <button class="btn-ok small" data-approve="${w._id}">
-      <i class="fa-solid fa-check"></i> Approve
-    </button>
-    <button class="btn-danger small" data-reject="${w._id}">
-      <i class="fa-solid fa-xmark"></i> Reject
-    </button>
-  </td>
-`;
-tb.appendChild(tr);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <div><strong>${u.username||'-'}</strong></div>
+          <div class="small muted mono">${u._id||''}</div>
+        </td>
+        <td>${u.email||'-'}</td>
+        <td>
+          <input data-field="balance" data-id="${u._id}" value="${Number(u.balance||0)}" />
+        </td>
+        <td>
+          <select data-field="subscriptionType" data-id="${u._id}">
+            <option value="">None</option>
+            <option value="Basic"${u.subscriptionType==='Basic'?' selected':''}>Basic</option>
+            <option value="Pro"${u.subscriptionType==='Pro'?' selected':''}>Pro</option>
+            <option value="VIP"${u.subscriptionType==='VIP'?' selected':''}>VIP</option>
+          </select>
+        </td>
+        <td>
+          <select data-field="taskProgress" data-id="${u._id}">
+            ${[0,1,2,3,4,5,6].map(n=>`<option value="${n}"${Number(u.taskProgress||0)===n?' selected':''}>${n}/6</option>`).join('')}
+          </select>
+        </td>
+        <td class="nowrap">
+          <button class="btn small" data-action="save" data-id="${u._id}"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+        </td>
+      `;
+      tb.appendChild(tr);
     });
 
     tb.querySelectorAll('button[data-action="save"]').forEach(btn=>{
