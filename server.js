@@ -10,6 +10,7 @@ const News = require('./models/News');
 const Withdrawal = require('./models/Withdrawal');
 const NewsTicker = require('./models/NewsTicker');
 const Banner = require('./models/Banner');
+const Payment = require('./models/Payment'); // Added Payment model
 
 const app = express();
 app.use(express.json());
@@ -76,7 +77,6 @@ async function authMiddleware(req, res, next) {
 
 // ================= ROUTES =================
 
-
 // Create withdrawal
 app.post("/api/withdrawals", authMiddleware, async (req, res) => {
   try {
@@ -101,7 +101,7 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
     await withdrawal.save();
 
-    user.balance -= amount; // خصم الرصيد مؤقتًا
+    user.balance -= amount; // Temporary balance deduction
     await user.save();
 
     res.json({ message: "Withdrawal request submitted", withdrawal });
@@ -111,6 +111,7 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
     res.status(500).json({ message: err.message || "Error submitting withdrawal" });
   }
 });
+
 // Update user (Admin only)
 app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
   if (!req.user.roles?.includes("admin")) {
@@ -121,10 +122,24 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
     const { id } = req.params;
     const { subscriptionType, balance, taskProgress } = req.body;
 
+    // Validate subscription type
+    if (subscriptionType && !['', 'BASIC', 'PRO', 'VIP'].includes(subscriptionType)) {
+      return res.status(400).json({ message: "Invalid subscription type" });
+    }
+
     const updateFields = {};
     if (subscriptionType !== undefined) updateFields.subscriptionType = subscriptionType;
     if (balance !== undefined) updateFields.balance = balance;
     if (taskProgress !== undefined) updateFields.taskProgress = taskProgress;
+
+    // If subscription is being set, activate it
+    if (subscriptionType && subscriptionType !== '') {
+      updateFields.subscriptionActive = true;
+      updateFields.subscriptionExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    } else if (subscriptionType === '') {
+      updateFields.subscriptionActive = false;
+      updateFields.subscriptionExpires = null;
+    }
 
     const user = await User.findByIdAndUpdate(
       id,
@@ -181,10 +196,219 @@ app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
   res.json({ message: "Banner deleted" });
 });
 
-// جلب جميع طلبات السحب
+// ================= PAYMENT ROUTES =================
+
+// Create new payment request
+app.post("/api/payments", authMiddleware, async (req, res) => {
+  try {
+    const { plan, amount, transactionId, phone } = req.body;
+
+    if (!plan || !amount || !transactionId || !phone) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Validate plan type
+    if (!['BASIC', 'PRO', 'VIP'].includes(plan)) {
+      return res.status(400).json({ message: "Invalid plan type" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Check if payment with same transactionId already exists
+    const existingPayment = await Payment.findOne({ transactionId });
+    if (existingPayment) {
+      return res.status(400).json({ message: "Transaction ID already used" });
+    }
+
+    const payment = new Payment({
+      userId: user._id,
+      plan,
+      amount,
+      transactionId,
+      phone,
+      status: 'pending'
+    });
+
+    await payment.save();
+
+    res.json({ 
+      message: "Payment request submitted successfully. It will be reviewed within 24 hours",
+      payment 
+    });
+
+  } catch (err) {
+    console.error("Payment error:", err);
+    res.status(500).json({ message: err.message || "Error creating payment request" });
+  }
+});
+
+// Get user payments
+app.get("/api/payments", authMiddleware, async (req, res) => {
+  try {
+    const payments = await Payment.find({ userId: req.user.id })
+      .sort({ createdAt: -1 });
+    res.json({ payments });
+  } catch (err) {
+    console.error("Get payments error:", err);
+    res.status(500).json({ message: "Error fetching payments" });
+  }
+});
+
+// ================= ADMIN PAYMENT ROUTES =================
+
+// Get all payments (admin only)
+app.get("/api/admin/payments", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const payments = await Payment.find()
+      .populate("userId", "username email")
+      .sort({ createdAt: -1 });
+
+    res.json({ payments });
+  } catch (err) {
+    console.error("Error fetching payments:", err);
+    res.status(500).json({ message: "Error fetching payments" });
+  }
+});
+
+// Verify payment and activate subscription
+app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const payment = await Payment.findById(req.params.id).populate("userId");
+    if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+    if (payment.status !== 'pending') {
+      return res.status(400).json({ message: "Payment already processed" });
+    }
+
+    const user = await User.findById(payment.userId._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Update payment status
+    payment.status = 'verified';
+    payment.verifiedAt = new Date();
+    payment.verifiedBy = req.user.id;
+    await payment.save();
+
+    // Update user subscription based on plan
+    user.subscriptionType = payment.plan;
+    user.subscriptionActive = true;
+    
+    // Set subscription expiration based on plan
+    const expirationDays = {
+      'BASIC': 30,
+      'PRO': 30,
+      'VIP': 30
+    };
+    
+    user.subscriptionExpires = new Date(Date.now() + expirationDays[payment.plan] * 24 * 60 * 60 * 1000);
+    await user.save();
+
+    res.json({ 
+      message: "Payment verified and subscription activated successfully",
+      payment 
+    });
+
+  } catch (err) {
+    console.error("Verify payment error:", err);
+    res.status(500).json({ message: "Error verifying payment" });
+  }
+});
+
+// Reject payment
+app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const payment = await Payment.findById(req.params.id);
+    if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+    if (payment.status !== 'pending') {
+      return res.status(400).json({ message: "Payment already processed" });
+    }
+
+    payment.status = 'rejected';
+    payment.rejectedAt = new Date();
+    payment.rejectedBy = req.user.id;
+    payment.rejectionReason = req.body.reason || "No reason provided";
+    await payment.save();
+
+    res.json({ 
+      message: "Payment rejected successfully",
+      payment 
+    });
+
+  } catch (err) {
+    console.error("Reject payment error:", err);
+    res.status(500).json({ message: "Error rejecting payment" });
+  }
+});
+
+// Payment statistics
+app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const totalPayments = await Payment.countDocuments();
+    const pendingPayments = await Payment.countDocuments({ status: 'pending' });
+    const verifiedPayments = await Payment.countDocuments({ status: 'verified' });
+    const rejectedPayments = await Payment.countDocuments({ status: 'rejected' });
+    const totalRevenue = await Payment.aggregate([
+      { $match: { status: 'verified' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+
+    res.json({
+      totalPayments,
+      pendingPayments,
+      verifiedPayments,
+      rejectedPayments,
+      totalRevenue: totalRevenue[0]?.total || 0
+    });
+
+  } catch (err) {
+    console.error("Payment stats error:", err);
+    res.status(500).json({ message: "Error fetching payment statistics" });
+  }
+});
+
+// Check subscription status
+app.get("/api/subscription/status", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const now = new Date();
+    const isActive = user.subscriptionActive && user.subscriptionExpires > now;
+
+    res.json({
+      subscriptionType: user.subscriptionType,
+      subscriptionActive: isActive,
+      subscriptionExpires: user.subscriptionExpires,
+      daysRemaining: isActive ? 
+        Math.ceil((user.subscriptionExpires - now) / (1000 * 60 * 60 * 24)) : 0
+    });
+  } catch (err) {
+    console.error("Subscription status error:", err);
+    res.status(500).json({ message: "Error checking subscription status" });
+  }
+});
+
 // ================= WITHDRAWALS ROUTES =================
 
-// 🟢 جلب كل طلبات السحب (للامن فقط)
+// Get all withdrawals (admin only)
 app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
   try {
     if (!req.user.roles?.includes("admin")) {
@@ -192,7 +416,7 @@ app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
     }
 
     const withdrawals = await Withdrawal.find()
-      .populate("userId", "username")   // نجلب فقط username
+      .populate("userId", "username")
       .sort({ createdAt: -1 });
 
     res.json({ withdrawals });
@@ -202,7 +426,7 @@ app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
   }
 });
 
-// 🟢 موافقة على طلب سحب
+// Approve withdrawal
 app.post("/api/admin/withdrawals/:id/approve", authMiddleware, async (req, res) => {
   try {
     if (!req.user.roles?.includes("admin")) {
@@ -222,7 +446,7 @@ app.post("/api/admin/withdrawals/:id/approve", authMiddleware, async (req, res) 
   }
 });
 
-// 🟢 رفض طلب سحب + استرجاع الرصيد
+// Reject withdrawal + refund balance
 app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) => {
   try {
     if (!req.user.roles?.includes("admin")) {
@@ -248,7 +472,7 @@ app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) =
   }
 });
 
-// 🟢 جلب طلبات السحب للمستخدم الحالي
+// Get user withdrawals
 app.get("/api/withdrawals", authMiddleware, async (req, res) => {
   try {
     const withdrawals = await Withdrawal.find({ userId: req.user.id })
@@ -432,6 +656,41 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
   }
 });
 
+// Admin stats
+app.get("/api/admin/stats", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const totalUsers = await User.countDocuments();
+    const paidUsers = await User.countDocuments({ subscriptionActive: true });
+    const spins = 0;
+    const successfulInvites = 0;
+    
+    const totalWithdrawals = await Withdrawal.countDocuments();
+    const pendingWithdrawals = await Withdrawal.countDocuments({ status: 'pending' });
+    
+    const totalPayments = await Payment.countDocuments();
+    const pendingPayments = await Payment.countDocuments({ status: 'pending' });
+
+    res.json({
+      totalUsers,
+      paidUsers,
+      spins,
+      successfulInvites,
+      totalWithdrawals,
+      pendingWithdrawals,
+      totalPayments,
+      pendingPayments
+    });
+
+  } catch (err) {
+    console.error("Stats error:", err);
+    res.status(500).json({ message: "Error fetching stats" });
+  }
+});
+
 // ================= STATIC FILES =================
 const FRONTEND_PATH = process.env.FRONTEND_PATH || path.join(__dirname, 'public');
 app.use(express.static(FRONTEND_PATH));
@@ -460,24 +719,3 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
