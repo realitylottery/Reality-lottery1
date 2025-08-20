@@ -1,41 +1,42 @@
+// createAdmin.js
+require("dotenv").config();
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-const User = require("./models/User"); // عدل المسار حسب مكان ملف User.js
-
-// اتصال بقاعدة البيانات
-mongoose.connect("mongodb+srv://realitylottery:Moataz1234@realitylottery.3l31mmt.mongodb.net/?retryWrites=true&w=majority&appName=realitylottery")
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch(err => console.error("❌ DB Connection error:", err));
+const bcrypt = require("bcrypt");
+const User = require("./models/User");
 
 (async () => {
   try {
-    const username = "admin"; 
-    const password = "RealityLottery@2023"; 
-    const email = "admin@site.com";
+    // الاتصال بقاعدة البيانات
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
 
-    // شوف إذا الأدمن موجود أصلاً
-    let existing = await User.findOne({ username });
-    if (existing) {
-      console.log("⚠️ Admin user already exists");
-      return mongoose.disconnect();
-    }
+    const username = "admin";
+    const email = "admin@site.com";
+    const fullName = "Main Administrator";
+    const password = "RealityLottery@2023";
 
     // تشفير الباسورد
-    const hashed = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // إنشاء الأدمن
     const admin = new User({
-      username,
+      fullName,
       email,
-      password: hashed,
-      role: "admin"
+      username,
+      password: hashedPassword,
+      roles: ["admin"],   // لو حابب تستخدم المصفوفة
+      role: "admin",      // ولو حابب تستخدم الحقل الواحد
+      balance: 0,
+      subscriptionType: "Free",
     });
 
     await admin.save();
-    console.log("✅ Admin user created successfully!");
+    console.log("✅ Admin user created successfully");
+    mongoose.connection.close();
   } catch (err) {
-    console.error("❌ Error creating admin:", err);
-  } finally {
-    mongoose.disconnect();
+    console.error("❌ Error creating admin:", err.message);
+    mongoose.connection.close();
   }
 })();
