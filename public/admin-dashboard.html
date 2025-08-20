@@ -556,12 +556,13 @@
           <input data-field="balance" data-id="${u._id}" value="${Number(u.balance||0)}" />
         </td>
         <td>
-          <select data-field="subscriptionType" data-id="${u._id}">
-            <option value="">None</option>
-            <option value="Basic"${u.subscriptionType==='Basic'?' selected':''}>Basic</option>
-            <option value="Pro"${u.subscriptionType==='Pro'?' selected':''}>Pro</option>
-            <option value="VIP"${u.subscriptionType==='VIP'?' selected':''}>VIP</option>
-          </select>
+          // في قسم إدارة المستخدمين، تحديث الـ select options
+<select data-field="subscriptionType" data-id="${u._id}">
+  <option value="">None</option>
+  <option value="BASIC"${u.subscriptionType==='BASIC'?' selected':''}>BASIC</option>
+  <option value="PRO"${u.subscriptionType==='PRO'?' selected':''}>PRO</option>
+  <option value="VIP"${u.subscriptionType==='VIP'?' selected':''}>VIP</option>
+</select>
         </td>
         <td>
           <select data-field="taskProgress" data-id="${u._id}">
