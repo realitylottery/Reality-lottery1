@@ -184,69 +184,78 @@ app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
 // جلب جميع طلبات السحب
 // ================= WITHDRAWALS ROUTES =================
 
-// // Get all withdrawals (admin)
-app.get("/api/admin/withdrawals", async (req, res) => {
+// 🟢 جلب كل طلبات السحب (للامن فقط)
+app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
   try {
-    const withdrawals = await Withdrawal.find().populate("userId", "username");
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const withdrawals = await Withdrawal.find()
+      .populate("userId", "username")   // نجلب فقط username
+      .sort({ createdAt: -1 });
+
     res.json({ withdrawals });
   } catch (err) {
+    console.error("Error fetching withdrawals:", err);
     res.status(500).json({ message: "Error fetching withdrawals" });
   }
 });
 
-// Approve withdrawal
-app.post("/api/admin/withdrawals/:id/approve", async (req, res) => {
+// 🟢 موافقة على طلب سحب
+app.post("/api/admin/withdrawals/:id/approve", authMiddleware, async (req, res) => {
   try {
-    const withdrawal = await Withdrawal.findById(req.params.id).populate("userId");
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const withdrawal = await Withdrawal.findById(req.params.id).populate("userId", "username");
     if (!withdrawal) return res.status(404).json({ message: "Not found" });
 
-    withdrawal.status = "Approved";
+    withdrawal.status = "approved";
     await withdrawal.save();
 
     res.json({ message: "Withdrawal approved" });
   } catch (err) {
+    console.error("Approve error:", err);
     res.status(500).json({ message: "Error approving withdrawal" });
   }
 });
 
-// Reject withdrawal
-app.post("/api/admin/withdrawals/:id/reject", async (req, res) => {
+// 🟢 رفض طلب سحب + استرجاع الرصيد
+app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) => {
   try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
     const withdrawal = await Withdrawal.findById(req.params.id).populate("userId");
     if (!withdrawal) return res.status(404).json({ message: "Not found" });
 
-    // استرجاع الرصيد للمستخدم عند الرفض
-    const user = await User.findById(withdrawal.user._id);
-    user.balance += withdrawal.amount;
-    await user.save();
+    const user = await User.findById(withdrawal.userId._id);
+    if (user) {
+      user.balance += withdrawal.amount;
+      await user.save();
+    }
 
-    withdrawal.status = "Rejected";
+    withdrawal.status = "rejected";
     await withdrawal.save();
 
     res.json({ message: "Withdrawal rejected, balance refunded" });
   } catch (err) {
+    console.error("Reject error:", err);
     res.status(500).json({ message: "Error rejecting withdrawal" });
   }
 });
 
-// 
-
+// 🟢 جلب طلبات السحب للمستخدم الحالي
 app.get("/api/withdrawals", authMiddleware, async (req, res) => {
   try {
-    const withdrawals = await Withdrawal.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    const withdrawals = await Withdrawal.find({ userId: req.user.id })
+      .sort({ createdAt: -1 });
     res.json({ withdrawals });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-app.put("/api/admin/withdrawals/:id", authMiddleware, async (req, res) => {
-  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
-  try {
-    const w = await Withdrawal.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
-    res.json({ withdrawal: w });
-  } catch (err) {
+    console.error("User withdrawals error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -451,6 +460,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
