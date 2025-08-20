@@ -241,12 +241,6 @@ app.get("/api/withdrawals", authMiddleware, async (req, res) => {
   }
 });
 
-app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
-  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
-  const all = await Withdrawal.find().populate("userId", "username email").sort({ createdAt: -1 });
-  res.json({ withdrawals: all });
-});
-
 app.put("/api/admin/withdrawals/:id", authMiddleware, async (req, res) => {
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
   try {
@@ -457,6 +451,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
