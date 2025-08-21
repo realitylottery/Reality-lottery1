@@ -677,67 +677,81 @@ tb.querySelectorAll('button[data-verify-payment]').forEach(b => {
       });
 
       console.log("VERIFY RESPONSE:", r);
-
-      if (!r.payment) {
-        alert('❌ Verification failed: ' + (r.message || 'Unknown error'));
-      } else {
-        alert('✅ Payment verified! Subscription activated.');
-        loadPayments();
-        loadUsers();
-      }
-    } catch (err) {
-      console.error("Verify request error:", err);
-      alert('Verification failed: ' + err.message);
-    }
-
-    b.disabled = false;
-    b.innerHTML = '<i class="fa-solid fa-check"></i> Verify';
-  });
-});
-
-
-// --- REJECT PAYMENT ---
-tb.querySelectorAll('button[data-reject-payment]').forEach(b => {
-  b.addEventListener('click', async () => {
-    const reason = prompt("Enter rejection reason (optional):") || "No reason provided";
-    if (!confirm("Are you sure you want to reject this payment?")) return;
-
-    const id = b.dataset.rejectPayment;
-    b.disabled = true;
-    b.textContent = 'Rejecting…';
-
-    try {
-      const r = await safeFetch(API_BASE + '/api/admin/payments/' + id + '/reject', {
-        method: 'POST',
-        headers: {
-          ...authHeaders(true),
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ reason })
-      });
-
-      console.log("REJECT RESPONSE:", r);
-
-      if (!r.payment) {
-        alert('❌ Rejection failed: ' + (r.message || 'Unknown error'));
-      } else {
-        alert('🚫 Payment rejected successfully.');
-        loadPayments();
-      }
-    } catch (err) {
-      console.error("Reject request error:", err);
-      alert('Rejection failed: ' + err.message);
-    }
-
-    b.disabled = false;
-    b.innerHTML = '<i class="fa-solid fa-xmark"></i> Reject';
-  });
-    });
+function getPaymentStatusChip(status) {
+  switch(status) {
+    case 'pending': return '<span class="chip" style="color:#ffa500">Pending</span>';
+    case 'verified': return '<span class="chip" style="color:#23d18b">Verified</span>';
+    case 'rejected': return '<span class="chip" style="color:#ff5252">Rejected</span>';
+    default: return '<span class="chip">' + status + '</span>';
   }
-  $('#btnReloadPayments').addEventListener('click', loadPayments);
-  $('#paymentFilter').addEventListener('change', loadPayments);
-  $('#paymentSearch').addEventListener('input', loadPayments);
+}
 
+async function loadPayments(){
+  const tb = $('#paymentsTbody');
+  tb.innerHTML = '<tr><td colspan="6" class="muted">Loading…</td></tr>';
+  const r = await safeFetch(API_BASE + '/api/admin/payments', { headers: authHeaders(false) });
+  if (r._error){
+    tb.innerHTML = '<tr><td colspan="6"><div class="notice">'+ r.message +'</div></td></tr>';
+    return;
+  }
+  const rows = r.payments || [];
+  if (!rows.length){
+    tb.innerHTML = '<tr><td colspan="6" class="muted">No payment requests.</td></tr>';
+    return;
+  }
+  tb.innerHTML = '';
+  rows.forEach(p=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${p.userId?.username || '-'}</strong></td>
+      <td>${p.plan || '-'}</td>
+      <td>${Number(p.amount || 0)}</td>
+      <td class="mono">${p.txHash || '-'}</td>
+      <td>${getPaymentStatusChip(p.status)}</td>
+      <td class="nowrap">
+        <button class="btn-ok small" data-verify="${p._id}">
+          <i class="fa-solid fa-check"></i> Verify
+        </button>
+        <button class="btn-danger small" data-reject="${p._id}">
+          <i class="fa-solid fa-xmark"></i> Reject
+        </button>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+
+  // زر Verify
+  tb.querySelectorAll('button[data-verify]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      if (!confirm('Verify this payment? This will activate the user\'s subscription.')) return;
+      const id = b.dataset.verify;
+      b.disabled = true; b.textContent = 'Verifying…';
+      const r = await safeFetch(API_BASE + '/api/admin/payments/'+id+'/verify', {
+        method:'POST', headers: authHeaders(true)
+      });
+      b.disabled = false; b.innerHTML = '<i class="fa-solid fa-check"></i> Verify';
+      if (r._error) alert('Verification failed: ' + r.message);
+      else { alert('Payment verified! Subscription activated.'); loadPayments(); loadUsers(); }
+    });
+  });
+
+  // زر Reject
+  tb.querySelectorAll('button[data-reject]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      const id = b.dataset.reject;
+      if (!confirm('Reject this payment?')) return;
+      b.disabled = true; b.textContent = 'Rejecting…';
+      const r = await safeFetch(API_BASE + '/api/admin/payments/'+id+'/reject', {
+        method:'POST', headers: authHeaders(true)
+      });
+      b.disabled = false; b.innerHTML = '<i class="fa-solid fa-xmark"></i> Reject';
+      if (r._error) alert('Reject failed: ' + r.message);
+      else { alert('Payment rejected!'); loadPayments(); }
+    });
+  });
+}
+
+$('#btnReloadPayments').addEventListener('click', loadPayments);
   // ========= WITHDRAWALS =========
   function getStatusChip(status) {
     switch(status) {
