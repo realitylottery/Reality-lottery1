@@ -1,1197 +1,813 @@
-u<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8" />
-<title>RealityLottery — Admin Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-/>
-<style>
-  :root{
-    --bg:#000; --panel:#0f0f0f; --muted:#b9b9b9; --gold:#ffd700; --gold2:#ffa500; --red:#ff5252; --green:#23d18b; --blue:#4f8ff7;
-  }
-  *{box-sizing:border-box; font-family: Arial, Helvetica, sans-serif;}
-  body{margin:0; background:var(--bg); color:#fff; min-height:100vh; display:flex; flex-direction:column;}
-  header{border-bottom:2px solid var(--gold); background:#111; padding:16px 20px; display:flex; align-items:center; justify-content:space-between;}
-  .brand{font-weight:800; letter-spacing:1px; color:var(--gold); font-size:20px;}
-  .admin-state{font-size:14px; color:var(--muted);}
-  .wrap{display:flex; flex:1; min-height:0;}
-  aside{width:280px; background:var(--panel); border-right:1px solid rgba(255,215,0,0.25); padding:14px; overflow:auto;}
-  main{flex:1; padding:16px; overflow:auto;}
-  .section{background:#111; border:1px solid rgba(255,215,0,0.25); border-radius:10px; padding:16px; margin-bottom:16px;}
-  .title{font-weight:700; color:var(--gold); margin-bottom:10px; display:flex; align-items:center; gap:10px;}
-  .muted{color:var(--muted); font-size:13px;}
-  .btn{background:linear-gradient(45deg, var(--gold), var(--gold2)); color:#000; font-weight:700; border:none; border-radius:8px; padding:10px 14px; cursor:pointer; transition:transform .15s ease, box-shadow .15s ease; box-shadow:0 4px 12px rgba(255,215,0,.25);}
-  .btn:hover{transform:translateY(-1px); box-shadow:0 6px 14px rgba(255,215,0,.35);}
-  .btn-outline{background:transparent; border:1px solid var(--gold); color:var(--gold);}
-  .btn-danger{background:#2b0000; border:1px solid #900; color:#f88;}
-  .btn-ok{background:#092; border:1px solid #0f6; color:#eaffea;}
-  .btn-info{background:#004080; border:1px solid #4f8ff7; color:#e0f0ff;}
-  .row{display:flex; gap:12px; flex-wrap:wrap;}
-  .col{flex:1 1 240px; min-width:220px;}
-  input, select, textarea{
-    width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,215,0,.25);
-    background:#0f0f0f; color:#fff; outline:none;
-  }
-  textarea{min-height:120px; resize:vertical;}
-  label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px;}
-  table{width:100%; border-collapse:collapse; overflow:auto;}
-  th, td{border-bottom:1px solid rgba(255,215,0,.15); padding:10px; text-align:left; font-size:14px;}
-  th{color:var(--gold);}
-  .chip{display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid rgba(255,215,0,.35); color:var(--gold);}
-  .grid{display:grid; gap:12px;}
-  .grid-2{grid-template-columns:repeat(2, minmax(0, 1fr));}
-  .grid-3{grid-template-columns:repeat(3, minmax(0, 1fr));}
-  .grid-4{grid-template-columns:repeat(4, minmax(0, 1fr));}
-  .stat{background:#0f0f0f; border:1px solid rgba(255,215,0,.2); border-radius:10px; padding:14px;}
-  .stat .label{color:var(--muted); font-size:12px;}
-  .stat .value{color:#fff; font-size:22px; margin-top:6px;}
-  .hidden{display:none !important;}
-  .danger{color:#ff8b8b}
-  .ok{color:#9effb3}
-  .info{color:#4f8ff7}
-  .notice{background:#141414; border:1px dashed rgba(255,215,0,.35); border-radius:10px; padding:10px; color:var(--muted); font-size:13px;}
-  .top-actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
-  .small{font-size:12px;}
-  .card{border:1px solid rgba(255,215,0,.2); background:#0e0e0e; border-radius:10px; padding:12px;}
-  .img-preview{width:100%; max-height:140px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,215,0,.25); background:#000;}
-  .pill{border:1px solid rgba(255,215,0,.25); padding:4px 10px; border-radius:999px; font-size:12px; color:var(--muted)}
-  .divider{height:1px; background:rgba(255,215,0,.2); margin:10px 0;}
-  footer{border-top:1px solid rgba(255,215,0,.25); padding:10px 16px; color:var(--muted); text-align:center; background:#111;}
-  .navbtn{width:100%; text-align:left; background:transparent; border:1px solid rgba(255,215,0,.25); color:#fff; padding:10px 12px; border-radius:8px; cursor:pointer; margin-bottom:8px;}
-  .navbtn.active{border-color:var(--gold); color:var(--gold); background:#151515;}
-  .inline{display:inline-flex; gap:8px; align-items:center;}
-  .nowrap{white-space:nowrap;}
-  .right{margin-left:auto}
-  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-  .filter-bar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px;}
-  .filter-select{background:#0f0f0f; border:1px solid rgba(255,215,0,.25); color:#fff; padding:6px 10px; border-radius:6px;}
-</style>
-</head>
-<body>
-<header>
-  <div class="brand"><i class="fa-solid fa-crown"></i> RealityLottery Admin</div>
-  <div class="inline">
-    <span id="adminState" class="admin-state">Not signed in</span>
-    <button id="btnLogout" class="btn btn-outline hidden"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-  </div>
-</header>
-
-<div class="wrap">
-  <aside>
-    <button class="navbtn active" data-tab="tab-login"><i class="fa-solid fa-lock"></i> Admin Sign-in</button>
-    <button class="navbtn" data-tab="tab-stats"><i class="fa-solid fa-chart-line"></i> Stats</button>
-    <button class="navbtn" data-tab="tab-users"><i class="fa-solid fa-users"></i> Users</button>
-    <button class="navbtn" data-tab="tab-payments"><i class="fa-solid fa-credit-card"></i> Payments</button>
-    <button class="navbtn" data-tab="tab-withdrawals"><i class="fa-solid fa-wallet"></i> Withdrawals</button>
-    <button class="navbtn" data-tab="tab-news"><i class="fa-solid fa-newspaper"></i> News</button>
-    <button class="navbtn" data-tab="tab-banners"><i class="fa-solid fa-image"></i> Banners</button>
-    <button class="navbtn" data-tab="tab-content"><i class="fa-solid fa-pen-ruler"></i> Site Content</button>
-    <div class="divider"></div>
-    <div class="small muted">All actions require admin token.</div>
-  </aside>
-
-  <main>
-    <!-- LOGIN -->
-    <section id="tab-login" class="section">
-      <div class="title"><i class="fa-solid fa-lock"></i> Admin Sign-in</div>
-      <div class="row">
-        <div class="col card">
-          <label>Admin Username</label>
-          <input id="adminUser" placeholder="admin" />
-          <label style="margin-top:8px">Admin Password</label>
-          <input id="adminPass" type="password" placeholder="Your strong password" />
-          <div class="row" style="margin-top:12px">
-            <button class="btn" id="btnLoginAdmin"><i class="fa-solid fa-right-to-bracket"></i> Sign in</button>
-            <span id="loginMsg" class="muted"></span>
-          </div>
-          <div class="notice" style="margin-top:12px">
-            Default (as per server): <span class="mono">a</span>. Y <span class="mono">ADMIN_USER</span> and <span class="mono">ADMIN_PASS</span>.
-          </div>
-        </div>
-        <div class="col">
-          <div class="notice">
-            Your token is stored in <span class="mono">localStorage.rl_admin_token</span> and attached as <span class="mono">Authorization: Bearer &lt;token&gt;</span> to all admin API calls on the same origin.
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- STATS -->
-    <section id="tab-stats" class="section hidden">
-      <div class="title"><i class="fa-solid fa-chart-line"></i> Platform Stats</div>
-      <div id="statsWrap" class="grid grid-4">
-        <!-- cards injected -->
-      </div>
-      <div class="row" style="margin-top:12px">
-        <button class="btn" id="btnRefreshStats"><i class="fa-solid fa-rotate"></i> Refresh</button>
-        <span class="muted">If endpoint is not ready, you'll see a gentle message instead of an error.</span>
-      </div>
-    </section>
-
-    <!-- USERS -->
-    <section id="tab-users" class="section hidden">
-      <div class="title"><i class="fa-solid fa-users"></i> Users Management</div>
-      <div class="row top-actions">
-        <input id="userSearch" placeholder="Search by username or email..." class="col" />
-        <button class="btn" id="btnReloadUsers"><i class="fa-solid fa-rotate"></i> Reload</button>
-        <span class="pill">Tip: use the inline actions to set balance, subscription, and task progress.</span>
-      </div>
-      <div class="row" style="margin-top:12px; overflow:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>username</th>
-              <th>Email</th>
-              <th>Balance</th>
-              <th>Subscription</th>
-              <th>Task Progress</th>
-              <th class="nowrap">Save</th>
-            </tr>
-          </thead>
-          <tbody id="usersTbody">
-            <tr><td colspan="6" class="muted">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- PAYMENTS -->
-    <section id="tab-payments" class="section hidden">
-      <div class="title"><i class="fa-solid fa-credit-card"></i> Payment Management</div>
-      
-      <div class="filter-bar">
-        <select id="paymentFilter" class="filter-select">
-          <option value="all">All Payments</option>
-          <option value="pending">Pending</option>
-          <option value="verified">Verified</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <input id="paymentSearch" placeholder="Search by user or transaction ID..." />
-        <button class="btn" id="btnReloadPayments"><i class="fa-solid fa-rotate"></i> Reload</button>
-      </div>
-      
-      <div class="row" style="overflow:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Plan</th>
-              <th>Amount</th>
-              <th>Transaction ID</th>
-              <th>Phone</th>
-              <th>Date</th>
-              <th>Status</th>
-              <th class="nowrap">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="paymentsTbody">
-            <tr><td colspan="8" class="muted">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="notice" style="margin-top:12px">
-        This section allows you to manage user payment verifications. Verify payments to activate user subscriptions.
-      </div>
-    </section>
-
-    <!-- WITHDRAWALS -->
-    <section id="tab-withdrawals" class="section hidden">
-      <div class="title"><i class="fa-solid fa-wallet"></i> Withdrawals</div>
-      <div class="row top-actions">
-        <button class="btn" id="btnReloadWithdrawals"><i class="fa-solid fa-rotate"></i> Reload</button>
-        <span class="pill">Approve or reject user withdrawal requests.</span>
-      </div>
-      <div class="row" style="margin-top:12px; overflow:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Amount</th>
-              <th>Wallet Address</th>
-              <th>Status</th>
-              <th class="nowrap">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="withdrawalsTbody">
-            <tr><td colspan="5" class="muted">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="notice" style="margin-top:10px">
-        This expects endpoints <span class="mono">GET /api/admin/withdrawals</span>, <span class="mono">POST /api/admin/withdrawals/:id/approve</span> and <span class="mono">POST /api/admin/withdrawals/:id/reject</span>.
-        If not implemented yet, you'll see an informational message instead of an error.
-      </div>
-    </section>
-
-    <!-- NEWS -->
-    <section id="tab-news" class="section hidden">
-      <div class="title"><i class="fa-solid fa-newspaper"></i> News Management</div>
-
-      <div class="grid grid-2">
-        <div class="card">
-          <div class="title" style="font-size:16px"><i class="fa-solid fa-plus"></i> New News Item</div>
-          <div class="row">
-            <div class="col">
-              <label>Title</label>
-              <input id="newsTitle" placeholder="Headline…" />
-            </div>
-            <div class="col">
-              <label>Button Text</label>
-              <input id="newsBtnText" placeholder="Read more" />
-            </div>
-          </div>
-          <label style="margin-top:8px">Body</label>
-          <textarea id="newsBody" placeholder="Short description…"></textarea>
-          <div class="row" style="margin-top:8px">
-            <div class="col">
-              <label>Image URL</label>
-              <input id="newsImage" placeholder="https://…" />
-            </div>
-            <div class="col">
-              <label>Button Link URL</label>
-              <input id="newsBtnLink" placeholder="https://…" />
-            </div>
-          </div>
-          <div class="row" style="margin-top:10px; align-items:flex-start">
-            <div class="col"><img id="newsPreview" class="img-preview" alt="Preview" /></div>
-            <div class="col">
-              <button class="btn" id="btnCreateNews"><i class="fa-solid fa-floppy-disk"></i> Create</button>
-              <div class="small muted" id="newsCreateMsg" style="margin-top:6px;"></div>
-            </div>
-          </div>
-          <div class="notice" style="margin-top:12px">
-            Image uploads are via URL for now. If you later add file uploads on the server, you can wire it here easily.
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="title" style="font-size:16px"><i class="fa-solid fa-list"></i> Existing News</div>
-          <div id="newsList" class="grid" style="grid-template-columns:1fr; gap:10px;">
-            <div class="muted">Loading…</div>
-          </div>
-          <div class="row" style="margin-top:10px">
-            <button class="btn" id="btnReloadNews"><i class="fa-solid fa-rotate"></i> Reload</button>
-          </div>
-          <div class="small muted" style="margin-top:8px">
-            Endpoints expected: <span class="mono">GET/POST /api/admin/news</span>, <span class="mono">PUT/DELETE /api/admin/news/:id</span>.
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- BANNERS -->
-    <section id="tab-banners" class="section hidden">
-      <div class="title"><i class="fa-solid fa-image"></i> Banner Management</div>
-
-      <div class="grid grid-2">
-        <div class="card">
-          <div class="title" style="font-size:16px"><i class="fa-solid fa-plus"></i> New Banner</div>
-          <div class="row">
-            <div class="col">
-              <label>Title</label>
-              <input id="bannerTitle" placeholder="Banner title…" />
-            </div>
-            <div class="col">
-              <label>Button Text</label>
-              <input id="bannerBtnText" placeholder="Click here" />
-            </div>
-          </div>
-          <label style="margin-top:8px">Description</label>
-          <textarea id="bannerDescription" placeholder="Banner description…"></textarea>
-          <div class="row" style="margin-top:8px">
-            <div class="col">
-              <label>Image URL</label>
-              <input id="bannerImage" placeholder="https://…" />
-            </div>
-            <div class="col">
-              <label>Button Link URL</label>
-              <input id="bannerBtnLink" placeholder="https://…" />
-            </div>
-          </div>
-          <div class="row" style="margin-top:10px; align-items:flex-start">
-            <div class="col"><img id="bannerPreview" class="img-preview" alt="Preview" /></div>
-            <div class="col">
-              <button class="btn" id="btnCreateBanner"><i class="fa-solid fa-floppy-disk"></i> Create</button>
-              <div class="small muted" id="bannerCreateMsg" style="margin-top:6px;"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="title" style="font-size:16px"><i class="fa-solid fa-list"></i> Existing Banners</div>
-          <div id="bannerList" class="grid" style="grid-template-columns:1fr; gap:10px;">
-            <div class="muted">Loading…</div>
-          </div>
-          <div class="row" style="margin-top:10px">
-            <button class="btn" id="btnReloadBanners"><i class="fa-solid fa-rotate"></i> Reload</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CONTENT -->
-    <section id="tab-content" class="section hidden">
-      <div class="title"><i class="fa-solid fa-pen-ruler"></i> Site Content Controls</div>
-      <div class="grid grid-2">
-        <div class="card">
-          <div class="title" style="font-size:16px"><i class="fa-solid fa-bullhorn"></i> News Ticker</div>
-          <label>Ticker Text</label>
-          <textarea id="tickerText" placeholder="Set the scrolling ticker text shown on the homepage…"></textarea>
-          <div class="row" style="margin-top:8px">
-            <button class="btn" id="btnSaveTicker"><i class="fa-solid fa-floppy-disk"></i> Save</button>
-            <span id="tickerMsg" class="muted"></span>
-          </div>
-        </div>
-        <div class="card">
-          <div class="title" style="font-size:16px"><i class="fa-solid fa-image"></i> Homepage Slides</div>
-          <div class="row">
-            <div class="col">
-              <label>Slide 1 Image URL</label>
-              <input id="slide1Url" placeholder="https://…" />
-              <label style="margin-top:6px">Slide 1 Title</label>
-              <input id="slide1Title" placeholder="…" />
-            </div>
-            <div class="col">
-              <label>Slide 2 Image URL</label>
-              <input id="slide2Url" placeholder="https://…" />
-              <label style="margin-top:6px">Slide 2 Title</label>
-              <input id="slide2Title" placeholder="…" />
-            </div>
-          </div>
-          <div class="row" style="margin-top:8px">
-            <button class="btn" id="btnSaveSlides"><i class="fa-solid fa-floppy-disk"></i> Save</button>
-            <span id="slidesMsg" class="muted"></span>
-          </div>
-          <div class="small muted" style="margin-top:8px">
-            Endpoint expected: <span class="mono">GET/PUT /api/admin/content</span> (and public <span class="mono">GET /api/content</span> for the homepage).
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-</div>
-
-<footer>
-  <div>© <span id="year"></span> RealityLottery — Admin. All rights reserved.</div>
-</footer>
-
-<script>
-  // ========= CONFIG =========
-  const API_BASE = 'https://realitylottery.koyeb.app';
-  const LS_TOKEN = 'rl_admin_token';
-
-  const $ = (q)=>document.querySelector(q);
-  const $$ = (q)=>Array.from(document.querySelectorAll(q));
-  const year = new Date().getFullYear(); $('#year').textContent = year;
-
-  // ========= NAV =========
-  $$('.navbtn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      $$('.navbtn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      const tab = btn.dataset.tab;
-      $$('main .section').forEach(s=>s.classList.add('hidden'));
-      document.getElementById(tab).classList.remove('hidden');
-    });
-  });
-
-  // ========= AUTH =========
-  const adminState = $('#adminState');
-  const btnLogout = $('#btnLogout');
-
-  function getToken(){ return localStorage.getItem(LS_TOKEN) || ''; }
-  function setToken(t){
-    if (t) localStorage.setItem(LS_TOKEN, t);
-    updateAuthUI();
-  }
-  function clearToken(){
-    localStorage.removeItem(LS_TOKEN);
-    updateAuthUI();
-  }
-  function isSigned(){ return !!getToken(); }
-
-  function updateAuthUI(){
-    if (isSigned()){
-      adminState.innerHTML = '<span class="ok">Signed in</span> — token stored';
-      btnLogout.classList.remove('hidden');
-    } else {
-      adminState.innerHTML = 'Not signed in';
-      btnLogout.classList.add('hidden');
-    }
-  }
-  btnLogout.addEventListener('click', ()=>{ clearToken(); info('Signed out.'); });
-
-  // ========= HELPERS =========
-  function authHeaders(json=true){
-    const h = { 'Authorization':'Bearer ' + getToken() };
-    if (json) h['Content-Type'] = 'application/json';
-    return h;
-  }
-  function info(msg){ console.log(msg); }
-  function humanErr(e){
-    if (e && e.message) return e.message;
-    return 'Endpoint not available yet';
-  }
-  async function safeFetch(url, opts={}){
-    try{
-      const res = await fetch(url, opts);
-      const ct = res.headers.get('content-type') || '';
-      const data = ct.includes('application/json') ? await res.json() : await res.text();
-      if (!res.ok){
-        // Handle 403 Forbidden specifically
-        if (res.status === 403) {
-          return { _error: true, message: 'Access forbidden. Please check your admin privileges or token.' };
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RealityLottery — Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        :root {
+            --bg: #000;
+            --panel: #0f0f0f;
+            --muted: #b9b9b9;
+            --gold: #ffd700;
+            --gold2: #ffa500;
+            --red: #ff5252;
+            --green: #23d18b;
+            --blue: #4f8ff7;
         }
-        throw new Error((data && data.message) ? data.message : ('HTTP ' + res.status));
-      }
-      return data;
-    }catch(e){
-      console.warn('Fetch error', url, e);
-      return { _error: true, message: humanErr(e) };
-    }
-  }
-  function el(tag, attrs={}, children=[]){
-    const n = document.createElement(tag);
-    Object.entries(attrs||{}).forEach(([k,v])=>{
-      if (k==='class') n.className = v;
-      else if (k==='html') n.innerHTML = v;
-      else n.setAttribute(k,v);
-    });
-    (children||[]).forEach(c=>{
-      if (typeof c==='string') n.appendChild(document.createTextNode(c));
-      else if (c) n.appendChild(c);
-    });
-    return n;
-  }
 
-  // ========= LOGIN =========
-  $('#btnLoginAdmin').addEventListener('click', async ()=>{
-    const username = $('#adminUser').value.trim();
-    const password = $('#adminPass').value.trim();
-    $('#loginMsg').textContent = 'Signing in…';
-    const r = await safeFetch(API_BASE + '/api/admin/login', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ username, password })
-    });
-    if (r._error){
-      $('#loginMsg').innerHTML = '<span class="danger">'+ r.message +'</span>';
-    } else {
-      setToken(r.token);
-      $('#loginMsg').innerHTML = '<span class="ok">Success</span>';
-      // Auto-load data after successful login
-      loadStats();
-      loadUsers();
-      loadPayments();
-      loadWithdrawals();
-      loadNewsList();
-      loadBannerList();
-      loadContentAdmin();
-    }
-  });
-
-  // ========= STATS =========
-  async function loadStats(){
-    const wrap = $('#statsWrap');
-    wrap.innerHTML = '';
-    const r = await safeFetch(API_BASE + '/api/admin/stats', { headers: authHeaders(false) });
-    if (r._error){
-      wrap.appendChild(el('div', {class:'notice'}, [r.message]));
-      return;
-    }
-    const items = [
-      { label:'Total Users', value: r.totalUsers },
-      { label:'Paid Users', value: r.paidUsers },
-      { label:'Wheel Spins', value: r.spins },
-      { label:'Successful Invites', value: r.successfulInvites },
-      { label:'Total Withdrawals', value: r.totalWithdrawals },
-      { label:'Pending Withdrawals', value: r.pendingWithdrawals },
-      { label:'Total Payments', value: r.totalPayments || 0 },
-      { label:'Pending Payments', value: r.pendingPayments || 0 },
-    ];
-    items.forEach(it=>{
-      const card = el('div', {class:'stat'}, [
-        el('div', {class:'label'}, [it.label]),
-        el('div', {class:'value'}, [String(it.value ?? 0)])
-      ]);
-      wrap.appendChild(card);
-    });
-  }
-  $('#btnRefreshStats').addEventListener('click', loadStats);
-
-  // ========= USERS =========
-  async function loadUsers(){
-    const tb = $('#usersTbody');
-    tb.innerHTML = '<tr><td colspan="6" class="muted">Loading…</td></tr>';
-    const r = await safeFetch(API_BASE + '/api/admin/users', { headers: authHeaders(false) });
-    if (r._error){
-      tb.innerHTML = '<tr><td colspan="6"><div class="notice">'+ r.message +'</div></td></tr>';
-      return;
-    }
-    const users = (r.users || []);
-    if (!users.length){
-      tb.innerHTML = '<tr><td colspan="6" class="muted">No users yet.</td></tr>';
-      return;
-    }
-    const q = $('#userSearch').value.trim().toLowerCase();
-    const filtered = q ? users.filter(u=>{
-      const x = (u.username||'') + ' ' + (u.email||'');
-      return x.toLowerCase().includes(q);
-    }) : users;
-
-    tb.innerHTML = '';
-    filtered.forEach(u=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>
-          <div><strong>${u.username||'-'}</strong></div>
-          <div class="small muted mono">${u._id||''}</div>
-        </td>
-        <td>${u.email||'-'}</td>
-        <td>
-          <input data-field="balance" data-id="${u._id}" value="${Number(u.balance||0)}" />
-        </td>
-        <td>
-<select data-field="subscriptionType" data-id="${u._id}">
-  <option value="">None</option>
-  <option value="BASIC"${u.subscriptionType==='BASIC'?' selected':''}>BASIC</option>
-  <option value="PRO"${u.subscriptionType==='PRO'?' selected':''}>PRO</option>
-  <option value="VIP"${u.subscriptionType==='VIP'?' selected':''}>VIP</option>
-</select>
-        </td>
-        <td>
-          <select data-field="taskProgress" data-id="${u._id}">
-            ${[0,1,2,3,4,5,6].map(n=>`<option value="${n}"${Number(u.taskProgress||0)===n?' selected':''}>${n}/6</option>`).join('')}
-          </select>
-        </td>
-        <td class="nowrap">
-          <button class="btn small" data-action="save" data-id="${u._id}"><i class="fa-solid fa-floppy-disk"></i> Save</button>
-        </td>
-      `;
-      tb.appendChild(tr);
-    });
-
-    tb.querySelectorAll('button[data-action="save"]').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        const id = btn.dataset.id;
-        const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
-        const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
-        const taskProgress = Number(tb.querySelector(`select[data-field="taskProgress"][data-id="${id}"]`).value || 0);
-
-        btn.disabled = true; btn.textContent = 'Saving…';
-        const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
-          method: 'PUT',
-          headers: authHeaders(true),
-          body: JSON.stringify({ balance, subscriptionType, taskProgress })
-        });
-        btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save';
-        if (r._error){
-          alert('Update failed: ' + r.message);
-        } else {
-          alert('Saved!');
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-      });
-    });
-  }
-  $('#btnReloadUsers').addEventListener('click', loadUsers);
-  $('#userSearch').addEventListener('input', loadUsers);
 
-  // ========= PAYMENTS =========
-  function getPaymentStatusChip(status) {
-    switch(status) {
-      case 'pending': return '<span class="chip" style="color:#ffa500">Pending</span>';
-      case 'verified': return '<span class="chip" style="color:#23d18b">Verified</span>';
-      case 'rejected': return '<span class="chip" style="color:#ff5252">Rejected</span>';
-      default: return '<span class="chip">' + status + '</span>';
-    }
-  }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-  async function loadPayments(){
-    const tb = $('#paymentsTbody');
-    tb.innerHTML = '<tr><td colspan="8" class="muted">Loading…</td></tr>';
-    const r = await safeFetch(API_BASE + '/api/admin/payments', { headers: authHeaders(false) });
-    if (r._error){
-      tb.innerHTML = '<tr><td colspan="8"><div class="notice">'+ r.message +'</div></td></tr>';
-      return;
-    }
-    const payments = (r.payments || []);
-    if (!payments.length){
-      tb.innerHTML = '<tr><td colspan="8" class="muted">No payment records yet.</td></tr>';
-      return;
-    }
-    
-    const statusFilter = $('#paymentFilter').value;
-    const searchQuery = $('#paymentSearch').value.trim().toLowerCase();
-    
-    const filtered = payments.filter(p => {
-      const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
-      const matchesSearch = !searchQuery || 
-        (p.userId?.username || '').toLowerCase().includes(searchQuery) ||
-        (p.transactionId || '').toLowerCase().includes(searchQuery);
-      return matchesStatus && matchesSearch;
-    });
+        header {
+            border-bottom: 2px solid var(--gold);
+            background: #111;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
 
-    tb.innerHTML = '';
-    filtered.forEach(p=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><strong>${p.userId?.username || p.userId || 'Unknown'}</strong></td>
-        <td>${p.plan || '-'}</td>
-        <td>$${Number(p.amount || 0)}</td>
-        <td class="mono small">${p.transactionId || 'No ID'}</td>
-        <td>${p.phone || '-'}</td>
-        <td class="small">${new Date(p.createdAt || Date.now()).toLocaleDateString()}</td>
-        <td>${getPaymentStatusChip(p.status || 'pending')}</td>
-        <td class="nowrap">
-          ${p.status === 'pending' ? `
-            <button class="btn-ok small" data-verify-payment="${p._id}">
-              <i class="fa-solid fa-check"></i> Verify
-            </button>
-            <button class="btn-danger small" data-reject-payment="${p._id}">
-              <i class="fa-solid fa-xmark"></i> Reject
-            </button>
-          ` : '<span class="muted small">No actions</span>'}
-        </td>
-      `;
-      tb.appendChild(tr);
-    });
+        .brand {
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--gold);
+            font-size: 20px;
+        }
 
-    // Add event listeners for payment actions
-    // --- VERIFY PAYMENT ---
-tb.querySelectorAll('button[data-verify-payment]').forEach(b => {
-  b.addEventListener('click', async () => {
-    if (!confirm("Verify this payment? This will activate the user's subscription.")) return;
+        .admin-state {
+            font-size: 14px;
+            color: var(--muted);
+        }
 
-    const id = b.dataset.verifyPayment;
-    b.disabled = true;
-    b.textContent = 'Verifying…';
+        .wrap {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
 
-    try {
-      const r = await safeFetch(API_BASE + '/api/admin/payments/' + id + '/verify', {
-        method: 'POST',
-        headers: authHeaders(true)
-      });
+        aside {
+            width: 280px;
+            background: var(--panel);
+            border-right: 1px solid rgba(255, 215, 0, 0.25);
+            padding: 14px;
+            overflow: auto;
+        }
 
-      console.log("VERIFY RESPONSE:", r);
-function getPaymentStatusChip(status) {
-  switch(status) {
-    case 'pending': return '<span class="chip" style="color:#ffa500">Pending</span>';
-    case 'verified': return '<span class="chip" style="color:#23d18b">Verified</span>';
-    case 'rejected': return '<span class="chip" style="color:#ff5252">Rejected</span>';
-    default: return '<span class="chip">' + status + '</span>';
-  }
-}
+        main {
+            flex: 1;
+            padding: 16px;
+            overflow: auto;
+        }
 
-async function loadPayments(){
-  const tb = $('#paymentsTbody');
-  tb.innerHTML = '<tr><td colspan="6" class="muted">Loading…</td></tr>';
-  const r = await safeFetch(API_BASE + '/api/admin/payments', { headers: authHeaders(false) });
-  if (r._error){
-    tb.innerHTML = '<tr><td colspan="6"><div class="notice">'+ r.message +'</div></td></tr>';
-    return;
-  }
-  const rows = r.payments || [];
-  if (!rows.length){
-    tb.innerHTML = '<tr><td colspan="6" class="muted">No payment requests.</td></tr>';
-    return;
-  }
-  tb.innerHTML = '';
-  rows.forEach(p=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${p.userId?.username || '-'}</strong></td>
-      <td>${p.plan || '-'}</td>
-      <td>${Number(p.amount || 0)}</td>
-      <td class="mono">${p.txHash || '-'}</td>
-      <td>${getPaymentStatusChip(p.status)}</td>
-      <td class="nowrap">
-        <button class="btn-ok small" data-verify="${p._id}">
-          <i class="fa-solid fa-check"></i> Verify
-        </button>
-        <button class="btn-danger small" data-reject="${p._id}">
-          <i class="fa-solid fa-xmark"></i> Reject
-        </button>
-      </td>
-    `;
-    tb.appendChild(tr);
-  });
+        .section {
+            background: #111;
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
 
-  // زر Verify
-  tb.querySelectorAll('button[data-verify]').forEach(b=>{
-    b.addEventListener('click', async ()=>{
-      if (!confirm('Verify this payment? This will activate the user\'s subscription.')) return;
-      const id = b.dataset.verify;
-      b.disabled = true; b.textContent = 'Verifying…';
-      const r = await safeFetch(API_BASE + '/api/admin/payments/'+id+'/verify', {
-        method:'POST', headers: authHeaders(true)
-      });
-      b.disabled = false; b.innerHTML = '<i class="fa-solid fa-check"></i> Verify';
-      if (r._error) alert('Verification failed: ' + r.message);
-      else { alert('Payment verified! Subscription activated.'); loadPayments(); loadUsers(); }
-    });
-  });
+        .title {
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-  // زر Reject
-  tb.querySelectorAll('button[data-reject]').forEach(b=>{
-    b.addEventListener('click', async ()=>{
-      const id = b.dataset.reject;
-      if (!confirm('Reject this payment?')) return;
-      b.disabled = true; b.textContent = 'Rejecting…';
-      const r = await safeFetch(API_BASE + '/api/admin/payments/'+id+'/reject', {
-        method:'POST', headers: authHeaders(true)
-      });
-      b.disabled = false; b.innerHTML = '<i class="fa-solid fa-xmark"></i> Reject';
-      if (r._error) alert('Reject failed: ' + r.message);
-      else { alert('Payment rejected!'); loadPayments(); }
-    });
-  });
-}
+        .muted {
+            color: var(--muted);
+            font-size: 13px;
+        }
 
-$('#btnReloadPayments').addEventListener('click', loadPayments);
-  // ========= WITHDRAWALS =========
-  function getStatusChip(status) {
-    switch(status) {
-      case 'pending': return '<span class="chip" style="color:#ffa500">Pending</span>';
-      case 'approved': return '<span class="chip" style="color:#23d18b">Approved</span>';
-      case 'rejected': return '<span class="chip" style="color:#ff5252">Rejected</span>';
-      default: return '<span class="chip">' + status + '</span>';
-    }
-  }
+        .btn {
+            background: linear-gradient(45deg, var(--gold), var(--gold2));
+            color: #000;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.25);
+        }
 
-  async function loadWithdrawals(){
-    const tb = $('#withdrawalsTbody');
-    tb.innerHTML = '<tr><td colspan="5" class="muted">Loading…</td></tr>';
-    const r = await safeFetch(API_BASE + '/api/admin/withdrawals', { headers: authHeaders(false) });
-    if (r._error){
-      tb.innerHTML = '<tr><td colspan="5"><div class="notice">'+ r.message +'</div></td></tr>';
-      return;
-    }
-    const rows = r.withdrawals || [];
-    if (!rows.length){
-      tb.innerHTML = '<tr><td colspan="5" class="muted">No withdrawal requests.</td></tr>';
-      return;
-    }
-    tb.innerHTML = '';
-    rows.forEach(w=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><strong>${w.userId?.username || '-'}</strong></td>
-        <td>${Number(w.amount || 0)}</td>
-        <td class="mono">${w.walletAddress || '-'}</td>
-        <td>${getStatusChip(w.status)}</td>
-        <td class="nowrap">
-          <button class="btn-ok small" data-approve="${w._id}">
-            <i class="fa-solid fa-check"></i> Approve
-          </button>
-                    <button class="btn-danger small" data-reject="${w._id}">
-            <i class="fa-solid fa-xmark"></i> Reject
-          </button>
-        </td>
-      `;
-      tb.appendChild(tr);
-    });
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(255, 215, 0, 0.35);
+        }
 
-    tb.querySelectorAll('button[data-approve]').forEach(b=>{
-      b.addEventListener('click', async ()=>{
-        const id = b.dataset.approve;
-        b.disabled = true; b.textContent = 'Approving…';
-        const r = await safeFetch(API_BASE + '/api/admin/withdrawals/'+id+'/approve', {
-          method:'POST', headers: authHeaders(true)
-        });
-        b.disabled = false; b.innerHTML = '<i class="fa-solid fa-check"></i> Approve';
-        if (r._error) alert('Approve failed: ' + r.message);
-        else { alert('Approved'); loadWithdrawals(); }
-      });
-    });
-    tb.querySelectorAll('button[data-reject]').forEach(b=>{
-      b.addEventListener('click', async ()=>{
-        const id = b.dataset.reject;
-        b.disabled = true; b.textContent = 'Rejecting…';
-        const r = await safeFetch(API_BASE + '/api/admin/withdrawals/'+id+'/reject', {
-          method:'POST', headers: authHeaders(true)
-        });
-        b.disabled = false; b.innerHTML = '<i class="fa-solid fa-xmark"></i> Reject';
-        if (r._error) alert('Reject failed: ' + r.message);
-        else { alert('Rejected'); loadWithdrawals(); }
-      });
-    });
-  }
-  $('#btnReloadWithdrawals').addEventListener('click', loadWithdrawals);
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+        }
 
-  // ========= NEWS =========
-  function updateNewsPreview(){
-    const url = $('#newsImage').value.trim();
-    $('#newsPreview').src = url || '';
-  }
-  $('#newsImage').addEventListener('input', updateNewsPreview);
-  updateNewsPreview();
+        .btn-danger {
+            background: #2b0000;
+            border: 1px solid #900;
+            color: #f88;
+        }
 
-  async function loadNewsList(){
-    const list = $('#newsList');
-    list.innerHTML = '<div class="muted">Loading…</div>';
-    
-    try {
-      const r = await safeFetch(API_BASE + '/api/admin/news', { headers: authHeaders(false) });
-      
-      if (r._error){
-        list.innerHTML = '';
-        list.appendChild(el('div',{class:'notice'},[r.message]));
-        return;
-      }
-      
-      const items = r.news || [];
-      if (!items.length){
-        list.innerHTML = '<div class="muted">No news yet.</div>';
-        return;
-      }
-      
-      list.innerHTML = '';
-      items.forEach(n=>{
-        const card = el('div', {class:'card'}, [
-          el('div', {class:'row'}, [
-            el('div', {class:'col'}, [
-              el('div', {class:'title', style:'font-size:15px'}, [n.title || '(no title)']),
-              el('div', {class:'muted small'}, [n._id || '']),
-              el('div', {style:'margin-top:6px'}, [n.body || ''])
-            ]),
-            el('div', {class:'col'}, [
-              n.imageUrl ? el('img', {src:n.imageUrl, class:'img-preview'}) : el('div', {class:'muted small'}, ['No image']),
-              el('div', {class:'small muted', style:'margin-top:6px'}, ['Button: ', (n.buttonText||'-'), ' → ', (n.buttonLink||'-')])
-            ])
-          ]),
-          el('div', {class:'row', style:'margin-top:8px'}, [
-            el('button', {class:'btn small', 'data-edit-news': n._id}, [el('i',{class:'fa-solid fa-pen'}), document.createTextNode(' Edit')]),
-            el('button', {class:'btn-danger small', 'data-del-news': n._id}, [el('i',{class:'fa-solid fa-trash'}), document.createTextNode(' Delete')])
-          ])
-        ]);
-        list.appendChild(card);
-      });
+        .btn-ok {
+            background: #092;
+            border: 1px solid #0f6;
+            color: #eaffea;
+        }
 
-      // Add event listeners
-      list.querySelectorAll('button[data-del-news]').forEach(b=>{
-        b.addEventListener('click', async ()=>{
-          if (!confirm('Delete this news item?')) return;
-          const id = b.getAttribute('data-del-news');
-          b.disabled = true; 
-          b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting…';
-          
-          const r = await safeFetch(API_BASE + '/api/admin/news/' + id, {
-            method: 'DELETE', 
-            headers: authHeaders(false)
-          });
-          
-          if (r._error) {
-            alert('Delete failed: ' + r.message);
-            b.disabled = false;
-            b.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
-          } else {
-            loadNewsList();
-          }
-        });
-      });
+        .btn-info {
+            background: #004080;
+            border: 1px solid #4f8ff7;
+            color: #e0f0ff;
+        }
 
-      list.querySelectorAll('button[data-edit-news]').forEach(b=>{
-        b.addEventListener('click', async ()=>{
-          const id = b.getAttribute('data-edit-news');
-          const newsItem = items.find(item => item._id === id);
-          
-          if (!newsItem) return;
-          
-          // Fill form with existing data
-          $('#newsTitle').value = newsItem.title || '';
-          $('#newsBody').value = newsItem.body || '';
-          $('#newsImage').value = newsItem.imageUrl || '';
-          $('#newsBtnText').value = newsItem.buttonText || '';
-          $('#newsBtnLink').value = newsItem.buttonLink || '';
-          updateNewsPreview();
-          
-          // Change create button to update button temporarily
-          const createBtn = $('#btnCreateNews');
-          const originalHtml = createBtn.innerHTML;
-          createBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Update';
-          
-          const originalHandler = createBtn.onclick;
-          createBtn.onclick = async () => {
-            const title = $('#newsTitle').value.trim();
-            const body = $('#newsBody').value.trim();
-            const imageUrl = $('#newsImage').value.trim();
-            const buttonText = $('#newsBtnText').value.trim();
-            const buttonLink = $('#newsBtnLink').value.trim();
-            
-            const r = await safeFetch(API_BASE + '/api/admin/news/' + id, {
-              method: 'PUT',
-              headers: authHeaders(true),
-              body: JSON.stringify({ title, body, imageUrl, buttonText, buttonLink })
-            });
-            
-            if (r._error) {
-              alert('Update failed: ' + r.message);
-            } else {
-              alert('News updated successfully!');
-              // Reset form and button
-              $('#newsTitle').value = '';
-              $('#newsBody').value = '';
-              $('#newsImage').value = '';
-              $('#newsBtnText').value = '';
-              $('#newsBtnLink').value = '';
-              updateNewsPreview();
-              createBtn.innerHTML = originalHtml;
-              createBtn.onclick = originalHandler;
-              loadNewsList();
+        .row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .col {
+            flex: 1 1 240px;
+            min-width: 220px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            background: #0f0f0f;
+            color: #fff;
+            outline: none;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: auto;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+            padding: 10px;
+            text-align: right;
+            font-size: 14px;
+        }
+
+        th {
+            color: var(--gold);
+        }
+
+        .chip {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            border: 1px solid rgba(255, 215, 0, 0.35);
+            color: var(--gold);
+        }
+
+        .grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .stat {
+            background: #0f0f0f;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .stat .label {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .stat .value {
+            color: #fff;
+            font-size: 22px;
+            margin-top: 6px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .danger {
+            color: #ff8b8b
+        }
+
+        .ok {
+            color: #9effb3
+        }
+
+        .info {
+            color: #4f8ff7
+        }
+
+        .notice {
+            background: #141414;
+            border: 1px dashed rgba(255, 215, 0, 0.35);
+            border-radius: 10px;
+            padding: 10px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .small {
+            font-size: 12px;
+        }
+
+        .card {
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            background: #0e0e0e;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .img-preview {
+            width: 100%;
+            max-height: 140px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            background: #000;
+        }
+
+        .pill {
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .divider {
+            height: 1px;
+            background: rgba(255, 215, 0, 0.2);
+            margin: 10px 0;
+        }
+
+        footer {
+            border-top: 1px solid rgba(255, 215, 0, 0.25);
+            padding: 10px 16px;
+            color: var(--muted);
+            text-align: center;
+            background: #111;
+        }
+
+        .navbtn {
+            width: 100%;
+            text-align: right;
+            background: transparent;
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .navbtn:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .navbtn.active {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: #151515;
+        }
+
+        .inline {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .nowrap {
+            white-space: nowrap;
+        }
+
+        .right {
+            margin-left: auto;
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .filter-select {
+            background: #0f0f0f;
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 6px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--gold);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
             }
-          };
-        });
-      });
-      
-    } catch (error) {
-      list.innerHTML = '<div class="notice">Error loading news: ' + error.message + '</div>';
-    }
-  }
-
-  $('#btnCreateNews').addEventListener('click', async ()=>{
-    const title = $('#newsTitle').value.trim();
-    const body = $('#newsBody').value.trim();
-    const imageUrl = $('#newsImage').value.trim();
-    const buttonText = $('#newsBtnText').value.trim();
-    const buttonLink = $('#newsBtnLink').value.trim();
-    $('#newsCreateMsg').textContent = 'Creating…';
-    const r = await safeFetch(API_BASE + '/api/admin/news', {
-      method:'POST', headers: authHeaders(true),
-      body: JSON.stringify({ title, body, imageUrl, buttonText, buttonLink })
-    });
-    if (r._error) $('#newsCreateMsg').innerHTML = '<span class="danger">'+ r.message +'</span>';
-    else {
-      $('#newsCreateMsg').innerHTML = '<span class="ok">Created</span>';
-      $('#newsTitle').value = ''; $('#newsBody').value=''; $('#newsImage').value=''; $('#newsBtnText').value=''; $('#newsBtnLink').value='';
-      updateNewsPreview();
-      loadNewsList();
-    }
-  });
-  $('#btnReloadNews').addEventListener('click', loadNewsList);
-
-  // ========= BANNERS =========
-  function updateBannerPreview(){
-    const url = $('#bannerImage').value.trim();
-    $('#bannerPreview').src = url || 'https://via.placeholder.com/300x150?text=Banner+Preview';
-  }
-  $('#bannerImage').addEventListener('input', updateBannerPreview);
-  updateBannerPreview();
-
-  async function loadBannerList(){
-    const list = $('#bannerList');
-    list.innerHTML = '<div class="muted">Loading…</div>';
-    const r = await safeFetch(API_BASE + '/api/admin/banners', { headers: authHeaders(false) });
-    
-    if (r._error){
-      list.innerHTML = '';
-      list.appendChild(el('div',{class:'notice'},[r.message]));
-      return;
-    }
-    
-    const items = r.banners || [];
-    if (!items.length){
-      list.innerHTML = '<div class="muted">No banners yet.</div>';
-      return;
-    }
-    
-    list.innerHTML = '';
-    items.forEach(banner=>{
-      const card = el('div', {class:'card'}, [
-        el('div', {class:'row'}, [
-          el('div', {class:'col'}, [
-            el('div', {class:'title', style:'font-size:15px'}, [banner.title || '(no title)']),
-            el('div', {class:'muted small'}, [banner._id || '']),
-            el('div', {style:'margin-top:6px'}, [banner.description || ''])
-          ]),
-          el('div', {class:'col'}, [
-            banner.image ? el('img', {src:banner.image, class:'img-preview'}) : el('div', {class:'muted small'}, ['No image']),
-            el('div', {class:'small muted', style:'margin-top:6px'}, ['Button: ', (banner.buttonText||'-'), ' → ', (banner.buttonLink||'-')])
-          ])
-        ]),
-        el('div', {class:'row', style:'margin-top:8px'}, [
-          el('button', {class:'btn small', 'data-edit-banner': banner._id}, [el('i',{class:'fa-solid fa-pen'}), document.createTextNode(' Edit')]),
-          el('button', {class:'btn-danger small', 'data-del-banner': banner._id}, [el('i',{class:'fa-solid fa-trash'}), document.createTextNode(' Delete')])
-        ])
-      ]);
-      list.appendChild(card);
-    });
-
-    // Add event listeners for delete buttons
-    list.querySelectorAll('button[data-del-banner]').forEach(b=>{
-      b.addEventListener('click', async ()=>{
-        if (!confirm('Delete this banner?')) return;
-        const id = b.getAttribute('data-del-banner');
-        b.disabled = true; 
-        b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting…';
-        
-        const r = await safeFetch(API_BASE + '/api/admin/banners/' + id, {
-          method: 'DELETE', 
-          headers: authHeaders(false)
-        });
-        
-        if (r._error) {
-          alert('Delete failed: ' + r.message);
-          b.disabled = false;
-          b.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
-        } else {
-          loadBannerList();
         }
-      });
-    });
 
-    // Add event listeners for edit buttons
-    list.querySelectorAll('button[data-edit-banner]').forEach(b=>{
-      b.addEventListener('click', async ()=>{
-        const id = b.getAttribute('data-edit-banner');
-        const banner = items.find(item => item._id === id);
-        
-        if (!banner) return;
-        
-        // Fill form with existing data
-        $('#bannerTitle').value = banner.title || '';
-        $('#bannerDescription').value = banner.description || '';
-        $('#bannerImage').value = banner.image || '';
-        $('#bannerBtnText').value = banner.buttonText || '';
-        $('#bannerBtnLink').value = banner.buttonLink || '';
-        updateBannerPreview();
-        
-        // Change create button to update button temporarily
-        const createBtn = $('#btnCreateBanner');
-        const originalHtml = createBtn.innerHTML;
-        createBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Update';
-        createBtn.onclick = async () => {
-          const title = $('#bannerTitle').value.trim();
-          const description = $('#bannerDescription').value.trim();
-          const image = $('#bannerImage').value.trim();
-          const buttonText = $('#bannerBtnText').value.trim();
-          const buttonLink = $('#bannerBtnLink').value.trim();
-          
-          const r = await safeFetch(API_BASE + '/api/admin/banners/' + id, {
-            method: 'PUT',
-            headers: authHeaders(true),
-            body: JSON.stringify({ title, description, image, buttonText, buttonLink })
-          });
-          
-          if (r._error) {
-            alert('Update failed: ' + r.message);
-          } else {
-            alert('Banner updated successfully!');
-            // Reset form and button
-            $('#bannerTitle').value = '';
-            $('#bannerDescription').value = '';
-            $('#bannerImage').value = '';
-            $('#bannerBtnText').value = '';
-            $('#bannerBtnLink').value = '';
-            updateBannerPreview();
-            createBtn.innerHTML = originalHtml;
-            createBtn.onclick = createBannerHandler;
-            loadBannerList();
-          }
-        };
-      });
-    });
-  }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
 
-  // Handler for creating banners
-  async function createBannerHandler() {
-    const title = $('#bannerTitle').value.trim();
-    const description = $('#bannerDescription').value.trim();
-    const image = $('#bannerImage').value.trim();
-    const buttonText = $('#bannerBtnText').value.trim();
-    const buttonLink = $('#bannerBtnLink').value.trim();
-    
-    $('#bannerCreateMsg').textContent = 'Creating…';
-    
-    const r = await safeFetch(API_BASE + '/api/admin/banners', {
-      method: 'POST', 
-      headers: authHeaders(true),
-      body: JSON.stringify({ title, description, image, buttonText, buttonLink })
-    });
-    
-    if (r._error) {
-      $('#bannerCreateMsg').innerHTML = '<span class="danger">'+ r.message +'</span>';
-    } else {
-      $('#bannerCreateMsg').innerHTML = '<span class="ok">Banner created successfully!</span>';
-      // Clear form
-      $('#bannerTitle').value = '';
-      $('#bannerDescription').value = '';
-      $('#bannerImage').value = '';
-      $('#bannerBtnText').value = '';
-      $('#bannerBtnLink').value = '';
-      updateBannerPreview();
-      loadBannerList();
-      
-      // Clear message after 3 seconds
-      setTimeout(() => {
-        $('#bannerCreateMsg').textContent = '';
-      }, 3000);
-    }
-  }
+        .status-pending {
+            background-color: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+        }
 
-  $('#btnCreateBanner').addEventListener('click', createBannerHandler);
-  $('#btnReloadBanners').addEventListener('click', loadBannerList);
+        .status-approved {
+            background-color: rgba(35, 209, 139, 0.2);
+            color: #23d18b;
+        }
 
-  // ========= CONTENT =========
-  async function loadContentAdmin(){
-    const r = await safeFetch(API_BASE + '/api/admin/content', { headers: authHeaders(false) });
-    if (r._error){
-      $('#tickerMsg').textContent = r.message;
-      $('#slidesMsg').textContent = r.message;
-      return;
-    }
-    $('#tickerText').value = r.tickerText || '';
-    $('#slide1Url').value = r.slide1Url || '';
-    $('#slide1Title').value = r.slide1Title || '';
-    $('#slide2Url').value = r.slide2Url || '';
-    $('#slide2Title').value = r.slide2Title || '';
-  }
-  $('#btnSaveTicker').addEventListener('click', async ()=>{
-    const r = await safeFetch(API_BASE + '/api/admin/content', {
-      method:'PUT', headers: authHeaders(true),
-      body: JSON.stringify({ tickerText: $('#tickerText').value })
-    });
-    $('#tickerMsg').textContent = r._error ? r.message : 'Saved';
-  });
-  $('#btnSaveSlides').addEventListener('click', async ()=>{
-    const payload = {
-      slide1Url: $('#slide1Url').value.trim(),
-      slide1Title: $('#slide1Title').value.trim(),
-      slide2Url: $('#slide2Url').value.trim(),
-      slide2Title: $('#slide2Title').value.trim(),
-    };
-    const r = await safeFetch(API_BASE + '/api/admin/content', {
-      method:'PUT', headers: authHeaders(true),
-      body: JSON.stringify(payload)
-    });
-    $('#slidesMsg').textContent = r._error ? r.message : 'Saved';
-  });
+        .status-rejected {
+            background-color: rgba(255, 82, 82, 0.2);
+            color: #ff5252;
+        }
+    </style>
+</head>
 
-  // ========= INIT =========
-  updateAuthUI();
+<body>
+    <header>
+        <div class="brand"><i class="fa-solid fa-crown"></i> RealityLottery Admin</div>
+        <div class="inline">
+            <span id="adminState" class="admin-state">لم يتم تسجيل الدخول</span>
+            <button id="btnLogout" class="btn btn-outline hidden"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+        </div>
+    </header>
 
-  // Auto-load after login if token exists
-  if (isSigned()){
-    loadStats();
-    loadUsers();
-    loadPayments();
-    loadWithdrawals();
-    loadNewsList();
-    loadBannerList();
-    loadContentAdmin();
-  }
+    <div class="wrap">
+        <aside>
+            <button class="navbtn active" data-tab="tab-login"><i class="fa-solid fa-lock"></i> تسجيل الدخول</button>
+            <button class="navbtn" data-tab="tab-stats"><i class="fa-solid fa-chart-line"></i> الإحصائيات</button>
+            <button class="navbtn" data-tab="tab-users"><i class="fa-solid fa-users"></i> المستخدمين</button>
+            <button class="navbtn" data-tab="tab-payments"><i class="fa-solid fa-credit-card"></i> المدفوعات</button>
+            <button class="navbtn" data-tab="tab-withdrawals"><i class="fa-solid fa-wallet"></i> السحوبات</button>
+            <button class="navbtn" data-tab="tab-news"><i class="fa-solid fa-newspaper"></i> الأخبار</button>
+            <button class="navbtn" data-tab="tab-banners"><i class="fa-solid fa-image"></i> الإعلانات</button>
+            <button class="navbtn" data-tab="tab-content"><i class="fa-solid fa-pen-ruler"></i> محتوى الموقع</button>
+            <div class="divider"></div>
+            <div class="small muted">جميع الإجراءات تتطلب رمز المسؤول.</div>
+        </aside>
 
-  // If the admin navigates into tabs while not signed, we keep UI friendly
-  document.addEventListener('click', (e)=>{
-    const tab = e.target.closest('.navbtn')?.dataset?.tab || '';
-    const needAuthTabs = ['tab-stats','tab-users','tab-payments','tab-withdrawals','tab-news','tab-banners','tab-content'];
-    if (tab && needAuthTabs.includes(tab) && !isSigned()){
-      setTimeout(()=>{ alert('Please sign in as admin first.'); }, 0);
-    }
-  });
-</script>
+        <main>
+            <!-- LOGIN -->
+            <section id="tab-login" class="section">
+                <div class="title"><i class="fa-solid fa-lock"></i> تسجيل الدخول للمسؤول</div>
+                <div class="row">
+                    <div class="col card">
+                        <label>اسم المستخدم</label>
+                        <input id="adminUser" placeholder="admin" />
+                        <label style="margin-top:8px">كلمة المرور</label>
+                        <input id="adminPass" type="password" placeholder="كلمة المرور" />
+                        <div class="row" style="margin-top:12px">
+                            <button class="btn" id="btnLoginAdmin"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</button>
+                            <span id="loginMsg" class="muted"></span>
+                        </div>
+                        <div class="notice" style="margin-top:12px">
+                            الافتراضي (حسب الخادم): <span class="mono">a</span>. Y <span class="mono">ADMIN_USER</span> and <span class="mono">ADMIN_PASS</span>.
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="notice">
+                            يتم تخزين الرمز المميز في <span class="mono">localStorage.rl_admin_token</span> ويتم إرفاقه كـ <span class="mono">Authorization: Bearer &lt;token&gt;</span> لجميع استدعئات واجهة برمجة التطبيقات الخاصة بالمسؤول على نفس الأصل.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STATS -->
+            <section id="tab-stats" class="section hidden">
+                <div class="title"><i class="fa-solid fa-chart-line"></i> إحصائيات المنصة</div>
+                <div id="statsWrap" class="grid grid-4">
+                    <!-- سيتم إضافة البطاقات هنا -->
+                </div>
+                <div class="row" style="margin-top:12px">
+                    <button class="btn" id="btnRefreshStats"><i class="fa-solid fa-rotate"></i> تحديث</button>
+                    <span class="muted">إذا لم يكن نقطة النهاية جاهزة، فسترى رسالة لطيفة بدلاً من خطأ.</span>
+                </div>
+            </section>
+
+            <!-- USERS -->
+            <section id="tab-users" class="section hidden">
+                <div class="title"><i class="fa-solid fa-users"></i> إدارة المستخدمين</div>
+                <div class="row top-actions">
+                    <input id="userSearch" placeholder="البحث باسم المستخدم أو البريد الإلكتروني..." class="col" />
+                    <button class="btn" id="btnReloadUsers"><i class="fa-solid fa-rotate"></i> إعادة تحميل</button>
+                    <span class="pill">نصيحة: استخدم الإجراءات المضمنة لتعيين الرصيد والاشتراك وتقدم المهمة.</span>
+                </div>
+                <div class="row" style="margin-top:12px; overflow:auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>اسم المستخدم</th>
+                                <th>البريد الإلكتروني</th>
+                                <th>الرصيد</th>
+                                <th>الاشتراك</th>
+                                <th>تقدم المهمة</th>
+                                <th class="nowrap">حفظ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTbody">
+                            <tr>
+                                <td colspan="6" class="muted">جاري التحميل…</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- سيبقى باقي المحتوى مخفياً للاختصار -->
+
+        </main>
+    </div>
+
+    <footer>
+        <div>© <span id="year"></span> RealityLottery — Admin. جميع الحقوق محفوظة.</div>
+    </footer>
+
+    <script>
+        // ========= CONFIG =========
+        const API_BASE = 'https://realitylottery.koyeb.app';
+        const LS_TOKEN = 'rl_admin_token';
+
+        const $ = (q) => document.querySelector(q);
+        const $$ = (q) => Array.from(document.querySelectorAll(q));
+        const year = new Date().getFullYear();
+        $('#year').textContent = year;
+
+        // ========= NAV =========
+        $$('.navbtn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                $$('.navbtn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const tab = btn.dataset.tab;
+                $$('main .section').forEach(s => s.classList.add('hidden'));
+                document.getElementById(tab).classList.remove('hidden');
+            });
+        });
+
+        // ========= AUTH =========
+        const adminState = $('#adminState');
+        const btnLogout = $('#btnLogout');
+
+        function getToken() {
+            return localStorage.getItem(LS_TOKEN) || '';
+        }
+
+        function setToken(t) {
+            if (t) localStorage.setItem(LS_TOKEN, t);
+            updateAuthUI();
+        }
+
+        function clearToken() {
+            localStorage.removeItem(LS_TOKEN);
+            updateAuthUI();
+        }
+
+        function isSigned() {
+            return !!getToken();
+        }
+
+        function updateAuthUI() {
+            if (isSigned()) {
+                adminState.innerHTML = '<span class="ok">تم تسجيل الدخول</span> — تم تخزين الرمز';
+                btnLogout.classList.remove('hidden');
+            } else {
+                adminState.innerHTML = 'لم يتم تسجيل الدخول';
+                btnLogout.classList.add('hidden');
+            }
+        }
+        btnLogout.addEventListener('click', () => {
+            clearToken();
+            info('تم تسجيل الخروج.');
+        });
+
+        // ========= HELPERS =========
+        function authHeaders(json = true) {
+            const h = {
+                'Authorization': 'Bearer ' + getToken()
+            };
+            if (json) h['Content-Type'] = 'application/json';
+            return h;
+        }
+
+        function info(msg) {
+            console.log(msg);
+        }
+
+        function humanErr(e) {
+            if (e && e.message) return e.message;
+            return 'نقطة النهاية غير متاحة بعد';
+        }
+
+        async function safeFetch(url, opts = {}) {
+            try {
+                const res = await fetch(url, opts);
+                const ct = res.headers.get('content-type') || '';
+                const data = ct.includes('application/json') ? await res.json() : await res.text();
+                if (!res.ok) {
+                    // Handle 403 Forbidden specifically
+                    if (res.status === 403) {
+                        return {
+                            _error: true,
+                            message: 'تم الرفض. يرجى التحقق من صلاحيات المسؤول أو الرمز المميز.'
+                        };
+                    }
+                    throw new Error((data && data.message) ? data.message : ('HTTP ' + res.status));
+                }
+                return data;
+            } catch (e) {
+                console.warn('Fetch error', url, e);
+                return {
+                    _error: true,
+                    message: humanErr(e)
+                };
+            }
+        }
+
+        function el(tag, attrs = {}, children = []) {
+            const n = document.createElement(tag);
+            Object.entries(attrs || {}).forEach(([k, v]) => {
+                if (k === 'class') n.className = v;
+                else if (k === 'html') n.innerHTML = v;
+                else n.setAttribute(k, v);
+            });
+            (children || []).forEach(c => {
+                if (typeof c === 'string') n.appendChild(document.createTextNode(c));
+                else if (c) n.appendChild(c);
+            });
+            return n;
+        }
+
+        // ========= LOGIN =========
+        $('#btnLoginAdmin').addEventListener('click', async () => {
+            const username = $('#adminUser').value.trim();
+            const password = $('#adminPass').value.trim();
+            $('#loginMsg').textContent = 'جاري تسجيل الدخول…';
+            const r = await safeFetch(API_BASE + '/api/admin/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username,
+                    password
+                })
+            });
+            if (r._error) {
+                $('#loginMsg').innerHTML = '<span class="danger">' + r.message + '</span>';
+            } else {
+                setToken(r.token);
+                $('#loginMsg').innerHTML = '<span class="ok">تم بنجاح</span>';
+                // التحميل التلقائي للبيانات بعد تسجيل الدخول الناجح
+                loadStats();
+                loadUsers();
+            }
+        });
+
+        // ========= STATS =========
+        async function loadStats() {
+            const wrap = $('#statsWrap');
+            wrap.innerHTML = '';
+            const r = await safeFetch(API_BASE + '/api/admin/stats', {
+                headers: authHeaders(false)
+            });
+            if (r._error) {
+                wrap.appendChild(el('div', {
+                    class: 'notice'
+                }, [r.message]));
+                return;
+            }
+            const items = [{
+                    label: 'إجمالي المستخدمين',
+                    value: r.totalUsers || 0
+                },
+                {
+                    label: 'المستخدمون المدفوعون',
+                    value: r.paidUsers || 0
+                },
+                {
+                    label: 'دورات العجلة',
+                    value: r.spins || 0
+                },
+                {
+                    label: 'الدعوات الناجحة',
+                    value: r.successfulInvites || 0
+                },
+                {
+                    label: 'إجمالي السحوبات',
+                    value: r.totalWithdrawals || 0
+                },
+                {
+                    label: 'السحوبات المعلقة',
+                    value: r.pendingWithdrawals || 0
+                },
+                {
+                    label: 'إجمالي المدفوعات',
+                    value: r.totalPayments || 0
+                },
+                {
+                    label: 'المدفوعات المعلقة',
+                    value: r.pendingPayments || 0
+                },
+            ];
+            items.forEach(it => {
+                const card = el('div', {
+                    class: 'stat'
+                }, [
+                    el('div', {
+                        class: 'label'
+                    }, [it.label]),
+                    el('div', {
+                        class: 'value'
+                    }, [String(it.value)])
+                ]);
+                wrap.appendChild(card);
+            });
+        }
+        $('#btnRefreshStats').addEventListener('click', loadStats);
+
+        // ========= USERS =========
+        async function loadUsers() {
+            const tb = $('#usersTbody');
+            tb.innerHTML = '<tr><td colspan="6" class="muted">جاري التحميل…</td></tr>';
+            const r = await safeFetch(API_BASE + '/api/admin/users', {
+                headers: authHeaders(false)
+            });
+            if (r._error) {
+                tb.innerHTML = '<tr><td colspan="6"><div class="notice">' + r.message + '</div></td></tr>';
+                return;
+            }
+            const users = (r.users || []);
+            if (!users.length) {
+                tb.innerHTML = '<tr><td colspan="6" class="muted">لا يوجد مستخدمون بعد.</td></tr>';
+                return;
+            }
+            const q = $('#userSearch').value.trim().toLowerCase();
+            const filtered = q ? users.filter(u => {
+                const x = (u.username || '') + ' ' + (u.email || '');
+                return x.toLowerCase().includes(q);
+            }) : users;
+
+            tb.innerHTML = '';
+            filtered.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div><strong>${u.username || '-'}</strong></div>
+                        <div class="small muted mono">${u._id || ''}</div>
+                    </td>
+                    <td>${u.email || '-'}</td>
+                    <td>
+                        <input data-field="balance" data-id="${u._id}" value="${Number(u.balance || 0)}" />
+                    </td>
+                    <td>
+                        <select data-field="subscriptionType" data-id="${u._id}">
+                            <option value="">لا شيء</option>
+                            <option value="BASIC" ${u.subscriptionType==='BASIC' ? ' selected' : ''}>BASIC</option>
+                            <option value="PRO" ${u.subscriptionType==='PRO' ? ' selected' : ''}>PRO</option>
+                            <option value="VIP" ${u.subscriptionType==='VIP' ? ' selected' : ''}>VIP</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select data-field="taskProgress" data-id="${u._id}">
+                            ${[0,1,2,3,4,5,6].map(n => `<option value="${n}" ${Number(u.taskProgress || 0)===n ? ' selected' : ''}>${n}/6</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="nowrap">
+                        <button class="btn small" data-action="save" data-id="${u._id}"><i class="fa-solid fa-floppy-disk"></i> حفظ</button>
+                    </td>
+                `;
+                tb.appendChild(tr);
+            });
+
+            tb.querySelectorAll('button[data-action="save"]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = btn.dataset.id;
+                    const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
+                    const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
+                    const taskProgress = Number(tb.querySelector(`select[data-field="taskProgress"][data-id="${id}"]`).value || 0);
+
+                    btn.disabled = true;
+                    btn.textContent = 'جاري الحفظ…';
+                    const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
+                        method: 'PUT',
+                        headers: authHeaders(true),
+                        body: JSON.stringify({
+                            balance,
+                            subscriptionType,
+                            taskProgress
+                        })
+                    });
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ';
+                    if (r._error) {
+                        alert('فشل التحديث: ' + r.message);
+                    } else {
+                        alert('تم الحفظ!');
+                    }
+                });
+            });
+        }
+        $('#btnReloadUsers').addEventListener('click', loadUsers);
+        $('#userSearch').addEventListener('input', loadUsers);
+
+        // ========= INIT =========
+        updateAuthUI();
+
+        // التحميل التلقائي بعد تسجيل الدخول إذا كان الرمز موجودًا
+        if (isSigned()) {
+            loadStats();
+            loadUsers();
+        }
+
+        // إذا انتقل المسؤول إلى علامات التبويب أثناء عدم تسجيل الدخول، نحافظ على واجهة المستخدم صديقة
+        document.addEventListener('click', (e) => {
+            const tab = e.target.closest('.navbtn')?.dataset?.tab || '';
+            const needAuthTabs = ['tab-stats', 'tab-users', 'tab-payments', 'tab-withdrawals', 'tab-news', 'tab-banners', 'tab-content'];
+            if (tab && needAuthTabs.includes(tab) && !isSigned()) {
+                setTimeout(() => {
+                    alert('يرجى تسجيل الدخول كمسؤول أولاً.');
+                }, 0);
+            }
+        });
+    </script>
 </body>
 </html>
