@@ -32,17 +32,11 @@ const PaymentSchema = new mongoose.Schema({
   verifiedAt: {
     type: Date
   },
-  verifiedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
+  verifiedBy: { type: String },
   rejectedAt: {
     type: Date
   },
-  rejectedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
+  rejectedBy: { type: String },
   rejectionReason: {
     type: String
   }
