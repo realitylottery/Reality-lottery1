@@ -20,6 +20,37 @@
     footer a{color:#ffd700;text-decoration:none;font-size:14px;font-weight:bold;display:flex;flex-direction:column;align-items:center;}
     footer a i{font-size:18px;margin-bottom:4px;}
     footer a:hover{color:#ffa500;}
+    
+    /* New styles for referral section */
+    .referral-notice {
+      background: rgba(255, 215, 0, 0.1);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 6px;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 14px;
+      text-align: center;
+    }
+    
+    .referral-success {
+      color: #23d18b;
+    }
+    
+    .referral-code-input {
+      position: relative;
+    }
+    
+    .referral-code-input input {
+      padding-right: 40px;
+    }
+    
+    .referral-code-input i {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #ffd700;
+    }
   </style>
 </head>
 <body>
@@ -28,12 +59,25 @@
   <div class="form-container">
     <form id="registerForm">
       <h2>Register</h2>
+      
+      <!-- Referral notice section -->
+      <div id="referralNotice" class="referral-notice" style="display: none;">
+        <i class="fas fa-gift"></i> 
+        <span id="referralMessage">You're joining with a referral code! You'll get special benefits.</span>
+      </div>
+      
       <input type="text" id="fullName" placeholder="Full Name" required>
       <input type="email" id="email" placeholder="Email" required>
       <input type="text" id="phone" placeholder="Phone (optional)">
       <input type="text" id="username" placeholder="Username" required>
       <input type="password" id="password" placeholder="Password" required>
-      <input type="text" id="referral" placeholder="Referral Code (optional)">
+      
+      <!-- Referral code input -->
+      <div class="referral-code-input">
+        <input type="text" id="referral" placeholder="Referral Code (optional)" value="">
+        <i class="fas fa-user-friends"></i>
+      </div>
+      
       <button type="submit">Register</button>
     </form>
   </div>
@@ -46,24 +90,73 @@
   </footer>
 
   <script>
-    const API_BASE="https://realitylottery.koyeb.app/api";
-    document.getElementById("registerForm").addEventListener("submit",async(e)=>{
+    const API_BASE = "https://realitylottery.koyeb.app/api";
+    
+    // Function to get URL parameters
+    function getUrlParameter(name) {
+      name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
+      const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+      const results = regex.exec(location.search);
+      return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+    
+    // Check for referral code in URL on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const referralCode = getUrlParameter('ref');
+      if (referralCode) {
+        document.getElementById('referral').value = referralCode;
+        document.getElementById('referralNotice').style.display = 'block';
+        
+        // Optional: Fetch referrer name from API to personalize message
+        fetchReferrerName(referralCode);
+      }
+    });
+    
+    // Function to fetch referrer name (optional enhancement)
+    async function fetchReferrerName(referralCode) {
+      try {
+        const res = await fetch(`${API_BASE}/auth/referrer-info?code=${referralCode}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.referrerName) {
+            document.getElementById('referralMessage').textContent = 
+              `You're joining through ${data.referrerName}'s referral! You'll get special benefits.`;
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching referrer info:', error);
+      }
+    }
+    
+    // Registration form submission
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const fullName=document.getElementById("fullName").value;
-      const email=document.getElementById("email").value;
-      const phone=document.getElementById("phone").value;
-      const username=document.getElementById("username").value;
-      const password=document.getElementById("password").value;
-      const referral=document.getElementById("referral").value;
-      try{
-        const res=await fetch(API_BASE+"/auth/register",{
-          method:"POST",headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({fullName,email,phone,username,password,referral})
+      
+      const fullName = document.getElementById("fullName").value;
+      const email = document.getElementById("email").value;
+      const phone = document.getElementById("phone").value;
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const referral = document.getElementById("referral").value;
+      
+      try {
+        const res = await fetch(API_BASE + "/auth/register", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({fullName, email, phone, username, password, referral})
         });
-        const data=await res.json();
-        if(res.ok){ alert("Registration successful!"); window.location="login.html"; }
-        else{ alert(data.message||"Registration failed"); }
-      }catch(err){ alert("Network error"); }
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          alert("Registration successful!");
+          window.location = "login.html";
+        } else {
+          alert(data.message || "Registration failed");
+        }
+      } catch (err) {
+        alert("Network error");
+      }
     });
   </script>
 </body>
