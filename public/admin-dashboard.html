@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+u<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -661,32 +661,77 @@
     });
 
     // Add event listeners for payment actions
-    tb.querySelectorAll('button[data-verify-payment]').forEach(b=>{
-      b.addEventListener('click', async ()=>{
-        if (!confirm('Verify this payment? This will activate the user\'s subscription.')) return;
-        const id = b.dataset.verifyPayment;
-        b.disabled = true; b.textContent = 'Verifying…';
-        const r = await safeFetch(API_BASE + '/api/admin/payments/'+id+'/verify', {
-          method:'POST', headers: authHeaders(true)
-        });
-        b.disabled = false; b.innerHTML = '<i class="fa-solid fa-check"></i> Verify';
-        if (r._error) alert('Verification failed: ' + r.message);
-        else { alert('Payment verified! User subscription activated.'); loadPayments(); loadUsers(); }
+    // --- VERIFY PAYMENT ---
+tb.querySelectorAll('button[data-verify-payment]').forEach(b => {
+  b.addEventListener('click', async () => {
+    if (!confirm("Verify this payment? This will activate the user's subscription.")) return;
+
+    const id = b.dataset.verifyPayment;
+    b.disabled = true;
+    b.textContent = 'Verifying…';
+
+    try {
+      const r = await safeFetch(API_BASE + '/api/admin/payments/' + id + '/verify', {
+        method: 'POST',
+        headers: authHeaders(true)
       });
-    });
-    
-    tb.querySelectorAll('button[data-reject-payment]').forEach(b=>{
-      b.addEventListener('click', async ()=>{
-        if (!confirm('Reject this payment? This will notify the user their payment was rejected.')) return;
-        const id = b.dataset.rejectPayment;
-        b.disabled = true; b.textContent = 'Rejecting…';
-        const r = await safeFetch(API_BASE + '/api/admin/payments/'+id+'/reject', {
-          method:'POST', headers: authHeaders(true)
-        });
-        b.disabled = false; b.innerHTML = '<i class="fa-solid fa-xmark"></i> Reject';
-        if (r._error) alert('Rejection failed: ' + r.message);
-        else { alert('Payment rejected! User notified.'); loadPayments(); }
+
+      console.log("VERIFY RESPONSE:", r);
+
+      if (!r.payment) {
+        alert('❌ Verification failed: ' + (r.message || 'Unknown error'));
+      } else {
+        alert('✅ Payment verified! Subscription activated.');
+        loadPayments();
+        loadUsers();
+      }
+    } catch (err) {
+      console.error("Verify request error:", err);
+      alert('Verification failed: ' + err.message);
+    }
+
+    b.disabled = false;
+    b.innerHTML = '<i class="fa-solid fa-check"></i> Verify';
+  });
+});
+
+
+// --- REJECT PAYMENT ---
+tb.querySelectorAll('button[data-reject-payment]').forEach(b => {
+  b.addEventListener('click', async () => {
+    const reason = prompt("Enter rejection reason (optional):") || "No reason provided";
+    if (!confirm("Are you sure you want to reject this payment?")) return;
+
+    const id = b.dataset.rejectPayment;
+    b.disabled = true;
+    b.textContent = 'Rejecting…';
+
+    try {
+      const r = await safeFetch(API_BASE + '/api/admin/payments/' + id + '/reject', {
+        method: 'POST',
+        headers: {
+          ...authHeaders(true),
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ reason })
       });
+
+      console.log("REJECT RESPONSE:", r);
+
+      if (!r.payment) {
+        alert('❌ Rejection failed: ' + (r.message || 'Unknown error'));
+      } else {
+        alert('🚫 Payment rejected successfully.');
+        loadPayments();
+      }
+    } catch (err) {
+      console.error("Reject request error:", err);
+      alert('Rejection failed: ' + err.message);
+    }
+
+    b.disabled = false;
+    b.innerHTML = '<i class="fa-solid fa-xmark"></i> Reject';
+  });
     });
   }
   $('#btnReloadPayments').addEventListener('click', loadPayments);
