@@ -1,4 +1,3 @@
-<!-- FILE: public/profile.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,6 +46,12 @@
     .step.done{border-color:#0f6;box-shadow:0 0 0 1px rgba(0,255,120,.15) inset}
     .progress-bar{height:10px;background:#181818;border:1px solid rgba(255,215,0,.25);border-radius:999px;overflow:hidden}
     .progress-fill{height:100%;width:0;background:linear-gradient(90deg,#0f6,#7dffb2);transition:width .25s}
+
+    /* Referral stats */
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+    .stat-box{background:#101010;border:1px solid rgba(255,215,0,.2);padding:12px;border-radius:10px;text-align:center}
+    .stat-value{font-size:24px;font-weight:bold;color:var(--gold);margin:5px 0}
+    .stat-label{font-size:12px;color:var(--muted)}
 
     /* Bottom nav */
     footer.navbar{
@@ -116,6 +121,25 @@
         </div>
       </section>
     </div>
+
+    <!-- Referral Statistics -->
+    <section class="card" style="margin-top:12px">
+      <div class="title"><i class="fa-solid fa-user-group"></i> Referral Statistics</div>
+      
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">Total Invited Users</div>
+          <div class="stat-value" id="totalInvited">0</div>
+          <div class="muted">Registered via your link</div>
+        </div>
+        
+        <div class="stat-box">
+          <div class="stat-label">Subscribed Users</div>
+          <div class="stat-value" id="subscribedInvited">0</div>
+          <div class="muted">Upgraded to a paid plan</div>
+        </div>
+      </div>
+    </section>
 
     <!-- Task Progress -->
     <section class="card" style="margin-top:12px">
@@ -273,6 +297,20 @@
           setTimeout(()=> event.target.innerHTML = old, 1200);
         }catch(err){ alert('Copy failed'); }
       });
+
+      // Load referral statistics
+      try {
+        const referralStats = await safeFetch(API_BASE + '/api/user/referral-stats', {
+          headers: { 'Authorization':'Bearer ' + getToken() }
+        });
+        
+        document.getElementById('totalInvited').textContent = referralStats.totalInvited || 0;
+        document.getElementById('subscribedInvited').textContent = referralStats.subscribedInvited || 0;
+      } catch (e) {
+        console.error('Failed to load referral stats:', e);
+        document.getElementById('totalInvited').textContent = '0';
+        document.getElementById('subscribedInvited').textContent = '0';
+      }
 
       // Task progress: 0..6, with step1 = has subscription
       let progress = Number(user.taskProgress || 0);
