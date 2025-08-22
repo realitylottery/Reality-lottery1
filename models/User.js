@@ -26,6 +26,14 @@ const UserSchema = new mongoose.Schema({
   subscriptionExpires: {
     type: Date
   },
+  totalInvites: {
+    type: Number,
+    default: 0
+  },
+  successfulInvites: {
+    type: Number,
+    default: 0
+  },
   
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   subscriptionType: { type: String, default: "Free" } // نوع الاشتراك افتراضي = "Free"
