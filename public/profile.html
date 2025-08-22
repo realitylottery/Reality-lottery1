@@ -77,6 +77,17 @@
       opacity: 1;
     }
 
+    /* Reset button */
+    .reset-btn {
+      background: linear-gradient(45deg, #ff5252, #ff7b7b);
+      margin-top: 15px;
+      display: none;
+    }
+    .reset-btn:hover {
+      background: linear-gradient(45deg, #ff3838, #ff6565);
+      transform: translateY(-2px);
+    }
+
     /* Bottom nav */
     footer.navbar{
       position:fixed;bottom:0;left:0;right:0;background:#111;border-top:2px solid var(--gold);
@@ -151,7 +162,7 @@
 
         <div class="row" style="margin-top:8px">
           <a href="withdrawal.html" class="btn btn-small"><i class="fa-solid fa-arrow-up-right-from-square"></i> Withdrawal</a>
-          <a href="index.html" class="btn btn-outline btn-small"><i class="fa-solid fa-star"></i> Plans</a>
+          <a href="subscribe.html" class="btn btn-outline btn-small"><i class="fa-solid fa-star"></i> Plans</a>
         </div>
       </section>
     </div>
@@ -171,27 +182,27 @@
       <div id="stepsWrap" class="steps">
         <div class="step" data-step="1">
           <div class="n">Step 1</div>
-          <div class="label">1 paid</div>
+          <div class="label">Active subscription</div>
         </div>
         <div class="step" data-step="2">
           <div class="n">Step 2</div>
-          <div class="label">1 paid</div>
+          <div class="label">1 paid invite</div>
         </div>
         <div class="step" data-step="3">
           <div class="n">Step 3</div>
-          <div class="label">2 paid</div>
+          <div class="label">2 paid invites</div>
         </div>
         <div class="step" data-step="4">
           <div class="n">Step 4</div>
-          <div class="label">3 paid</div>
+          <div class="label">3 paid invites</div>
         </div>
         <div class="step" data-step="5">
           <div class="n">Step 5</div>
-          <div class="label">4 paid</div>
+          <div class="label">4 paid invites</div>
         </div>
         <div class="step" data-step="6">
           <div class="n">Step 6</div>
-          <div class="label">5 paid</div>
+          <div class="label">5 paid invites</div>
         </div>
       </div>
 
@@ -203,6 +214,14 @@
       <div class="field">
         <label>Completed Tasks</label>
         <div id="completedTasks">0</div>
+      </div>
+
+      <!-- Reset Task Button -->
+      <button id="resetTaskBtn" class="btn reset-btn">
+        <i class="fa-solid fa-rotate-left"></i> Reset Task & Claim Reward
+      </button>
+      <div id="resetInfo" class="muted" style="font-size:12px; margin-top:8px; display:none">
+        You can reset your task progress and claim a partial reward. The amount depends on your current progress and subscription type.
       </div>
     </section>
 
@@ -228,12 +247,11 @@
     const API_BASE = ''; // same-origin to avoid CORS/network issues
     const LS_TOKEN = 'rl_token';
 
-    // Reward amounts based on subscription type
+    // Reward amounts based on subscription type and progress
     const REWARD_AMOUNTS = {
-      'basic': 10,
-      'standard': 25,
-      'premium': 50,
-      'vip': 100
+      'basic': {2: 5, 3: 8, 6: 12},
+      'pro': {2: 8, 3: 12, 6: 15},
+      'vip': {2: 12, 3: 15, 6: 20}
     };
 
     // ====== AUTH STATE (top bar) ======
@@ -273,11 +291,16 @@
     }
 
     // ====== SHOW REWARD NOTIFICATION ======
-    function showRewardNotification(amount, subscriptionType) {
+    function showRewardNotification(amount, subscriptionType, isReset = false) {
       const notification = document.getElementById('rewardNotification');
       const message = document.getElementById('rewardMessage');
       
-      message.textContent = `Task completed! You received $${amount} reward (${subscriptionType} plan).`;
+      if (isReset) {
+        message.textContent = `Task reset! You received $${amount} reward (${subscriptionType} plan).`;
+      } else {
+        message.textContent = `Task completed! You received $${amount} reward (${subscriptionType} plan).`;
+      }
+      
       notification.classList.add('show');
       
       setTimeout(() => {
@@ -286,12 +309,20 @@
     }
 
     // ====== CALCULATE REWARD ======
-    function calculateReward(subscriptionType) {
-      return REWARD_AMOUNTS[subscriptionType.toLowerCase()] || REWARD_AMOUNTS.basic;
+    function calculateReward(subscriptionType, progress) {
+      const subType = (subscriptionType || '').toLowerCase();
+      const rewards = REWARD_AMOUNTS[subType] || REWARD_AMOUNTS.basic;
+      
+      // Find the closest milestone that the user has reached
+      if (progress >= 6) return rewards[6];
+      if (progress >= 3) return rewards[3];
+      if (progress >= 2) return rewards[2];
+      
+      return 0;
     }
 
     // ====== COMPLETE TASK ======
-    async function completeTask(userId, rewardAmount, subscriptionType) {
+    async function completeTask(userId, rewardAmount, subscriptionType, isReset = false) {
       try {
         const response = await fetch(API_BASE + '/api/tasks/complete', {
           method: 'POST',
@@ -302,13 +333,14 @@
           body: JSON.stringify({
             userId: userId,
             reward: rewardAmount,
-            subscriptionType: subscriptionType
+            subscriptionType: subscriptionType,
+            isReset: isReset
           })
         });
 
         if (response.ok) {
           const result = await response.json();
-          showRewardNotification(rewardAmount, subscriptionType);
+          showRewardNotification(rewardAmount, subscriptionType, isReset);
           return result;
         } else {
           console.error('Failed to complete task');
@@ -317,6 +349,22 @@
       } catch (error) {
         console.error('Error completing task:', error);
         return null;
+      }
+    }
+
+    // ====== UPDATE RESET BUTTON ======
+    function updateResetButton(progress, subscriptionType) {
+      const resetBtn = document.getElementById('resetTaskBtn');
+      const resetInfo = document.getElementById('resetInfo');
+      
+      if (progress >= 2 && subscriptionType) {
+        const rewardAmount = calculateReward(subscriptionType, progress);
+        resetBtn.innerHTML = `<i class="fa-solid fa-rotate-left"></i> Reset Task & Claim $${rewardAmount}`;
+        resetBtn.style.display = 'block';
+        resetInfo.style.display = 'block';
+      } else {
+        resetBtn.style.display = 'none';
+        resetInfo.style.display = 'none';
       }
     }
 
@@ -427,8 +475,8 @@
 
         // Check if task is completed (progress reached 6)
         if (progress === 6 && user.subscriptionType) {
-          const rewardAmount = calculateReward(user.subscriptionType);
-          const result = await completeTask(user._id, rewardAmount, user.subscriptionType);
+          const rewardAmount = calculateReward(user.subscriptionType, progress);
+          const result = await completeTask(user._id, rewardAmount, user.subscriptionType, false);
           
           if (result && result.success) {
             // Update balance display
@@ -443,13 +491,16 @@
 
         // Update next reward information
         if (user.subscriptionType) {
-          const nextReward = calculateReward(user.subscriptionType);
+          const nextReward = calculateReward(user.subscriptionType, 6);
           document.getElementById('nextReward').innerHTML = `
             <span class="chip"><i class="fa-solid fa-gift"></i> $${nextReward} (${user.subscriptionType} plan)</span>
           `;
         } else {
           document.getElementById('nextReward').textContent = "Subscribe to a plan to earn rewards";
         }
+
+        // Update reset button
+        updateResetButton(progress, user.subscriptionType);
 
         // paint steps
         document.querySelectorAll('.step').forEach(box=>{
@@ -462,6 +513,35 @@
         const pct = (progress/6)*100;
         document.getElementById('progressFill').style.width = pct + '%';
         document.getElementById('progressText').textContent = `${progress}/6`;
+        
+        // Add event listener for reset button
+        document.getElementById('resetTaskBtn').addEventListener('click', async function() {
+          if (progress >= 2 && user.subscriptionType) {
+            const rewardAmount = calculateReward(user.subscriptionType, progress);
+            const result = await completeTask(user._id, rewardAmount, user.subscriptionType, true);
+            
+            if (result && result.success) {
+              // Update balance display
+              document.getElementById('balanceAmount').textContent = Number(result.newBalance || 0).toLocaleString();
+              // Reset progress
+              progress = user.subscriptionType ? 1 : 0;
+              
+              // Update UI
+              document.querySelectorAll('.step').forEach(box=>{
+                const n = Number(box.getAttribute('data-step'));
+                if (n <= progress) box.classList.add('done');
+                else box.classList.remove('done');
+              });
+              
+              document.getElementById('progressFill').style.width = (progress/6)*100 + '%';
+              document.getElementById('progressText').textContent = `${progress}/6`;
+              
+              // Hide reset button
+              this.style.display = 'none';
+              document.getElementById('resetInfo').style.display = 'none';
+            }
+          }
+        });
         
       } catch (error) {
         console.error('❌ Failed to load referral stats:', error);
