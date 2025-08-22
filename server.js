@@ -657,7 +657,7 @@ app.get('/api/health', (req, res) =>
 // Auth
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { fullName, email, phone, username, password, referral } = req.body;
+    const { fullName, email, phone, username, password, ref } = req.body; // تغيير referral إلى ref
     if (!fullName || !email || !username || !password) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
@@ -668,6 +668,26 @@ app.post('/api/auth/register', async (req, res) => {
     if (existing)
       return res.status(409).json({ message: 'Email or username already used' });
 
+    let referredBy = null;
+    // البحث عن المستخدم باستخدام كود الدعوة (ref) بدلاً من اسم المستخدم
+    if (ref) {
+      const referrer = await User.findOne({ 
+        $or: [
+          { referralCode: ref },        // البحث بكود الدعوة أولاً
+          { username: ref }             // ثم البحث باسم المستخدم (للترحيل)
+        ]
+      });
+      if (referrer) {
+        referredBy = referrer._id;
+        
+        // إذا كان البحث باسم مستخدم، إنشاء كود دعوة إذا لم يكن موجوداً
+        if (!referrer.referralCode) {
+          referrer.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+          await referrer.save();
+        }
+      }
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
 
@@ -677,10 +697,21 @@ app.post('/api/auth/register', async (req, res) => {
       phone,
       username,
       password: hash,
-      referral: referral || null
+      referredBy: referredBy || null
     });
 
     await user.save();
+
+    // إذا كان هناك مدعٍ، تحديث إحصائياته
+    if (referredBy) {
+      await User.findByIdAndUpdate(referredBy, {
+        $inc: { 
+          totalInvites: 1,
+          successfulInvites: 1 
+        }
+      });
+      
+    }
 
     const token = generateToken(user);
 
@@ -735,6 +766,101 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// الحصول على رابط الدعوة للمستخدم الحالي
+app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // إنشاء الرابط باستخدام كود الدعوة
+    const baseUrl = process.env.FRONTEND_ORIGIN || 'https://realitylottery.koyeb.app';
+    const referralLink = `${baseUrl}/register?ref=${user.referralCode}`;
+
+    res.json({ 
+      referralLink,
+      referralCode: user.referralCode
+    });
+  } catch (err) {
+    console.error('Referral link error:', err);
+    res.status(500).json({ message: 'Error generating referral link' });
+  }
+});
+
+// الحصول على إحصائيات الدعوات للمستخدم الحالي
+app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // البحث عن المستخدمين الذين قام هذا المستخدم بدعوتهم
+    const referredUsers = await User.find({ referredBy: user._id })
+      .select('username fullName email createdAt subscriptionActive')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      referralCode: user.referralCode,
+      referralLink: `${process.env.FRONTEND_ORIGIN || 'https://realitylottery.koyeb.app'}/register?ref=${user.referralCode}`,
+      totalInvites: user.totalInvites || 0,
+      successfulInvites: user.successfulInvites || 0,
+      referredUsers: referredUsers.map(u => ({
+        username: u.username,
+        fullName: u.fullName,
+        email: u.email,
+        joined: u.createdAt,
+        hasSubscription: u.subscriptionActive
+      }))
+    });
+  } catch (err) {
+    console.error('Referral stats error:', err);
+    res.status(500).json({ message: 'Error fetching referral stats' });
+  }
+});
+
+// إحصائيات الدعوات للمسؤولين
+app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles || !req.user.roles.includes('admin')) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    // إحصائيات عامة عن الدعوات
+    const totalReferrals = await User.countDocuments({ referredBy: { $ne: null } });
+    
+    // المستخدمون الأكثر دعوة
+    const topReferrers = await User.aggregate([
+      { $match: { totalInvites: { $gt: 0 } } },
+      { $sort: { successfulInvites: -1 } },
+      { $limit: 10 },
+      { $project: { 
+        username: 1, 
+        email: 1, 
+        totalInvites: 1, 
+        successfulInvites: 1,
+        referralCode: 1 
+      } }
+    ]);
+
+    // معدل التحويل (الناجح/الكلي)
+    const totalSuccessful = await User.aggregate([
+      { $group: { _id: null, total: { $sum: "$successfulInvites" } } }
+    ]);
+    
+    const conversionRate = totalReferrals > 0 
+      ? (totalSuccessful[0]?.total || 0) / totalReferrals * 100 
+      : 0;
+
+    res.json({
+      totalReferrals,
+      topReferrers,
+      conversionRate: conversionRate.toFixed(2)
+    });
+
+  } catch (err) {
+    console.error("Referral stats error:", err);
+    res.status(500).json({ message: "Error fetching referral statistics" });
+  }
+});
+
 // Admin login
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASS = process.env.ADMIN_PASS || 'RealityLottery@2023';
@@ -759,7 +885,22 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
       return res.status(403).json({ message: 'Forbidden' });
     }
     const users = await User.find().select('-password').sort({ registeredAt: -1 });
-    res.json({ users });
+    res.json({ 
+      users: users.map(u => ({
+        _id: u._id,
+        username: u.username,
+        email: u.email,
+        fullName: u.fullName,
+        referralCode: u.referralCode,        // تأكد من وجود هذا
+        totalInvites: u.totalInvites,        // تأكد من وجود هذا
+        successfulInvites: u.successfulInvites, // تأكد من وجود هذا
+        referredBy: u.referredBy,            // تأكد من وجود هذا
+        balance: u.balance,
+        subscriptionType: u.subscriptionType,
+        subscriptionActive: u.subscriptionActive,
+        registeredAt: u.registeredAt
+      }))
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
@@ -849,4 +990,5 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
