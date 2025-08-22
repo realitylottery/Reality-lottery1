@@ -562,7 +562,7 @@
   }
   $('#btnRefreshStats').addEventListener('click', loadStats);
 
-  // ========= USERS =========
+ // ========= USERS =========
 async function loadUsers(){
   const tb = $('#usersTbody');
   tb.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
@@ -584,9 +584,14 @@ async function loadUsers(){
 
   tb.innerHTML = '';
   filtered.forEach(u=>{
-    // استخدام completedTasks لتحديد تقدم المهمة
-    const completedTasks = Number(u.completedTasks || 0);
-    const taskProgress = Math.min(6, completedTasks); // لا يمكن أن يتجاوز التقدم 6
+    // استخدام taskProgress إذا كان موجوداً، وإلا استخدام completedTasks
+    let taskProgress = Number(u.taskProgress || u.completedTasks || 0);
+    
+    // إذا كانت القيمة أكبر من 6، نحددها إلى 6
+    taskProgress = Math.min(6, taskProgress);
+    
+    // إذا كانت القيمة غير رقمية أو غير معرفة، نضعها 0
+    if (isNaN(taskProgress)) taskProgress = 0;
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -607,21 +612,34 @@ async function loadUsers(){
         </select>
       </td>
       <td>
-        <input type="number" min="0" max="6" data-field="completedTasks" data-id="${u._id}" value="${completedTasks}" />
+        <input type="number" min="0" max="6" data-field="taskProgress" data-id="${u._id}" value="${taskProgress}" />
         <div class="muted small" style="margin-top:4px">Task Progress (0-6)</div>
         <div class="progress-visual">
           ${[1,2,3,4,5,6].map(n=>`<div class="progress-step ${taskProgress >= n ? 'done' : ''}" title="Step ${n}"></div>`).join('')}
         </div>
       </td>
       <td>
-        <div class="muted small">Current: ${taskProgress}/6</div>
-        <div class="muted small">Total Completed: ${u.totalCompletedTasks || 0}</div>
+        <div class="muted small">Debug Info:</div>
+        <div class="muted small">taskProgress: ${u.taskProgress !== undefined ? u.taskProgress : 'undefined'}</div>
+        <div class="muted small">completedTasks: ${u.completedTasks !== undefined ? u.completedTasks : 'undefined'}</div>
       </td>
       <td class="nowrap">
         <button class="btn small" data-action="save" data-id="${u._id}"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+        <button class="btn small btn-outline" style="margin-top:4px" data-action="debug" data-id="${u._id}">
+          <i class="fa-solid fa-bug"></i> Debug
+        </button>
       </td>
     `;
     tb.appendChild(tr);
+  });
+
+  // زر التصحيح
+  tb.querySelectorAll('button[data-action="debug"]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = btn.dataset.id;
+      const user = filtered.find(u => u._id === id);
+      alert(`User Debug Info:\n\nID: ${user._id}\nUsername: ${user.username}\nTask Progress: ${user.taskProgress}\nCompleted Tasks: ${user.completedTasks}\n\nFull Data:\n${JSON.stringify(user, null, 2)}`);
+    });
   });
 
   tb.querySelectorAll('button[data-action="save"]').forEach(btn=>{
@@ -629,16 +647,16 @@ async function loadUsers(){
       const id = btn.dataset.id;
       const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
       const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
-      const completedTasks = Number(tb.querySelector(`input[data-field="completedTasks"][data-id="${id}"]`).value || 0);
+      const taskProgress = Number(tb.querySelector(`input[data-field="taskProgress"][data-id="${id}"]`).value || 0);
 
-      // التأكد من أن قيمة completedTasks بين 0 و 6
-      const validCompletedTasks = Math.max(0, Math.min(6, completedTasks));
+      // التأكد من أن قيمة taskProgress بين 0 و 6
+      const validTaskProgress = Math.max(0, Math.min(6, taskProgress));
 
       btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
       const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
         method: 'PUT',
         headers: authHeaders(true),
-        body: JSON.stringify({ balance, subscriptionType, completedTasks: validCompletedTasks })
+        body: JSON.stringify({ balance, subscriptionType, taskProgress: validTaskProgress })
       });
       btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save';
       if (r._error){
