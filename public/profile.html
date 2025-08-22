@@ -53,6 +53,30 @@
     .stat-value{font-size:24px;font-weight:bold;color:var(--gold);margin:5px 0}
     .stat-label{font-size:12px;color:var(--muted)}
 
+    /* Reward notification */
+    .reward-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--green);
+      color: #000;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
+      transform: translateX(100%);
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .reward-notification.show {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
     /* Bottom nav */
     footer.navbar{
       position:fixed;bottom:0;left:0;right:0;background:#111;border-top:2px solid var(--gold);
@@ -114,6 +138,363 @@
             Share this link. Each friend who registers and pays their subscription advances your task progress.
           </div>
           <div class="stats-grid" style="margin-top:12px">
+            <div class="stat-box">
+              <div class="stat-value" id="totalInvited">0</div>
+              <div class="stat-label">Total Invited</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="subscribedInvited">0</div>
+              <div class="stat-label">Subscribed Invites</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <a href="withdrawal.html" class="btn btn-small"><i class="fa-solid fa-arrow-up-right-from-square"></i> Withdrawal</a>
+          <a href="subscribe.html" class="btn btn-outline btn-small"><i class="fa-solid fa-star"></i> Plans</a>
+        </div>
+      </section>
+    </div>
+
+    <!-- Task Progress -->
+    <section class="card" style="margin-top:12px">
+      <div class="title"><i class="fa-solid fa-list-check"></i> 6-Step Task</div>
+      <div class="muted">Step 1 is completed automatically once you have an active subscription. Steps 2–6 advance when invited users pay their subscription. When you complete the task, you'll receive a reward based on your subscription type and the task will reset.</div>
+
+      <div class="row" style="margin:12px 0 8px">
+        <div class="progress-bar" style="flex:1">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+        <div class="chip"><span id="progressText">0/6</span></div>
+      </div>
+
+      <div id="stepsWrap" class="steps">
+        <div class="step" data-step="1">
+          <div class="n">Step 1</div>
+          <div class="label">Active subscription</div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="n">Step 2</div>
+          <div class="label">1 paid invite</div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="n">Step 3</div>
+          <div class="label">2 paid invites</div>
+        </div>
+        <div class="step" data-step="4">
+          <div class="n">Step 4</div>
+          <div class="label">3 paid invites</div>
+        </div>
+        <div class="step" data-step="5">
+          <div class="n">Step 5</div>
+          <div class="label">4 paid invites</div>
+        </div>
+        <div class="step" data-step="6">
+          <div class="n">Step 6</div>
+          <div class="label">5 paid invites</div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:12px">
+        <label>Next Reward</label>
+        <div id="nextReward">Complete the task to see your reward</div>
+      </div>
+
+      <div class="field">
+        <label>Completed Tasks</label>
+        <div id="completedTasks">0</div>
+      </div>
+    </section>
+
+    <div class="pagepad"></div>
+  </main>
+
+  <!-- Reward Notification -->
+  <div id="rewardNotification" class="reward-notification">
+    <i class="fa-solid fa-gift"></i>
+    <span id="rewardMessage">Task completed! You received a reward.</span>
+  </div>
+
+  <!-- Bottom fixed nav -->
+  <footer class="navbar">
+    <a href="index.html"><i class="fa-solid fa-home"></i>Home</a>
+    <a href="news.html"><i class="fa-solid fa-newspaper"></i>News</a>
+    <a href="withdrawal.html"><i class="fa-solid fa-wallet"></i>Withdrawal</a>
+    <a href="profile.html"><i class="fa-solid fa-user"></i>Profile</a>
+  </footer>
+
+  <script>
+    // ====== CONFIG ======
+    const API_BASE = ''; // same-origin to avoid CORS/network issues
+    const LS_TOKEN = 'rl_token';
+
+    // Reward amounts based on subscription type
+    const REWARD_AMOUNTS = {
+      'basic': 10,
+      'standard': 25,
+      'premium': 50,
+      'vip': 100
+    };
+
+    // ====== AUTH STATE (top bar) ======
+    function getToken(){ return localStorage.getItem(LS_TOKEN) || ''; }
+    function isSigned(){ return !!getToken(); }
+    function signOut(){ localStorage.removeItem(LS_TOKEN); location.href = 'login.html'; }
+
+    function updateTopAuth(user){
+      const guest = document.getElementById('auth-guest');
+      const auth  = document.getElementById('auth-user');
+      if (user){
+        guest.style.display = 'none';
+        auth.style.display  = 'flex';
+        document.getElementById('top-username').textContent = user.username || user.fullName || 'User';
+      }else{
+        guest.style.display = 'flex';
+        auth.style.display  = 'none';
+      }
+    }
+
+    document.getElementById('btnLogout').addEventListener('click', signOut);
+
+    // ====== SAFE FETCH ======
+    async function safeFetch(url, opts={}){
+      try{
+        const res = await fetch(url, opts);
+        const ct = res.headers.get('content-type') || '';
+        const data = ct.includes('application/json') ? await res.json() : await res.text();
+        if (!res.ok){
+          throw new Error((data && data.message) ? data.message : ('HTTP ' + res.status));
+        }
+        return data;
+      }catch(e){
+        console.warn('Fetch error:', url, e);
+        throw e;
+      }
+    }
+
+    // ====== SHOW REWARD NOTIFICATION ======
+    function showRewardNotification(amount, subscriptionType) {
+      const notification = document.getElementById('rewardNotification');
+      const message = document.getElementById('rewardMessage');
+      
+      message.textContent = `Task completed! You received $${amount} reward (${subscriptionType} plan).`;
+      notification.classList.add('show');
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 5000);
+    }
+
+    // ====== CALCULATE REWARD ======
+    function calculateReward(subscriptionType) {
+      return REWARD_AMOUNTS[subscriptionType.toLowerCase()] || REWARD_AMOUNTS.basic;
+    }
+
+    // ====== COMPLETE TASK ======
+    async function completeTask(userId, rewardAmount, subscriptionType) {
+      try {
+        const response = await fetch(API_BASE + '/api/tasks/complete', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + getToken(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: userId,
+            reward: rewardAmount,
+            subscriptionType: subscriptionType
+          })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          showRewardNotification(rewardAmount, subscriptionType);
+          return result;
+        } else {
+          console.error('Failed to complete task');
+          return null;
+        }
+      } catch (error) {
+        console.error('Error completing task:', error);
+        return null;
+      }
+    }
+
+    // ====== LOAD PROFILE ======
+    async function loadProfile(){
+      if (!isSigned()){
+        // if not logged, go to login
+        location.href = 'login.html?next=profile.html';
+        return;
+      }
+
+      // get user
+      let me;
+      try{
+        me = await safeFetch(API_BASE + '/api/auth/me', {
+          headers: { 'Authorization':'Bearer ' + getToken() }
+        });
+      }catch(e){
+        alert('Network error or session expired. Please login again.');
+        signOut();
+        return;
+      }
+
+      const user = me.user || me || {};
+      updateTopAuth(user);
+
+      // Profile details
+      const profileWrap = document.getElementById('profileWrap');
+      profileWrap.innerHTML = `
+        <div class="field">
+          <label>Username</label>
+          <div class="mono"><strong>${user.username || '-'}</strong></div>
+        </div>
+        <div class="field">
+          <label>Full Name</label>
+          <div>${user.fullName || '-'}</div>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <div>${user.email || '-'}</div>
+        </div>
+        <div class="field">
+          <label>User ID</label>
+          <div class="mono">${user._id || '-'}</div>
+        </div>
+      `;
+
+      // Balance & subscription
+      document.getElementById('balanceAmount').textContent = Number(user.balance || 0).toLocaleString();
+      const sub = user.subscriptionType || '';
+      document.getElementById('subType').innerHTML = sub ? 
+        `<span class="chip"><i class="fa-solid fa-star"></i> ${sub}</span>` : 
+        `<span class="muted">None</span>`;
+
+      // Referral link
+      const refCode = user.referralCode || user._id || '';
+      const refLink = `${location.origin}/register.html?ref=${refCode}`;
+      const refInput = document.getElementById('refLink');
+      refInput.value = refLink;
+      
+      document.getElementById('btnCopyRef').addEventListener('click', async ()=>{
+        try{
+          await navigator.clipboard.writeText(refInput.value);
+          const old = event.target.innerHTML;
+          event.target.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+          setTimeout(()=> event.target.innerHTML = old, 1200);
+        }catch(err){ alert('Copy failed'); }
+      });
+
+      // Load referral statistics
+      try {
+        console.log('🔄 Loading referral stats...');
+        const response = await fetch(API_BASE + '/api/user/referral-stats', {
+          headers: { 
+            'Authorization': 'Bearer ' + getToken(),
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('📨 Response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Server error:', response.status, errorText);
+          throw new Error(`Server error: ${response.status}`);
+        }
+        
+        const referralStats = await response.json();
+        console.log('📊 Referral stats received:', referralStats);
+        
+        document.getElementById('totalInvited').textContent = referralStats.totalInvites || 0;
+        document.getElementById('subscribedInvited').textContent = referralStats.successfulInvites || 0;
+        
+        // Calculate task progress
+        let progress = 0;
+        
+        // Step 1: User has active subscription
+        if (sub) {
+          progress = 1;
+        }
+        
+        // Steps 2-6: Based on number of subscribed referrals
+        const successfulInvites = referralStats.successfulInvites || 0;
+        if (successfulInvites > 0) {
+          progress += successfulInvites;
+          if (progress > 6) progress = 6;
+        }
+
+        // Check if task is completed (progress reached 6)
+        if (progress === 6 && user.subscriptionType) {
+          const rewardAmount = calculateReward(user.subscriptionType);
+          const result = await completeTask(user._id, rewardAmount, user.subscriptionType);
+          
+          if (result && result.success) {
+            // Update balance display
+            document.getElementById('balanceAmount').textContent = Number(result.newBalance || 0).toLocaleString();
+            // Reset progress for the next task
+            progress = sub ? 1 : 0; // Keep step 1 if user still has subscription
+          }
+        }
+
+        // Update completed tasks count
+        document.getElementById('completedTasks').textContent = user.completedTasks || 0;
+
+        // Update next reward information
+        if (user.subscriptionType) {
+          const nextReward = calculateReward(user.subscriptionType);
+          document.getElementById('nextReward').innerHTML = `
+            <span class="chip"><i class="fa-solid fa-gift"></i> $${nextReward} (${user.subscriptionType} plan)</span>
+          `;
+        } else {
+          document.getElementById('nextReward').textContent = "Subscribe to a plan to earn rewards";
+        }
+
+        // paint steps
+        document.querySelectorAll('.step').forEach(box=>{
+          const n = Number(box.getAttribute('data-step'));
+          if (n <= progress) box.classList.add('done');
+          else box.classList.remove('done');
+        });
+
+        // progress bar
+        const pct = (progress/6)*100;
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressText').textContent = `${progress}/6`;
+        
+      } catch (error) {
+        console.error('❌ Failed to load referral stats:', error);
+        document.getElementById('totalInvited').textContent = '0';
+        document.getElementById('subscribedInvited').textContent = '0';
+        
+        // إظهار رسالة خطأ للمستخدم
+        const statsGrid = document.querySelector('.stats-grid');
+        if (statsGrid) {
+          const errorDiv = document.createElement('div');
+          errorDiv.style.color = '#ff5252';
+          errorDiv.style.marginTop = '10px';
+          errorDiv.style.fontSize = '12px';
+          errorDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Could not load referral stats';
+          statsGrid.parentNode.insertBefore(errorDiv, statsGrid.nextSibling);
+        }
+      }
+    }
+
+    // ====== INIT ======
+    // If token missing, show guest header immediately to avoid flicker
+    updateTopAuth(isSigned() ? {} : null);
+    window.addEventListener('load', loadProfile);
+  </script>
+</body>
+</html>          <div class="copy-wrap">
+            <input id="refLink" class="mono" readonly style="flex:1;min-width:220px;background:#0b0b0b;border:1px solid rgba(255,215,0,.25);border-radius:8px;padding:8px;color:#fff" />
+            <button id="btnCopyRef" class="btn btn-small"><i class="fa-regular fa-copy"></i> Copy</button>
+          </div>
+          <div class="muted" style="font-size:12px;margin-top:6px">
+            Share this link. Each friend who registers and pays their subscription advances your task progress.
+          </div>
+          <div class="stats-grid" style="margin-top:12px">
   <div class="stat-box">
     <div class="stat-value" id="totalInvited">0</div>
     <div class="stat-label">Total Invited</div>
@@ -127,11 +508,11 @@
 
         <div class="row" style="margin-top:8px">
           <a href="withdrawal.html" class="btn btn-small"><i class="fa-solid fa-arrow-up-right-from-square"></i> Withdrawal</a>
-          <a href="subscribe.html" class="btn btn-outline btn-small"><i class="fa-solid fa-star"></i> Plans</a>
+          <a href="index.html" class="btn btn-outline btn-small"><i class="fa-solid fa-star"></i> Plans</a>
         </div>
       </section>
     </div>
-<!-- Invited Users List -->
+
 
     <!-- Task Progress -->
     <section class="card" style="margin-top:12px">
