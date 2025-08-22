@@ -121,25 +121,40 @@
         </div>
       </section>
     </div>
-
-    <!-- Referral Statistics -->
-    <section class="card" style="margin-top:12px">
-      <div class="title"><i class="fa-solid fa-user-group"></i> Referral Statistics</div>
-      
-      <div class="stats-grid">
-        <div class="stat-box">
-          <div class="stat-label">Total Invited Users</div>
-          <div class="stat-value" id="totalInvited">0</div>
-          <div class="muted">Registered via your link</div>
-        </div>
-        
-        <div class="stat-box">
-          <div class="stat-label">Subscribed Users</div>
-          <div class="stat-value" id="subscribedInvited">0</div>
-          <div class="muted">Upgraded to a paid plan</div>
-        </div>
-      </div>
-    </section>
+<!-- Invited Users List -->
+<section class="card" style="margin-top:12px">
+  <div class="title"><i class="fa-solid fa-users"></i> Invited Users</div>
+  <div class="muted" style="margin-bottom:12px">People who joined using your referral code</div>
+  
+  <div class="filter-bar" style="display:flex;gap:8px;margin-bottom:12px">
+    <select id="invitedFilter" class="filter-select" style="background:#0f0f0f;border:1px solid rgba(255,215,0,.25);color:#fff;padding:6px 10px;border-radius:6px">
+      <option value="all">All Users</option>
+      <option value="subscribed">Subscribed Only</option>
+      <option value="non-subscribed">Non-Subscribed</option>
+    </select>
+    <button class="btn btn-small" id="btnReloadInvited"><i class="fa-solid fa-rotate"></i> Reload</button>
+  </div>
+  
+  <div style="overflow:auto;max-height:300px">
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:10px;border-bottom:1px solid rgba(255,215,0,.15);color:var(--gold)">Username</th>
+          <th style="text-align:left;padding:10px;border-bottom:1px solid rgba(255,215,0,.15);color:var(--gold)">Joined Date</th>
+          <th style="text-align:left;padding:10px;border-bottom:1px solid rgba(255,215,0,.15);color:var(--gold)">Subscription</th>
+          <th style="text-align:left;padding:10px;border-bottom:1px solid rgba(255,215,0,.15);color:var(--gold)">Status</th>
+        </tr>
+      </thead>
+      <tbody id="invitedUsersList">
+        <tr><td colspan="4" class="muted" style="padding:20px;text-align:center">Loading invited users...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="muted" style="font-size:12px;margin-top:10px;text-align:center">
+    <i class="fa-solid fa-info-circle"></i> You earn rewards when invited users subscribe to a paid plan
+  </div>
+</section>
 
     <!-- Task Progress -->
     <section class="card" style="margin-top:12px">
