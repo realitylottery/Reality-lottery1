@@ -657,7 +657,7 @@ app.get('/api/health', (req, res) =>
 // Auth
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { fullName, email, phone, username, password, ref } = req.body; // تغيير referral إلى ref
+    const { fullName, email, phone, username, password, ref } = req.body;
     if (!fullName || !email || !username || !password) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
@@ -669,21 +669,26 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(409).json({ message: 'Email or username already used' });
 
     let referredBy = null;
+    let referrer = null; // إضافة متغير referrer
+    
     // البحث عن المستخدم باستخدام كود الدعوة (ref) بدلاً من اسم المستخدم
     if (ref) {
-      const referrer = await User.findOne({ 
+      referrer = await User.findOne({ 
         $or: [
           { referralCode: ref },        // البحث بكود الدعوة أولاً
           { username: ref }             // ثم البحث باسم المستخدم (للترحيل)
         ]
       });
+      
       if (referrer) {
-        referredBy = referrer._id;
+        // استخدام referralCode بدلاً من _id
+        referredBy = referrer.referralCode;
         
         // إذا كان البحث باسم مستخدم، إنشاء كود دعوة إذا لم يكن موجوداً
         if (!referrer.referralCode) {
           referrer.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
           await referrer.save();
+          referredBy = referrer.referralCode; // تحديث referredBy بعد إنشاء الكود
         }
       }
     }
@@ -697,20 +702,19 @@ app.post('/api/auth/register', async (req, res) => {
       phone,
       username,
       password: hash,
-      referredBy: referredBy || null
+      referredBy: referredBy || null // سيحتوي على referralCode أو null
     });
 
     await user.save();
 
     // إذا كان هناك مدعٍ، تحديث إحصائياته
-    if (referredBy) {
-      await User.findByIdAndUpdate(referredBy, {
+    if (referrer) { // استخدام referrer بدلاً من referredBy
+      await User.findByIdAndUpdate(referrer._id, { // استخدام _id الخاص بالمدعو
         $inc: { 
           totalInvites: 1,
           successfulInvites: 1 
         }
       });
-      
     }
 
     const token = generateToken(user);
@@ -818,13 +822,14 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
 });
 
 // الحصول على قائمة المستخدمين الذين تم دعوتهم
+// الحصول على قائمة المستخدمين الذين تم دعوتهم
 app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // البحث عن المستخدمين الذين قام هذا المستخدم بدعوتهم
-    const invitedUsers = await User.find({ referredBy: user._id })
+    // البحث عن المستخدمين الذين قام هذا المستخدم بدعوتهم باستخدام referralCode
+    const invitedUsers = await User.find({ referredBy: user.referralCode })
       .select('username email createdAt subscriptionType subscriptionActive subscriptionExpires')
       .sort({ createdAt: -1 });
 
@@ -1027,6 +1032,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
