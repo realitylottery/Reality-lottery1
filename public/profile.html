@@ -291,20 +291,19 @@ refInput.value = refLink;
         }catch(err){ alert('Copy failed'); }
       });
 
-      // Load referral statistics
-      try {
+      // // Load referral statistics
+try {
   const referralStats = await safeFetch(API_BASE + '/api/user/referral-stats', {
     headers: { 'Authorization':'Bearer ' + getToken() }
   });
-
-  document.getElementById('totalInvites').textContent = referralStats.totalInvites || 0;
-  document.getElementById('successfulInvites).textContent = referralStats.successfulInvites || 0;
+  
+  document.getElementById('totalInvited').textContent = referralStats.totalInvites || 0;
+  document.getElementById('subscribedInvited').textContent = referralStats.successfulInvites || 0;
 } catch (e) {
   console.error('Failed to load referral stats:', e);
-  document.getElementById('totalInvites').textContent = '0';
-  document.getElementById('successfulInvites').textContent = '0';
-      }
-
+  document.getElementById('totalInvited').textContent = '0';
+  document.getElementById('subscribedInvited').textContent = '0';
+}
       // Task progress: 0..6, with step1 = has subscription
       let progress = Number(user.taskProgress || 0);
       const hasSub = !!sub;
