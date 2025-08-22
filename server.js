@@ -157,6 +157,127 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+// ================= INVITES & SUBSCRIPTIONS ROUTES =================
+
+// Get invites and subscriptions statistics (admin only)
+app.get("/api/admin/invites", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    // الحصول على جميع المستخدمين مع إحصائيات الدعوات والاشتراكات
+    const users = await User.find()
+      .select("username email totalInvites successfulInvites subscriptionType subscriptionActive subscriptionExpires createdAt")
+      .sort({ createdAt: -1 });
+
+    res.json({ 
+      users: users.map(user => ({
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        totalInvites: user.totalInvites || 0,
+        successfulInvites: user.successfulInvites || 0,
+        subscriptionType: user.subscriptionType || 'None',
+        subscriptionStatus: user.subscriptionActive && user.subscriptionExpires > new Date() ? 'Active' : 'Inactive',
+        joinDate: user.createdAt
+      }))
+    });
+
+  } catch (err) {
+    console.error("Invites stats error:", err);
+    res.status(500).json({ message: "Error fetching invites statistics" });
+  }
+});
+
+// Get detailed user information (admin only)
+app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const user = await User.findById(req.params.id)
+      .select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // الحصول على معلومات إضافية إذا لزم الأمر
+    const userPayments = await Payment.find({ userId: user._id })
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    const userWithdrawals = await Withdrawal.find({ userId: user._id })
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    res.json({
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        phone: user.phone,
+        balance: user.balance,
+        totalInvites: user.totalInvites || 0,
+        successfulInvites: user.successfulInvites || 0,
+        subscriptionType: user.subscriptionType,
+        subscriptionActive: user.subscriptionActive,
+        subscriptionExpires: user.subscriptionExpires,
+        taskProgress: user.taskProgress,
+        createdAt: user.createdAt,
+        // معلومات إضافية
+        payments: userPayments,
+        withdrawals: userWithdrawals
+      }
+    });
+
+  } catch (err) {
+    console.error("User details error:", err);
+    res.status(500).json({ message: "Error fetching user details" });
+  }
+});
+
+// Update user invites (admin only)
+app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const { totalInvites, successfulInvites } = req.body;
+
+    const updateFields = {};
+    if (totalInvites !== undefined) updateFields.totalInvites = totalInvites;
+    if (successfulInvites !== undefined) updateFields.successfulInvites = successfulInvites;
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      updateFields,
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ 
+      message: "User invites updated successfully",
+      user: {
+        _id: user._id,
+        username: user.username,
+        totalInvites: user.totalInvites,
+        successfulInvites: user.successfulInvites
+      }
+    });
+
+  } catch (err) {
+    console.error("Update user invites error:", err);
+    res.status(500).json({ message: "Error updating user invites" });
+  }
+});
 
 // News Ticker
 app.get("/api/ticker", async (req, res) => {
@@ -657,6 +778,7 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
 });
 
 // Admin stats
+// Admin stats
 app.get("/api/admin/stats", authMiddleware, async (req, res) => {
   try {
     if (!req.user.roles?.includes("admin")) {
@@ -666,7 +788,14 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
     const totalUsers = await User.countDocuments();
     const paidUsers = await User.countDocuments({ subscriptionActive: true });
     const spins = 0;
-    const successfulInvites = 0;
+    
+    // إحصائيات الدعوات
+    const totalInvites = await User.aggregate([
+      { $group: { _id: null, total: { $sum: "$totalInvites" } } }
+    ]);
+    const successfulInvites = await User.aggregate([
+      { $group: { _id: null, total: { $sum: "$successfulInvites" } } }
+    ]);
     
     const totalWithdrawals = await Withdrawal.countDocuments();
     const pendingWithdrawals = await Withdrawal.countDocuments({ status: 'pending' });
@@ -678,7 +807,8 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
       totalUsers,
       paidUsers,
       spins,
-      successfulInvites,
+      totalInvites: totalInvites[0]?.total || 0,
+      successfulInvites: successfulInvites[0]?.total || 0,
       totalWithdrawals,
       pendingWithdrawals,
       totalPayments,
@@ -719,3 +849,4 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
