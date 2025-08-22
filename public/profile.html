@@ -293,12 +293,12 @@ refInput.value = refLink;
 
       // Load referral statistics
       try {
-  const referralStats = await safeFetch(API_BASE + '/api/user/invites', {
+  const referralStats = await safeFetch(API_BASE + '/api/user/referral-stats', {
     headers: { 'Authorization':'Bearer ' + getToken() }
   });
-  
-  document.getElementById('totalInvited').textContent = referralStats.totalInvited || 0;
-  document.getElementById('subscribedInvited').textContent = referralStats.subscribedInvited || 0;
+
+  document.getElementById('totalInvited').textContent = referralStats.totalInvites || 0;
+  document.getElementById('subscribedInvited').textContent = referralStats.successfulInvites || 0;
 } catch (e) {
   console.error('Failed to load referral stats:', e);
   document.getElementById('totalInvited').textContent = '0';
