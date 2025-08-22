@@ -297,12 +297,12 @@ refInput.value = refLink;
     headers: { 'Authorization':'Bearer ' + getToken() }
   });
 
-  document.getElementById('totalInvited').textContent = referralStats.totalInvites || 0;
-  document.getElementById('subscribedInvited').textContent = referralStats.successfulInvites || 0;
+  document.getElementById('totalInvites').textContent = referralStats.totalInvites || 0;
+  document.getElementById('successfulInvites).textContent = referralStats.successfulInvites || 0;
 } catch (e) {
   console.error('Failed to load referral stats:', e);
-  document.getElementById('totalInvited').textContent = '0';
-  document.getElementById('subscribedInvited').textContent = '0';
+  document.getElementById('totalInvites').textContent = '0';
+  document.getElementById('successfulInvites').textContent = '0';
       }
 
       // Task progress: 0..6, with step1 = has subscription
