@@ -40,20 +40,6 @@ localStorage.setItem("rl_user", JSON.stringify(data.user));
       }else{
         document.getElementById("msg").textContent=data.message;
 
-        // Inside your login form submit handler
-fetch("/api/login", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email, password })
-})
-.then(res => res.json())
-.then(data => {
-  if (data.success) {
-    localStorage.setItem("user", JSON.stringify(data.user));
-    window.location.href = "index.html";
-  } else {
-    alert("Invalid credentials");
-  }
 });
       }
     }
