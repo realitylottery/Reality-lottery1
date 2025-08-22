@@ -669,14 +669,14 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(409).json({ message: 'Email or username already used' });
 
     let referredBy = null;
-    let referrer = null; // إضافة متغير referrer
+    let referrer = null;
     
-    // البحث عن المستخدم باستخدام كود الدعوة (ref) بدلاً من اسم المستخدم
+    // البحث عن المستخدم باستخدام كود الدعوة (ref)
     if (ref) {
       referrer = await User.findOne({ 
         $or: [
-          { referralCode: ref },        // البحث بكود الدعوة أولاً
-          { username: ref }             // ثم البحث باسم المستخدم (للترحيل)
+          { referralCode: ref },  // البحث بكود الدعوة أولاً
+          { username: ref }       // ثم البحث باسم المستخدم (للتوافق مع الروابط القديمة)
         ]
       });
       
@@ -684,11 +684,11 @@ app.post('/api/auth/register', async (req, res) => {
         // استخدام referralCode بدلاً من _id
         referredBy = referrer.referralCode;
         
-        // إذا كان البحث باسم مستخدم، إنشاء كود دعوة إذا لم يكن موجوداً
+        // إذا كان البحث باسم مستخدم ولم يكن لديه كود دعوة، ننشئ له واحد
         if (!referrer.referralCode) {
           referrer.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
           await referrer.save();
-          referredBy = referrer.referralCode; // تحديث referredBy بعد إنشاء الكود
+          referredBy = referrer.referralCode;
         }
       }
     }
@@ -702,19 +702,32 @@ app.post('/api/auth/register', async (req, res) => {
       phone,
       username,
       password: hash,
-      referredBy: referredBy || null // سيحتوي على referralCode أو null
+      referredBy: referredBy // سيحتوي على referralCode أو null
     });
 
     await user.save();
 
-    // إذا كان هناك مدعٍ، تحديث إحصائياته
-    if (referrer) { // استخدام referrer بدلاً من referredBy
-      await User.findByIdAndUpdate(referrer._id, { // استخدام _id الخاص بالمدعو
-        $inc: { 
-          totalInvites: 1,
-          successfulInvites: 1 
+    // إذا كان هناك مدعٍ، تحديث إحصائياته بعد 1 ثانية (لضمان حفظ المستخدم أولاً)
+    if (referrer) {
+      setTimeout(async () => {
+        try {
+          await User.findByIdAndUpdate(referrer._id, {
+            $inc: { 
+              totalInvites: 1,
+              successfulInvites: 1 
+            }
+          });
+          console.log(`✅ Updated stats for referrer: ${referrer.username}`);
+        } catch (updateError) {
+          console.error('Error updating referrer stats:', updateError);
         }
-      });
+      }, 1000);
+    }
+
+    // إنشاء كود دعوة للمستخدم الجديد إذا لم يكن لديه واحد
+    if (!user.referralCode) {
+      user.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+      await user.save();
     }
 
     const token = generateToken(user);
@@ -725,12 +738,13 @@ app.post('/api/auth/register', async (req, res) => {
         id: user._id,
         username: user.username,
         fullName: user.fullName,
-        email: user.email
+        email: user.email,
+        referralCode: user.referralCode
       },
       token
     });
   } catch (err) {
-    console.error(err);
+    console.error('Registration error:', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
@@ -1032,6 +1046,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
