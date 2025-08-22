@@ -292,20 +292,45 @@ refInput.value = refLink;
       });
 
       // Load referral statistics
-       try {
-       const referralStats = await safeFetch(API_BASE + '/api/user/referral-stats', {
-       headers: { 'Authorization': 'Bearer ' + getToken() }
-       });
+try {
+  console.log('🔄 Loading referral stats...');
+  const response = await fetch(API_BASE + '/api/user/referral-stats', {
+    headers: { 
+      'Authorization': 'Bearer ' + getToken(),
+      'Content-Type': 'application/json'
+    }
+  });
   
-      console.log('Referral stats response:', referralStats);
+  console.log('📨 Response status:', response.status);
   
-      document.getElementById('totalInvited').textContent = referralStats.totalInvites || 0;
-      document.getElementById('subscribedInvited').textContent = referralStats.successfulInvites || 0;
-      } catch (e) {
-      console.error('Failed to load referral stats:', e);
-      document.getElementById('totalInvited').textContent = '0';
-      document.getElementById('subscribedInvited').textContent = '0';
-      }
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('❌ Server error:', response.status, errorText);
+    throw new Error(`Server error: ${response.status}`);
+  }
+  
+  const referralStats = await response.json();
+  console.log('📊 Referral stats received:', referralStats);
+  
+  document.getElementById('totalInvited').textContent = referralStats.totalInvites || 0;
+  document.getElementById('subscribedInvited').textContent = referralStats.successfulInvites || 0;
+  
+} catch (error) {
+  console.error('❌ Failed to load referral stats:', error);
+  document.getElementById('totalInvited').textContent = '0';
+  document.getElementById('subscribedInvited').textContent = '0';
+  
+  // إظهار رسالة خطأ للمستخدم
+  const statsGrid = document.querySelector('.stats-grid');
+  if (statsGrid) {
+    const errorDiv = document.createElement('div');
+    errorDiv.style.color = '#ff5252';
+    errorDiv.style.marginTop = '10px';
+    errorDiv.style.fontSize = '12px';
+    errorDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Could not load referral stats';
+    statsGrid.parentNode.insertBefore(errorDiv, statsGrid.nextSibling);
+  }
+}
       
       // Task progress: 0..6, with step1 = has subscription
       let progress = Number(user.taskProgress || 0);
