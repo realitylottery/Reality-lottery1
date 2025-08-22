@@ -563,82 +563,96 @@
   $('#btnRefreshStats').addEventListener('click', loadStats);
 
   // ========= USERS =========
-  async function loadUsers(){
-    const tb = $('#usersTbody');
-    tb.innerHTML = '<tr><td colspan="6" class="muted">Loading…</td></tr>';
-    const r = await safeFetch(API_BASE + '/api/admin/users', { headers: authHeaders(false) });
-    if (r._error){
-      tb.innerHTML = '<tr><td colspan="6"><div class="notice">'+ r.message +'</div></td></tr>';
-      return;
-    }
-    const users = (r.users || []);
-    if (!users.length){
-      tb.innerHTML = '<tr><td colspan="6" class="muted">No users yet.</td></tr>';
-      return;
-    }
-    const q = $('#userSearch').value.trim().toLowerCase();
-    const filtered = q ? users.filter(u=>{
-      const x = (u.username||'') + ' ' + (u.email||'');
-      return x.toLowerCase().includes(q);
-    }) : users;
-
-    tb.innerHTML = '';
-    filtered.forEach(u=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>
-          <div><strong>${u.username||'-'}</strong></div>
-          <div class="small muted mono">${u._id||''}</div>
-        </td>
-        <td>${u.email||'-'}</td>
-        <td>
-          <input data-field="balance" data-id="${u._id}" value="${Number(u.balance||0)}" />
-        </td>
-        <td>
-<select data-field="subscriptionType" data-id="${u._id}">
-  <option value="">None</option>
-  <option value="BASIC"${u.subscriptionType==='BASIC'?' selected':''}>BASIC</option>
-  <option value="PRO"${u.subscriptionType==='PRO'?' selected':''}>PRO</option>
-  <option value="VIP"${u.subscriptionType==='VIP'?' selected':''}>VIP</option>
-</select>
-        </td>
-        <td>
-          <select data-field="taskProgress" data-id="${u._id}">
-            ${[0,1,2,3,4,5,6].map(n=>`<option value="${n}"${Number(u.taskProgress||0)===n?' selected':''}>${n}/6</option>`).join('')}
-          </select>
-        </td>
-        <td class="nowrap">
-          <button class="btn small" data-action="save" data-id="${u._id}"><i class="fa-solid fa-floppy-disk"></i> Save</button>
-        </td>
-      `;
-      tb.appendChild(tr);
-    });
-
-    tb.querySelectorAll('button[data-action="save"]').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        const id = btn.dataset.id;
-        const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
-        const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
-        const taskProgress = Number(tb.querySelector(`select[data-field="taskProgress"][data-id="${id}"]`).value || 0);
-
-        btn.disabled = true; btn.textContent = 'Saving…';
-        const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
-          method: 'PUT',
-          headers: authHeaders(true),
-          body: JSON.stringify({ balance, subscriptionType, taskProgress })
-        });
-        btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save';
-        if (r._error){
-          alert('Update failed: ' + r.message);
-        } else {
-          alert('Saved!');
-        }
-      });
-    });
+async function loadUsers(){
+  const tb = $('#usersTbody');
+  tb.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
+  const r = await safeFetch(API_BASE + '/api/admin/users', { headers: authHeaders(false) });
+  if (r._error){
+    tb.innerHTML = '<tr><td colspan="7"><div class="notice">'+ r.message +'</div></td></tr>';
+    return;
   }
-  $('#btnReloadUsers').addEventListener('click', loadUsers);
-  $('#userSearch').addEventListener('input', loadUsers);
+  const users = (r.users || []);
+  if (!users.length){
+    tb.innerHTML = '<tr><td colspan="7" class="muted">No users yet.</td></tr>';
+    return;
+  }
+  const q = $('#userSearch').value.trim().toLowerCase();
+  const filtered = q ? users.filter(u=>{
+    const x = (u.username||'') + ' ' + (u.email||'');
+    return x.toLowerCase().includes(q);
+  }) : users;
 
+  tb.innerHTML = '';
+  filtered.forEach(u=>{
+    // استخدام completedTasks لتحديد تقدم المهمة
+    const completedTasks = Number(u.completedTasks || 0);
+    const taskProgress = Math.min(6, completedTasks); // لا يمكن أن يتجاوز التقدم 6
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <div><strong>${u.username||'-'}</strong></div>
+        <div class="small muted mono">${u._id||''}</div>
+      </td>
+      <td>${u.email||'-'}</td>
+      <td>
+        <input data-field="balance" data-id="${u._id}" value="${Number(u.balance||0)}" />
+      </td>
+      <td>
+        <select data-field="subscriptionType" data-id="${u._id}">
+          <option value="">None</option>
+          <option value="BASIC"${u.subscriptionType==='BASIC'?' selected':''}>BASIC</option>
+          <option value="PRO"${u.subscriptionType==='PRO'?' selected':''}>PRO</option>
+          <option value="VIP"${u.subscriptionType==='VIP'?' selected':''}>VIP</option>
+        </select>
+      </td>
+      <td>
+        <input type="number" min="0" max="6" data-field="completedTasks" data-id="${u._id}" value="${completedTasks}" />
+        <div class="muted small" style="margin-top:4px">Task Progress (0-6)</div>
+        <div class="progress-visual">
+          ${[1,2,3,4,5,6].map(n=>`<div class="progress-step ${taskProgress >= n ? 'done' : ''}" title="Step ${n}"></div>`).join('')}
+        </div>
+      </td>
+      <td>
+        <div class="muted small">Current: ${taskProgress}/6</div>
+        <div class="muted small">Total Completed: ${u.totalCompletedTasks || 0}</div>
+      </td>
+      <td class="nowrap">
+        <button class="btn small" data-action="save" data-id="${u._id}"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+
+  tb.querySelectorAll('button[data-action="save"]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = btn.dataset.id;
+      const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
+      const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
+      const completedTasks = Number(tb.querySelector(`input[data-field="completedTasks"][data-id="${id}"]`).value || 0);
+
+      // التأكد من أن قيمة completedTasks بين 0 و 6
+      const validCompletedTasks = Math.max(0, Math.min(6, completedTasks));
+
+      btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+      const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
+        method: 'PUT',
+        headers: authHeaders(true),
+        body: JSON.stringify({ balance, subscriptionType, completedTasks: validCompletedTasks })
+      });
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save';
+      if (r._error){
+        alert('Update failed: ' + r.message);
+      } else {
+        alert('Saved successfully!');
+        loadUsers(); // إعادة تحميل البيانات لتحديث الواجهة
+      }
+    });
+  });
+}
+$('#btnReloadUsers').addEventListener('click', loadUsers);
+$('#userSearch').addEventListener('input', loadUsers);
+  
   // ========= PAYMENTS =========
   function getPaymentStatusChip(status) {
     switch(status) {
