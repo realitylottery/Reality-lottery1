@@ -53,10 +53,11 @@ const userSchema = new mongoose.Schema({
   lastLogin: { type: Date, default: Date.now }
 });
 
-// إنشاء كود دعوة تلقائي قبل الحفظ
+// // إنشاء كود دعوة تلقائي قبل الحفظ
 userSchema.pre('save', function(next) {
   if (this.isNew && !this.referralCode) {
-    this.referralCode = this._id.toString().slice(-8).toUpperCase();
+    // إنشاء كود فريد من 8 أحرف/أرقام
+    this.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
   }
   next();
 });
