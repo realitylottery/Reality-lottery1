@@ -26,6 +26,17 @@ const UserSchema = new mongoose.Schema({
   subscriptionExpires: {
     type: Date
   },
+  // ... الحقول الأخرى
+  referredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  referralCode: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   totalInvites: {
     type: Number,
     default: 0
@@ -34,6 +45,8 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  // ... باقي الحقول
+});
   
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   subscriptionType: { type: String, default: "Free" } // نوع الاشتراك افتراضي = "Free"
