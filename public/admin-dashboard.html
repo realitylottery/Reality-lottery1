@@ -86,6 +86,7 @@
     <button class="navbtn" data-tab="tab-users"><i class="fa-solid fa-users"></i> Users</button>
     <button class="navbtn" data-tab="tab-payments"><i class="fa-solid fa-credit-card"></i> Payments</button>
     <button class="navbtn" data-tab="tab-withdrawals"><i class="fa-solid fa-wallet"></i> Withdrawals</button>
+    <button class="navbtn" data-tab="tab-invites"><i class="fa-solid fa-user-plus"></i> Invites & Subscriptions</button>
     <button class="navbtn" data-tab="tab-news"><i class="fa-solid fa-newspaper"></i> News</button>
     <button class="navbtn" data-tab="tab-banners"><i class="fa-solid fa-image"></i> Banners</button>
     <button class="navbtn" data-tab="tab-content"><i class="fa-solid fa-pen-ruler"></i> Site Content</button>
@@ -227,6 +228,44 @@
       </div>
     </section>
 
+    <!-- أضف هذا القسم بعد قسم Withdrawals -->
+<section id="tab-invites" class="section hidden">
+  <div class="title"><i class="fa-solid fa-user-plus"></i> Invites & Subscriptions</div>
+  
+  <div class="filter-bar">
+    <select id="invitesFilter" class="filter-select">
+      <option value="all">All Users</option>
+      <option value="withInvites">With Invites</option>
+      <option value="withSubscriptions">With Subscriptions</option>
+    </select>
+    <input id="invitesSearch" placeholder="Search by username..." />
+    <button class="btn" id="btnReloadInvites"><i class="fa-solid fa-rotate"></i> Reload</button>
+  </div>
+  
+  <div class="row" style="overflow:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Total Invites</th>
+          <th>Successful Invites</th>
+          <th>Subscription Type</th>
+          <th>Subscription Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="invitesTbody">
+        <tr><td colspan="7" class="muted">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="notice" style="margin-top:12px">
+    This section shows detailed information about user invites and subscriptions.
+  </div>
+</section>
+    
     <!-- NEWS -->
     <section id="tab-news" class="section hidden">
       <div class="title"><i class="fa-solid fa-newspaper"></i> News Management</div>
@@ -959,6 +998,95 @@ tb.querySelectorAll('button[data-reject-payment]').forEach(b => {
   });
   $('#btnReloadNews').addEventListener('click', loadNewsList);
 
+  // ========= INVITES & SUBSCRIPTIONS =========
+async function loadInvites() {
+  const tb = $('#invitesTbody');
+  tb.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
+  const r = await safeFetch(API_BASE + '/api/admin/invites', { headers: authHeaders(false) });
+  if (r._error) {
+    tb.innerHTML = '<tr><td colspan="7"><div class="notice">'+ r.message +'</div></td></tr>';
+    return;
+  }
+  
+  const users = (r.users || []);
+  if (!users.length) {
+    tb.innerHTML = '<tr><td colspan="7" class="muted">No user data available.</td></tr>';
+    return;
+  }
+  
+  const filter = $('#invitesFilter').value;
+  const search = $('#invitesSearch').value.trim().toLowerCase();
+  
+  const filtered = users.filter(u => {
+    // تطبيق الفلتر
+    if (filter === 'withInvites' && (!u.totalInvites || u.totalInvites === 0)) return false;
+    if (filter === 'withSubscriptions' && (!u.subscriptionType || u.subscriptionType === 'none')) return false;
+    
+    // تطبيق البحث
+    if (search && !u.username.toLowerCase().includes(search)) return false;
+    
+    return true;
+  });
+  
+  if (!filtered.length) {
+    tb.innerHTML = '<tr><td colspan="7" class="muted">No matching users found.</td></tr>';
+    return;
+  }
+  
+  tb.innerHTML = '';
+  filtered.forEach(u => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${u.username || '-'}</strong></td>
+      <td>${u.email || '-'}</td>
+      <td>${u.totalInvites || 0}</td>
+      <td>${u.successfulInvites || 0}</td>
+      <td>${u.subscriptionType || 'None'}</td>
+      <td>${u.subscriptionStatus || 'Inactive'}</td>
+      <td class="nowrap">
+        <button class="btn small" data-action="viewDetails" data-id="${u._id}">
+          <i class="fa-solid fa-eye"></i> Details
+        </button>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+  
+  // إضافة مستمعي الأحداث للأزرار
+  tb.querySelectorAll('button[data-action="viewDetails"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const userId = btn.dataset.id;
+      viewUserDetails(userId);
+    });
+  });
+}
+
+// دالة لعرض تفاصيل المستخدم
+async function viewUserDetails(userId) {
+  const r = await safeFetch(API_BASE + '/api/admin/users/' + userId, { headers: authHeaders(false) });
+  if (r._error) {
+    alert('Error loading user details: ' + r.message);
+    return;
+  }
+  
+  const user = r.user;
+  const message = `
+    Username: ${user.username}
+    Email: ${user.email}
+    Total Invites: ${user.totalInvites || 0}
+    Successful Invites: ${user.successfulInvites || 0}
+    Subscription: ${user.subscriptionType || 'None'} (${user.subscriptionStatus || 'Inactive'})
+    Join Date: ${new Date(user.createdAt).toLocaleDateString()}
+  `;
+  
+  alert(message);
+}
+
+// إضافة مستمعي الأحداث
+$('#btnReloadInvites').addEventListener('click', loadInvites);
+$('#invitesFilter').addEventListener('change', loadInvites);
+$('#invitesSearch').addEventListener('input', loadInvites);
+  
   // ========= BANNERS =========
   function updateBannerPreview(){
     const url = $('#bannerImage').value.trim();
@@ -1168,6 +1296,7 @@ tb.querySelectorAll('button[data-reject-payment]').forEach(b => {
     loadNewsList();
     loadBannerList();
     loadContentAdmin();
+    loadInvites();
   }
 
   // If the admin navigates into tabs while not signed, we keep UI friendly
