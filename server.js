@@ -787,34 +787,7 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 });
 
 // الحصول على إحصائيات الدعوات للمستخدم الحالي
-app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // البحث عن المستخدمين الذين قام هذا المستخدم بدعوتهم
-    const referredUsers = await User.find({ referredBy: user._id })
-      .select('username fullName email createdAt subscriptionActive')
-      .sort({ createdAt: -1 });
-
-    res.json({
-      referralCode: user.referralCode,
-      referralLink: `${process.env.FRONTEND_ORIGIN || 'https://realitylottery.koyeb.app'}/register?ref=${user.referralCode}`,
-      totalInvites: user.totalInvites || 0,
-      successfulInvites: user.successfulInvites || 0,
-      referredUsers: referredUsers.map(u => ({
-        username: u.username,
-        fullName: u.fullName,
-        email: u.email,
-        joined: u.createdAt,
-        hasSubscription: u.subscriptionActive
-      }))
-    });
-  } catch (err) {
-    console.error('Referral stats error:', err);
-    res.status(500).json({ message: 'Error fetching referral stats' });
-  }
-});
 
 // الحصول على إحصائيات الدعوات للمستخدم الحالي (بدون مكافآت)
 app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
@@ -822,20 +795,21 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // البحث عن المستخدمين الذين قام هذا المستخدم بدعوتهم
-    const invitedUsers = await User.find({ referredBy: user._id })
+    // البحث عن المستخدمين الذين سجلوا عبر كود الدعوة الخاص بالمستخدم
+    const invitedUsers = await User.find({ referredBy: user.referralCode })
       .select('subscriptionActive subscriptionExpires');
-    
-    // حساب الإحصائيات
+
+    // العدد الإجمالي لكل من سجل
     const totalInvites = invitedUsers.length;
-    const successfulInvites = invitedUsers.filter(u => 
+
+    // العدد الذين اشتركوا في أي خطة
+    const successfulInvites = invitedUsers.filter(u =>
       u.subscriptionActive && u.subscriptionExpires > new Date()
     ).length;
 
     res.json({
-      totalInvites: user.totalInvites || totalInvites,
-      successfulInvites: user.successfulInvites || successfulInvites,
-      totalEarnings: 0 // لا توجد أرباح من الدعوات
+      totalInvites,
+      successfulInvites
     });
   } catch (err) {
     console.error('Referral stats error:', err);
@@ -1053,6 +1027,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
