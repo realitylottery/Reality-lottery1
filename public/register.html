@@ -100,17 +100,17 @@
       return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
     }
     
-    // Check for referral code in URL on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      const referralCode = getUrlParameter('ref');
-      if (referralCode) {
-        document.getElementById('referral').value = referralCode;
-        document.getElementById('referralNotice').style.display = 'block';
-        
-        // Optional: Fetch referrer name from API to personalize message
-        fetchReferrerName(referralCode);
-      }
-    });
+    // // Check for referral code in URL on page load
+document.addEventListener('DOMContentLoaded', function() {
+  const referralCode = getUrlParameter('ref'); // هذا صحيح بالفعل
+  if (referralCode) {
+    document.getElementById('referral').value = referralCode;
+    document.getElementById('referralNotice').style.display = 'block';
+    
+    // Optional: Fetch referrer name from API to personalize message
+    fetchReferrerName(referralCode);
+  }
+});
     
     // Function to fetch referrer name (optional enhancement)
     async function fetchReferrerName(referralCode) {
@@ -128,23 +128,24 @@
       }
     }
     
-    // Registration form submission
-    document.getElementById("registerForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      
-      const fullName = document.getElementById("fullName").value;
-      const email = document.getElementById("email").value;
-      const phone = document.getElementById("phone").value;
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-      const referral = document.getElementById("referral").value;
-      
-      try {
-        const res = await fetch(API_BASE + "/auth/register", {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({fullName, email, phone, username, password, referral})
-        });
+    // // Registration form submission
+document.getElementById("registerForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  
+  const fullName = document.getElementById("fullName").value;
+  const email = document.getElementById("email").value;
+  const phone = document.getElementById("phone").value;
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+  const referral = document.getElementById("referral").value; // هذا صحيح
+  
+  try {
+    const res = await fetch(API_BASE + "/auth/register", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({fullName, email, phone, username, password, referral}) // غير هذا السطر
+    });
+    
         
         const data = await res.json();
         
