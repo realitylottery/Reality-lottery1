@@ -766,13 +766,13 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// الحصول على رابط الدعوة للمستخدم الحالي
+/// الحصول على رابط الدعوة للمستخدم الحالي
 app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // إنشاء الرابط باستخدام كود الدعوة
+    // إنشاء الرابط باستخدام كود الدعوة فقط
     const baseUrl = process.env.FRONTEND_ORIGIN || 'https://realitylottery.koyeb.app';
     const referralLink = `${baseUrl}/register?ref=${user.referralCode}`;
 
@@ -990,5 +990,6 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
