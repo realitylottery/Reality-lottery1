@@ -293,7 +293,7 @@ refInput.value = refLink;
 
       // Load referral statistics
       try {
-  const referralStats = await safeFetch(API_BASE + '/api/user/referral-stats', {
+  const referralStats = await safeFetch(API_BASE + '/api/user/invites', {
     headers: { 'Authorization':'Bearer ' + getToken() }
   });
   
