@@ -120,7 +120,7 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { subscriptionType, balance, taskProgress } = req.body;
+    const { subscriptionType, balance, completedTasks } = req.body;
 
     // Validate subscription type
     if (subscriptionType && !['', 'BASIC', 'PRO', 'VIP'].includes(subscriptionType)) {
@@ -130,7 +130,7 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
     const updateFields = {};
     if (subscriptionType !== undefined) updateFields.subscriptionType = subscriptionType;
     if (balance !== undefined) updateFields.balance = balance;
-    if (taskProgress !== undefined) updateFields.taskProgress = taskProgress;
+    if (completedTasks !== undefined) updateFields.completedTasks = completedTasks;
 
     // If subscription is being set, activate it
     if (subscriptionType && subscriptionType !== '') {
@@ -226,7 +226,7 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
         subscriptionType: user.subscriptionType,
         subscriptionActive: user.subscriptionActive,
         subscriptionExpires: user.subscriptionExpires,
-        taskProgress: user.taskProgress,
+        completedTasks: user.completedTasks,
         createdAt: user.createdAt,
         // معلومات إضافية
         payments: userPayments,
@@ -804,10 +804,45 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
   }
 });
 
+// إكمال المهمة وإضافة المكافأة
+app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
+  try {
+    const { userId, reward, subscriptionType, isReset } = req.body;
+    
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // إضافة المكافأة إلى الرصيد
+    user.balance += Number(reward || 0);
+    
+    if (isReset) {
+      // إذا كان reset، نزيد عدد المهام المكتملة
+      user.completedTasks = (user.completedTasks || 0) + 1;
+    } else {
+      // إذا كان اكتمال المهمة كاملة، نزيد عدد المهام المكتملة
+      user.completedTasks = (user.completedTasks || 0) + 1;
+    }
+
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      message: "Task completed successfully",
+      newBalance: user.balance,
+      completedTasks: user.completedTasks
+    });
+
+  } catch (err) {
+    console.error("Complete task error:", err);
+    res.status(500).json({ message: "Error completing task" });
+  }
+});
+
 // الحصول على إحصائيات الدعوات للمستخدم الحالي
-
-
-// الحصول على إحصائيات الدعوات للمستخدم الحالي (بدون مكافآت)
 app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -825,9 +860,13 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
       u.subscriptionActive && u.subscriptionExpires > new Date()
     ).length;
 
+    // حساب تقدم المهمة الحالي
+    const currentProgress = Math.min(6, successfulInvites + (user.subscriptionActive ? 1 : 0));
+
     res.json({
       totalInvites,
-      successfulInvites
+      successfulInvites,
+      currentProgress // إرجاع التقدم الحالي المحسوب
     });
   } catch (err) {
     console.error('Referral stats error:', err);
@@ -835,7 +874,6 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
   }
 });
 
-// الحصول على قائمة المستخدمين الذين تم دعوتهم
 // الحصول على قائمة المستخدمين الذين تم دعوتهم
 app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
   try {
@@ -959,12 +997,16 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
     
-    // إضافة حقول الدعوات إلى الاستجابة
+    // حساب تقدم المهمة الحالي بناءً على الاشتراك والدعوات الناجحة
+    const currentProgress = Math.min(6, user.successfulInvites + (user.subscriptionActive ? 1 : 0));
+    
     const userResponse = {
       ...user.toObject(),
       totalInvites: user.totalInvites || 0,
       successfulInvites: user.successfulInvites || 0,
-      referralCode: user.referralCode || ''
+      referralCode: user.referralCode || '',
+      completedTasks: user.completedTasks || 0,
+      currentProgress: currentProgress // إضافة تقدم حالي محسوب
     };
     
     res.json({ user: userResponse });
@@ -974,7 +1016,6 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
   }
 });
 
-// Admin stats
 // Admin stats
 app.get("/api/admin/stats", authMiddleware, async (req, res) => {
   try {
@@ -1046,6 +1087,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
