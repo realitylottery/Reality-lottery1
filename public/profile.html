@@ -297,7 +297,7 @@ refInput.value = refLink;
     headers: { 'Authorization':'Bearer ' + getToken() }
   });
   
-  document.getElementById('totalInvited').textContent = referralStats.totalInvited || 0;
+  document.getElementById('totalInvited').textContent = totalinvites.totalInvited || 0;
   document.getElementById('subscribedInvited').textContent = referralStats.subscribedInvited || 0;
 } catch (e) {
   console.error('Failed to load referral stats:', e);
