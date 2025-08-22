@@ -1,32 +1,29 @@
+// ملف: models/User.js
 const mongoose = require('mongoose');
 
-const UserSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true, lowercase: true },
   phone: { type: String },
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  referral: { type: String, default: null },
-  roles: { type: [String], default: [] },
-  registeredAt: { type: Date, default: Date.now },
-  // الحقول الجديدة
+  
+  // استبدال enum بخيار صحيح
+  roles: { 
+    type: [String], 
+    default: ['user'],
+    validate: {
+      validator: function(roles) {
+        return roles.every(role => ['user', 'admin'].includes(role));
+      },
+      message: 'Roles must be either user or admin'
+    }
+  },
+  
   balance: { type: Number, default: 0 },
-  taskProgress: { type: Number, default: 0 },
-  // ... الحقول الحالية ...
-  // Subscription fields
-  subscriptionType: {
-    type: String,
-    enum: ['', 'BASIC', 'PRO', 'VIP'],
-    default: ''
-  },
-  subscriptionActive: {
-    type: Boolean,
-    default: false
-  },
-  subscriptionExpires: {
-    type: Date
-  },
-  // ... الحقول الأخرى
+  taskProgress: { type: Number, default: 0, min: 0, max: 6 },
+  
+  // حقول نظام الدعوات
   referredBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -45,12 +42,34 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  // ... باقي الحقول
-});
   
-  role: { type: String, enum: ['user', 'admin'], default: 'user' },
-  subscriptionType: { type: String, default: "Free" } // نوع الاشتراك افتراضي = "Free"
+  // حقول الاشتراك
+  subscriptionType: { type: String, enum: ['', 'BASIC', 'PRO', 'VIP'], default: '' },
+  subscriptionActive: { type: Boolean, default: false },
+  subscriptionExpires: { type: Date, default: null },
+  
+  // الطوابع الزمنية
+  registeredAt: { type: Date, default: Date.now },
+  lastLogin: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('User', UserSchema);
+// إنشاء كود دعوة تلقائي قبل الحفظ
+userSchema.pre('save', function(next) {
+  if (this.isNew && !this.referralCode) {
+    this.referralCode = this._id.toString().slice(-8).toUpperCase();
+  }
+  next();
+});
 
+// طريقة للتحقق من صلاحية الاشتراك
+userSchema.virtual('isSubscriptionValid').get(function() {
+  return this.subscriptionActive && this.subscriptionExpires > new Date();
+});
+
+// طريقة للحصول على رابط الدعوة
+userSchema.methods.getReferralLink = function() {
+  const baseUrl = process.env.FRONTEND_ORIGIN || 'https://realitylottery.koyeb.app';
+  return `${baseUrl}/register?ref=${this.referralCode}`;
+};
+
+module.exports = mongoose.model('User', userSchema);
