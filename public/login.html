@@ -22,27 +22,34 @@
   </div>
 
   <script>
-    const API_BASE = "https://realitylottery.koyeb.app";
+  const API_BASE = "https://realitylottery.koyeb.app";
 
-    async function login(){
-      const usernameOrEmail=document.getElementById("usernameOrEmail").value;
-      const password=document.getElementById("password").value;
-      const res=await fetch(API_BASE+"/api/auth/login",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({usernameOrEmail,password})
+  async function login() {
+    const usernameOrEmail = document.getElementById("usernameOrEmail").value;
+    const password = document.getElementById("password").value;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usernameOrEmail, password })
       });
-      const data=await res.json();
-      if(res.ok){
-        localStorage.setItem("rl_token", data.token);
-localStorage.setItem("rl_user", JSON.stringify(data.user));
-        location.href="profile.html";
-      }else{
-        document.getElementById("msg").textContent=data.message;
 
-});
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("rl_token", data.token);
+        localStorage.setItem("rl_user", JSON.stringify(data.user));
+        location.href = "profile.html";
+      } else {
+        document.getElementById("msg").textContent = data.message || "Login failed";
       }
+
+    } catch (err) {
+      document.getElementById("msg").textContent = "Network error";
+      console.error(err);
     }
+  }
   </script>
 </body>
 </html>
