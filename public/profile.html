@@ -88,6 +88,17 @@
       transform: translateY(-2px);
     }
 
+    /* Subscription bonus indicator */
+    .sub-bonus {
+      display: inline-block;
+      background: rgba(35, 209, 139, 0.2);
+      color: #23d18b;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-left: 5px;
+    }
+
     /* Bottom nav */
     footer.navbar{
       position:fixed;bottom:0;left:0;right:0;background:#111;border-top:2px solid var(--gold);
@@ -170,7 +181,10 @@
     <!-- Task Progress -->
     <section class="card" style="margin-top:12px">
       <div class="title"><i class="fa-solid fa-list-check"></i> 6-Step Task</div>
-      <div class="muted">Step 1 is completed automatically once you have an active subscription. Steps 2–6 advance when invited users pay their subscription. When you complete the task, you'll receive a reward based on your subscription type and the task will reset.</div>
+      <div class="muted">
+        Your active subscription adds +1 to your progress. Each subscribed referral also adds +1 to your progress. 
+        When you complete the task, you'll receive a reward based on your subscription type and the task will reset to 0.
+      </div>
 
       <div class="row" style="margin:12px 0 8px">
         <div class="progress-bar" style="flex:1">
@@ -182,27 +196,34 @@
       <div id="stepsWrap" class="steps">
         <div class="step" data-step="1">
           <div class="n">Step 1</div>
-          <div class="label">Active subscription</div>
+          <div class="label">1 total progress</div>
         </div>
         <div class="step" data-step="2">
           <div class="n">Step 2</div>
-          <div class="label">1 paid invite</div>
+          <div class="label">2 total progress</div>
         </div>
         <div class="step" data-step="3">
           <div class="n">Step 3</div>
-          <div class="label">2 paid invites</div>
+          <div class="label">3 total progress</div>
         </div>
         <div class="step" data-step="4">
           <div class="n">Step 4</div>
-          <div class="label">3 paid invites</div>
+          <div class="label">4 total progress</div>
         </div>
         <div class="step" data-step="5">
           <div class="n">Step 5</div>
-          <div class="label">4 paid invites</div>
+          <div class="label">5 total progress</div>
         </div>
         <div class="step" data-step="6">
           <div class="n">Step 6</div>
-          <div class="label">5 paid invites</div>
+          <div class="label">6 total progress</div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:12px">
+        <label>Progress Breakdown</label>
+        <div id="progressBreakdown" class="muted" style="font-size:13px">
+          Calculating your progress...
         </div>
       </div>
 
@@ -368,6 +389,25 @@
       }
     }
 
+    // ====== UPDATE PROGRESS BREAKDOWN ======
+    function updateProgressBreakdown(progress, subscriptionType, successfulInvites) {
+      const breakdownElement = document.getElementById('progressBreakdown');
+      
+      if (subscriptionType) {
+        breakdownElement.innerHTML = `
+          <div>+1 <span class="sub-bonus">Subscription bonus</span></div>
+          <div>+${successfulInvites} from ${successfulInvites} subscribed referrals</div>
+          <div>Total: ${progress}/6</div>
+        `;
+      } else {
+        breakdownElement.innerHTML = `
+          <div>+${successfulInvites} from ${successfulInvites} subscribed referrals</div>
+          <div>Subscribe to a plan to get +1 progress!</div>
+          <div>Total: ${progress}/6</div>
+        `;
+      }
+    }
+
     // ====== LOAD PROFILE ======
     async function loadProfile(){
       if (!isSigned()){
@@ -460,18 +500,19 @@
         
         // Calculate task progress
         let progress = 0;
-        
-        // Step 1: User has active subscription
-        if (sub) {
-          progress = 1;
-        }
-        
-        // Steps 2-6: Based on number of subscribed referrals
         const successfulInvites = referralStats.successfulInvites || 0;
-        if (successfulInvites > 0) {
-          progress += successfulInvites;
-          if (progress > 6) progress = 6;
+        
+        // Add +1 for active subscription
+        if (sub) {
+          progress += 1;
         }
+        
+        // Add progress from referrals
+        progress += successfulInvites;
+        if (progress > 6) progress = 6;
+
+        // Update progress breakdown
+        updateProgressBreakdown(progress, sub, successfulInvites);
 
         // Check if task is completed (progress reached 6)
         if (progress === 6 && user.subscriptionType) {
@@ -482,7 +523,10 @@
             // Update balance display
             document.getElementById('balanceAmount').textContent = Number(result.newBalance || 0).toLocaleString();
             // Reset progress for the next task
-            progress = sub ? 1 : 0; // Keep step 1 if user still has subscription
+            progress = sub ? 1 : 0; // Add +1 if user still has subscription
+            
+            // Update progress breakdown after reset
+            updateProgressBreakdown(progress, sub, 0);
           }
         }
 
@@ -523,8 +567,11 @@
             if (result && result.success) {
               // Update balance display
               document.getElementById('balanceAmount').textContent = Number(result.newBalance || 0).toLocaleString();
-              // Reset progress
+              // Reset progress to 0 (or +1 if user still has subscription)
               progress = user.subscriptionType ? 1 : 0;
+              
+              // Update progress breakdown after reset
+              updateProgressBreakdown(progress, user.subscriptionType, 0);
               
               // Update UI
               document.querySelectorAll('.step').forEach(box=>{
