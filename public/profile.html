@@ -285,10 +285,11 @@
         `<span class="muted">None</span>`;
 
       // Referral link (uses username by default)
-      const refCode = encodeURIComponent(user.username || user._id || '');
-      const refLink = `${location.origin}/register.html?ref=${refCode}`;
-      const refInput = document.getElementById('refLink');
-      refInput.value = refLink;
+      // Referral link (uses referral code)
+const refCode = user.referralCode || user._id || '';
+const refLink = `${location.origin}/register.html?ref=${refCode}`;
+const refInput = document.getElementById('refLink');
+refInput.value = refLink;
       document.getElementById('btnCopyRef').addEventListener('click', async ()=>{
         try{
           await navigator.clipboard.writeText(refInput.value);
