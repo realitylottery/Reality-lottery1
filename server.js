@@ -816,6 +816,60 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
   }
 });
 
+// الحصول على إحصائيات الدعوات للمستخدم الحالي (بدون مكافآت)
+app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // البحث عن المستخدمين الذين قام هذا المستخدم بدعوتهم
+    const invitedUsers = await User.find({ referredBy: user._id })
+      .select('subscriptionActive subscriptionExpires');
+    
+    // حساب الإحصائيات
+    const totalInvites = invitedUsers.length;
+    const successfulInvites = invitedUsers.filter(u => 
+      u.subscriptionActive && u.subscriptionExpires > new Date()
+    ).length;
+
+    res.json({
+      totalInvites: user.totalInvites || totalInvites,
+      successfulInvites: user.successfulInvites || successfulInvites,
+      totalEarnings: 0 // لا توجد أرباح من الدعوات
+    });
+  } catch (err) {
+    console.error('Referral stats error:', err);
+    res.status(500).json({ message: 'Error fetching referral stats' });
+  }
+});
+
+// الحصول على قائمة المستخدمين الذين تم دعوتهم
+app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // البحث عن المستخدمين الذين قام هذا المستخدم بدعوتهم
+    const invitedUsers = await User.find({ referredBy: user._id })
+      .select('username email createdAt subscriptionType subscriptionActive subscriptionExpires')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      invitedUsers: invitedUsers.map(u => ({
+        username: u.username,
+        email: u.email,
+        createdAt: u.createdAt,
+        subscriptionType: u.subscriptionType,
+        subscriptionActive: u.subscriptionActive && u.subscriptionExpires > new Date(),
+        subscriptionExpires: u.subscriptionExpires
+      }))
+    });
+  } catch (err) {
+    console.error('Invited users error:', err);
+    res.status(500).json({ message: 'Error fetching invited users' });
+  }
+});
+
 // إحصائيات الدعوات للمسؤولين
 app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
   try {
@@ -911,7 +965,16 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json({ user });
+    
+    // إضافة حقول الدعوات إلى الاستجابة
+    const userResponse = {
+      ...user.toObject(),
+      totalInvites: user.totalInvites || 0,
+      successfulInvites: user.successfulInvites || 0,
+      referralCode: user.referralCode || ''
+    };
+    
+    res.json({ user: userResponse });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
@@ -990,6 +1053,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
