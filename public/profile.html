@@ -113,6 +113,16 @@
           <div class="muted" style="font-size:12px;margin-top:6px">
             Share this link. Each friend who registers and pays their subscription advances your task progress.
           </div>
+          <div class="stats-grid" style="margin-top:12px">
+  <div class="stat-box">
+    <div class="stat-value" id="totalInvited">0</div>
+    <div class="stat-label">Total Invited</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value" id="subscribedInvited">0</div>
+    <div class="stat-label">Subscribed Invites</div>
+  </div>
+          </div>
         </div>
 
         <div class="row" style="margin-top:8px">
@@ -316,16 +326,16 @@ refInput.value = refLink;
 
       // Load referral statistics
       try {
-        const referralStats = await safeFetch(API_BASE + '/api/user/referral-stats', {
-          headers: { 'Authorization':'Bearer ' + getToken() }
-        });
-        
-        document.getElementById('totalInvited').textContent = referralStats.totalInvited || 0;
-        document.getElementById('subscribedInvited').textContent = referralStats.subscribedInvited || 0;
-      } catch (e) {
-        console.error('Failed to load referral stats:', e);
-        document.getElementById('totalInvited').textContent = '0';
-        document.getElementById('subscribedInvited').textContent = '0';
+  const referralStats = await safeFetch(API_BASE + '/api/user/referral-stats', {
+    headers: { 'Authorization':'Bearer ' + getToken() }
+  });
+  
+  document.getElementById('totalInvited').textContent = referralStats.totalInvited || 0;
+  document.getElementById('subscribedInvited').textContent = referralStats.subscribedInvited || 0;
+} catch (e) {
+  console.error('Failed to load referral stats:', e);
+  document.getElementById('totalInvited').textContent = '0';
+  document.getElementById('subscribedInvited').textContent = '0';
       }
 
       // Task progress: 0..6, with step1 = has subscription
