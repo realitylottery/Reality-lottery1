@@ -25,8 +25,7 @@ const userSchema = new mongoose.Schema({
   
   // حقول نظام الدعوات
   referredBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,
     default: null
   },
   referralCode: {
