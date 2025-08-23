@@ -2208,9 +2208,9 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       totalInvites: user.totalInvites,
       successfulInvites: user.successfulInvites,
       completedTasks: user.completedTasks,
-      currentTaskProgress: currentProgress,
+      currentTaskProgress: currentTaskProgress,
       expectedReward,
-      canReset: currentProgress >= 2
+      canReset: currentTaskProgress >= 2
     });
   } catch (err) {
     console.error('Me error:', err);
@@ -2431,6 +2431,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
