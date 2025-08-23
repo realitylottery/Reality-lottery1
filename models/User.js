@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
   },
   
   balance: { type: Number, default: 0 },
-  completedTasks: { type: Number, default: 0, min: 0, max: 6 },
+  completedTasks: { type: Number, default: 0 },
   currentTaskProgress: { type: Number, default: 0, min: 0, max: 6 },
   // حقول نظام الدعوات
   referredBy: {
