@@ -474,7 +474,7 @@
         }catch(err){ alert('Copy failed'); }
       });
 
-      // Load referral statistics - التعديل هنا فقط
+      // Load referral statistics - التصحيح هنا
 try {
   const response = await fetch(API_BASE + '/api/user/referral-stats', {
     headers: { 
@@ -551,8 +551,12 @@ try {
         location.reload();
       }
     }
+  } else {
+    console.error('Failed to load referral stats');
+    document.getElementById('totalInvited').textContent = '0';
+    document.getElementById('subscribedInvited').textContent = '0';
   }
- catch (error) {
+} catch (error) {
   console.error('❌ Failed to load referral stats:', error);
   document.getElementById('totalInvited').textContent = '0';
   document.getElementById('subscribedInvited').textContent = '0';
@@ -568,7 +572,6 @@ try {
     statsGrid.parentNode.insertBefore(errorDiv, statsGrid.nextSibling);
   }
 }
-
     // ====== INIT ======
     // If token missing, show guest header immediately to avoid flicker
     updateTopAuth(isSigned() ? {} : null);
