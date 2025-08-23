@@ -118,6 +118,27 @@ function generateToken(user) {
 
 }
 
+function calculateTaskReward(subscriptionType, progress) {
+
+  const rewards = {
+
+    'BASIC': { 2: 5, 3: 8, 6: 12 },
+
+    'PRO': { 2: 8, 3: 12, 6: 15 },
+
+    'VIP': { 2: 12, 3: 15, 6: 20 }
+
+  };
+
+  
+
+  const subscription = subscriptionType || 'BASIC';
+
+  return rewards[subscription][progress] || 0;
+
+}
+
+
 async function initializeCompletedTasks() {
 
   try {
@@ -1716,27 +1737,6 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
 
 // دالة حساب المكافأة
 
-function calculateTaskReward(subscriptionType, progress) {
-
-  const rewards = {
-
-    'BASIC': { 2: 5, 3: 8, 6: 12 },
-
-    'PRO': { 2: 8, 3: 12, 6: 15 },
-
-    'VIP': { 2: 12, 3: 15, 6: 20 }
-
-  };
-
-  
-
-  const subscription = subscriptionType || 'BASIC';
-
-  return rewards[subscription][progress] || 0;
-
-}
-
-
 
 // تحديث تقدم المهمة عند اشتراك مدعو
 
@@ -2391,3 +2391,4 @@ app.listen(PORT, () => {
 
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
