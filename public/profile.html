@@ -295,7 +295,7 @@
       try{ me=await safeFetch(API_BASE+'/api/auth/me',{headers:{'Authorization':'Bearer '+getToken()}}); }
       catch(e){ alert('Network error or session expired. Please login again.'); signOut(); return; }
 
-      const user = me.user;
+      const user = me;
       updateTopAuth(user);
 
       // Profile display
