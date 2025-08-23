@@ -178,7 +178,7 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
     if (subscriptionType !== undefined) updateFields.subscriptionType = subscriptionType;
     if (balance !== undefined) updateFields.balance = balance;
     if (completedTasks !== undefined) updateFields.completedTasks = completedTasks;
-    if (CurrentTaskProgress !== undefined) updateFields.currentTaskProgress = currentTaskProgress;
+    if (currentTaskProgress !== undefined) updateFields.currentTaskProgress = currentTaskProgress;
 
     // If subscription is being set, activate it
     if (subscriptionType && subscriptionType !== '') {
@@ -1251,6 +1251,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
