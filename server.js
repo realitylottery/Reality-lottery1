@@ -93,12 +93,25 @@ async function removeTaskProgressField() {
     );
     
     const initCurrent = await User.updateMany(
-      { currentTaskProgress: { $exists: false } }, // التأكد من الاسم الصحيح
+      { currentTaskProgress: { $exists: false } },
       { $set: { currentTaskProgress: 0 } }
+    );
+    
+    // إضافة تهيئة الحقول الجديدة للنظام المزدوج
+    const initAuto = await User.updateMany(
+      { autoProgress: { $exists: false } },
+      { $set: { autoProgress: 0 } }
+    );
+    
+    const initManual = await User.updateMany(
+      { manualProgress: { $exists: false } },
+      { $set: { manualProgress: 0 } }
     );
     
     console.log(`✅ Initialized completedTasks for ${initCompleted.nModified} users`);
     console.log(`✅ Initialized currentTaskProgress for ${initCurrent.nModified} users`);
+    console.log(`✅ Initialized autoProgress for ${initAuto.nModified} users`);
+    console.log(`✅ Initialized manualProgress for ${initManual.nModified} users`);
     
   } catch (error) {
     console.error('❌ Error initializing task fields:', error);
@@ -998,57 +1011,6 @@ app.get("/api/user/task-info", authMiddleware, async (req, res) => {
   }
 });
 
-// تحديث تقدم المهمة عند اشتراك مدعو
-app.post("/api/tasks/update-progress", authMiddleware, async (req, res) => {
-  try {
-    const { referrerId } = req.body;
-    
-    const referrer = await User.findById(referrerId);
-    if (!referrer) return res.status(404).json({ message: "Referrer not found" });
-
-    // زيادة تقدم المهمة الحالية بمقدار 1
-    referrer.currentTaskProgress += 1;
-    
-    // زيادة عدد الدعوات الناجحة
-    referrer.successfulInvites += 1;
-
-    await referrer.save();
-
-    res.json({ 
-      success: true, 
-      message: "Progress updated successfully",
-      currentTaskProgress: referrer.currentTaskProgress,
-      successfulInvites: referrer.successfulInvites
-    });
-
-  } catch (err) {
-    console.error("Update progress error:", err);
-    res.status(500).json({ message: "Error updating progress" });
-  }
-});
-
-// الحصول على معلومات المهمة للمستخدم
-app.get("/api/user/task-info", authMiddleware, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    // حساب المكافأة المتوقعة
-    const expectedReward = calculateTaskReward(user.subscriptionType, user.currentTaskProgress);
-    
-    res.json({
-      completedTasks: user.completedTasks,
-      currentTaskProgress: user.currentTaskProgress,
-      successfulInvites: user.successfulInvites,
-      expectedReward: expectedReward,
-      canReset: user.currentTaskProgress >= 2 // يمكن إعادة المهمة عند التقدم 2 أو أكثر
-    });
-
-  } catch (err) {
-    console.error("Task info error:", err);
-    res.status(500).json({ message: "Error fetching task info" });
-  }
-});
 
 
 // الحصول على إحصائيات الدعوات للمستخدم الحالي
@@ -1193,7 +1155,7 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
         subscriptionType: u.subscriptionType,
         subscriptionActive: u.subscriptionActive,
         completedTasks: u.completedTasks || 0,
-        currentTaskProgress: u.curgentTaskProgress || 0,
+        currentTaskProgress: u.currentTaskProgress || 0,
         registeredAt: u.registeredAt
       }))
     });
@@ -1216,6 +1178,10 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       totalInvites: user.totalInvites || 0,
       successfulInvites: user.successfulInvites || 0,
       referralCode: user.referralCode || '',
+      completedTasks: user.completedTasks || 0,
+      currentTaskProgress: user.currentTaskProgress || 0,
+      autoProgress: user.autoProgress || 0,
+      manualProgress: user.manualProgress || 0,
       currentTaskProgress: user.currentTaskProgress || 0,
       completedTasks: user.completedTasks || 0
     };
@@ -1370,6 +1336,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
