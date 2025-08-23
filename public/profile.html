@@ -576,8 +576,10 @@ try {
 }
     // ====== INIT ======
     // If token missing, show guest header immediately to avoid flicker
-    updateTopAuth(isSigned() ? {} : null);
-    window.addEventListener('load', loadProfile);
+    if (!isSigned()) {
+  updateTopAuth(null); // يظهر أزرار الضيف فقط
+}
+window.addEventListener('load', loadProfile);
   </script>
 </body>
 </html>
