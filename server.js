@@ -1679,72 +1679,51 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 /// إكمال المهمة وإضافة المكافأة
 
 app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
-
   try {
-
-    const { userId, progress } = req.body;
-
-    
+    const { userId, isReset } = req.body; // الواجهة سترسل userId و isReset فقط
+    if (!userId) return res.status(400).json({ message: "userId is required" });
 
     const user = await User.findById(userId);
-
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // نحسب التقدم الحالي الحقيقي:
+    // progress = currentTaskProgress + (user.subscriptionActive ? 1 : 0)
+    const progress = Math.min(6, (user.currentTaskProgress || 0) + (user.subscriptionActive ? 1 : 0));
 
-
-    // حساب المكافأة بناءً على نوع الاشتراك والتقدم
-
+    // مكافأة حسب التقدم
     const rewardAmount = calculateTaskReward(user.subscriptionType, progress);
 
-    
+    if (!isReset) {
+      // لو يومًا ما حبيت تتيح "إكمال" بدون ريست (اختياري)
+      return res.json({ success: true, message: "Nothing to do without reset", progress, reward: rewardAmount });
+    }
 
-    // إضافة المكافأة إلى الرصيد
+    // يُسمح بالريست فقط لو التقدم >= 2
+    if (progress < 2) {
+      return res.status(400).json({ message: "Progress too low to reset/claim", progress });
+    }
 
-    user.balance += rewardAmount;
-
-    
-
-    // زيادة عدد المهام المكتملة وإعادة التقدم إلى الصفر
-
-    user.completedTasks += 1;
-
+    // إضافة المكافأة + زيادة المهام المنجزة + تصفير تقدم الدورة
+    user.balance = (user.balance || 0) + rewardAmount;
+    user.completedTasks = (user.completedTasks || 0) + 1;
     user.currentTaskProgress = 0;
-
-
 
     await user.save();
 
-
-
-    res.json({ 
-
-      success: true, 
-
-      message: "Task completed successfully",
-
+    return res.json({
+      success: true,
+      message: "Task reset & reward claimed",
       reward: rewardAmount,
-
       newBalance: user.balance,
-
       completedTasks: user.completedTasks,
-
       currentTaskProgress: user.currentTaskProgress
-
     });
 
-
-
   } catch (err) {
-
     console.error("Complete task error:", err);
-
     res.status(500).json({ message: "Error completing task" });
-
   }
-
 });
-
-
 
 // دالة حساب المكافأة
 
@@ -2433,6 +2412,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
