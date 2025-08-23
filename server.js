@@ -957,7 +957,7 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
     const referrer = await User.findOne({ referralCode: user.referredBy });
     if (referrer) {
       referrer.successfulInvites += 1;
-      referrer.currentTaskProgress = (referrer.currentTaskProgress || 0) + 1;
+      referrer.currentTaskProgress += 1;
       await referrer.save();
       console.log(`✅ Increased successfulInvites for referrer: ${referrer.username}`);
     }
@@ -2356,6 +2356,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
