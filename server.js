@@ -2156,47 +2156,38 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
-
   try {
-
     const user = await User.findById(req.user.id).select('-password');
-
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    
+    // التقدم الحقيقي: الدعوات الناجحة + نقطة البونس لو عنده اشتراك
+    const currentProgress = Math.min(6, (user.successfulInvites || 0) + (user.subscriptionActive ? 1 : 0));
 
-    // حساب تقدم المهمة الحالي بناءً على الاشتراك والدعوات الناجحة
+    const expectedReward = calculateTaskReward(user.subscriptionType, currentProgress);
 
-    const currentProgress = Math.min(6, user.successfulInvites + (user.subscriptionActive ? 1 : 0));
-
-    
-
-    const userResponse = {
-
-      ...user.toObject(),
-
-      totalInvites: user.totalInvites || 0,
-
-      successfulInvites: user.successfulInvites || 0,
-
-      referralCode: user.referralCode || '',
-
-      completedTasks: user.completedTasks || 0
-
-    };
-
-    
-
-    res.json({ user: userResponse });
-
+    return res.json({
+      id: user._id,
+      username: user.username,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      balance: user.balance,
+      subscriptionType: user.subscriptionType,
+      subscriptionActive: user.subscriptionActive,
+      subscriptionExpires: user.subscriptionExpires,
+      referralCode: user.referralCode,
+      referredBy: user.referredBy,
+      totalInvites: user.totalInvites,
+      successfulInvites: user.successfulInvites,
+      completedTasks: user.completedTasks,
+      currentTaskProgress: currentProgress,
+      expectedReward,
+      canReset: currentProgress >= 2
+    });
   } catch (err) {
-
-    console.error(err);
-
-    res.status(500).json({ message: 'Server error' });
-
+    console.error('Me error:', err);
+    return res.status(500).json({ message: 'Server error' });
   }
-
 });
 
 
@@ -2412,6 +2403,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
