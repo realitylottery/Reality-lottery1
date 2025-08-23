@@ -498,8 +498,10 @@
         document.getElementById('totalInvited').textContent = referralStats.totalInvites || 0;
         document.getElementById('subscribedInvited').textContent = referralStats.successfulInvites || 0;
         
-        // Calculate task progress
-        let progress = 0;
+         
+      // استخدام completedTasks مباشرة من المستخدم بدلاً من referralStats
+      let progress = Number(user.completedTasks || 0);
+      if (progress > 6) progress = 6;
         const successfulInvites = referralStats.successfulInvites || 0;
         
         // Add +1 for active subscription
