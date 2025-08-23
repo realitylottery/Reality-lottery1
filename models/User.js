@@ -21,22 +21,12 @@ const userSchema = new mongoose.Schema({
   },
   
   balance: { type: Number, default: 0 },
-  completedTasks: { type: Number, default: 0 },
+  completedTasks: { type: Number, default: 0, min: 0, max: 6 },
   currentTaskProgress: { type: Number, default: 0, min: 0, max: 6 },
   // حقول نظام الدعوات
   referredBy: {
     type: String,
     default: null
-  },
-  autoProgress: {
-    type: Number,
-    default: 0
-  },
-  
-  // التقدم اليدوي (Manual) - من لوحة الإدارة
-  manualProgress: {
-    type: Number,
-    default: 0
   },
   referralCode: {
     type: String,
