@@ -1510,7 +1510,6 @@ app.post('/api/auth/register', async (req, res) => {
       user.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
 
       await user.save();
-
     }
 
 
@@ -1532,7 +1531,7 @@ app.post('/api/auth/register', async (req, res) => {
         fullName: user.fullName,
 
         email: user.email,
-
+        referredBy: user.referredBy
         referralCode: user.referralCode
 
       },
@@ -2425,6 +2424,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
