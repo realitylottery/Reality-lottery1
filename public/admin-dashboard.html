@@ -911,7 +911,7 @@ async function loadUsers(){
   
   filtered.forEach(u => {
     const completedTasks = Number(u.completedTasks || 0);
-    const currentTaskProgress = Number(u.currentTaskProgress || 0);
+    const currentTaskProgress = Number(u.completedTasks || 0);
     const progress = Math.min(6, (u.subscriptionActive ? 1 : 0) + (u.successfulInvites || 0));
 
     const tr = document.createElement('tr');
@@ -937,7 +937,7 @@ async function loadUsers(){
         <div class="muted small" style="margin-top:4px">Completed Tasks</div>
       </td>
       <td>
-        <input type="number" min="0" max="6" data-field="currentTaskProgress" data-id="${u._id}" value="${currentTaskProgress}" />
+        <input type="number" min="0" max="6" data-field="completedTasks" data-id="${u._id}" value="${currentTaskProgress}" />
         <div class="muted small" style="margin-top:4px">Current Task Progress</div>
       </td>
       <td>
