@@ -923,7 +923,7 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
     ).length;
 
     // حساب تقدم المهمة الحالي
-    const currentProgress = Math.min(6, user.completedTasks || 0));
+    const currentProgress = Math.min(6, user.completedTasks || 0);
 
     res.json({
       totalInvites,
@@ -1183,6 +1183,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
