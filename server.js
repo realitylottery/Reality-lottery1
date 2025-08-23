@@ -2355,15 +2355,7 @@ app.get('*', (req, res) => {
 // ================= START =================
 
 app.listen(PORT, () => {
-
   console.log(`🚀 Server running on port ${PORT}`);
-
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
-
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
-  
-});
-
-
-
