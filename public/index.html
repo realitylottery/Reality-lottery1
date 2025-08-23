@@ -744,7 +744,7 @@
               localStorage.setItem('rl_user', JSON.stringify(data.user));
               
               // Read subscriptionType from updated user data
-              if (data.user.subscriptionType) {
+              if (data.subscriptionType) {
                 messageElement.innerHTML = `
                   <span class="status-active">Active Subscription</span><br>
                   <strong>${data.user.subscriptionType}</strong> - Valid until lottery draw date
@@ -833,7 +833,7 @@
             if (response.ok) {
               const data = await response.json();
               
-              if (data.user && data.user.subscriptionType) {
+              if (data.subscriptionType) {
                 alert(`You already have an active subscription: ${data.user.subscriptionType}`);
                 this.innerHTML = originalText;
                 this.disabled = false;
