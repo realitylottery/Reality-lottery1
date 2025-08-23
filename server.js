@@ -1705,6 +1705,7 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
   console.error("Complete task error:", err);
   res.status(500).json({ message: "Error completing task" });
   }
+});
 
 
 // تحديث تقدم المهمة عند اشتراك مدعو
@@ -2357,4 +2358,5 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
