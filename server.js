@@ -2191,7 +2191,7 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     // التقدم الحقيقي: الدعوات الناجحة + نقطة البونس لو عنده اشتراك
     const currentProgress = Math.min(6, (user.successfulInvites || 0) + (user.subscriptionActive ? 1 : 0));
 
-    const expectedReward = calculateTaskReward(user.subscriptionType, currentTaskProgress);
+    const expectedReward = calculateTaskReward(user.subscriptionType, currentProgress);
 
     return res.json({
       id: user._id,
@@ -2208,9 +2208,9 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       totalInvites: user.totalInvites,
       successfulInvites: user.successfulInvites,
       completedTasks: user.completedTasks,
-      currentTaskProgress: currentTaskProgress,
+      currentProgress: currentProgress,
       expectedReward,
-      canReset: currentTaskProgress >= 2
+      canReset: currentProgress >= 2
     });
   } catch (err) {
     console.error('Me error:', err);
@@ -2431,6 +2431,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
