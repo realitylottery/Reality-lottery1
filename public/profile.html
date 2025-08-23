@@ -438,14 +438,12 @@
             if (result.completedTasks !== undefined) {
               user.completedTasks = result.completedTasks;
             }
-            user.successfulInvites = 0;
             
             // تحديث واجهة المستخدم
             document.getElementById('balanceAmount').textContent = user.balance;
             document.getElementById('completedTasks').textContent = user.completedTasks;
             document.getElementById('progressText').textContent = '0/6';
             document.getElementById('progressFill').style.width = '0%';
-            document.getElementById('subscribedInvited').textContent = '0';
             
             // إعادة تعيين الخطوات
             const stepElements = document.querySelectorAll('#stepsWrap .step');
