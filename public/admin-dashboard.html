@@ -796,6 +796,22 @@ async function loadUsersWithDebug(){
           ${u.completedTasks === undefined ? '<div class="danger small">NOT IN DB</div>' : ''}
         </td>
         <td>
+      <input type="number" min="0" data-field="completedTasks" data-id="${u._id}" value="${u.completedTasks || 0}" />
+      <div class="muted small">Completed Tasks</div>
+    </td>
+    <td>
+      <!-- التقدم التلقائي (للعرض فقط) -->
+      <div class="muted small">Auto: ${u.autoProgress || 0}/6</div>
+      <!-- التقدم اليدوي (قابل للتعديل) -->
+      <input type="number" min="0" max="6" data-field="manualProgress" data-id="${u._id}" value="${u.manualProgress || 0}" />
+      <div class="muted small">Manual Progress</div>
+    </td>
+    <td>
+      <!-- التقدم الكلي (للعرض فقط) -->
+      <strong>${u.currentTaskProgress || 0}/6</strong>
+      <div class="muted small">Total Progress</div>
+        </td>
+        <td>
       <input type="number" min="0" max="6" data-field="currentTaskProgress" data-id="${u._id}" value="${progress}" />
       <div class="muted small" style="margin-top:4px">Task Progress (0-6)</div>
         </td>
