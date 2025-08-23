@@ -138,13 +138,13 @@
       const phone = document.getElementById("phone").value;
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
-      const referral = document.getElementById("referral").value;
+      const referral = document.getElementById("referralCode").value;
       
       try {
         const res = await fetch(API_BASE + "/auth/register", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({fullName, email, phone, username, password, ref: referral}) // التعديل هنا
+          body: JSON.stringify({fullName, email, phone, username, password, referralCode: referral}) // التعديل هنا
         });
         
         const data = await res.json();
