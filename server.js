@@ -1690,7 +1690,7 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
   // إضافة المكافأة + زيادة المهام المنجزة + تصفير تقدم الدورة
   user.balance = (user.balance || 0) + rewardAmount;
   user.completedTasks = (user.completedTasks || 0) + 1;
-  user.successfulInvites = 0; // هذا هو التصحيح المهم!
+
 
   await user.save();
 
@@ -1700,7 +1700,6 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
     reward: rewardAmount,
     newBalance: user.balance,
     completedTasks: user.completedTasks,
-    currentTaskProgress: user.currentTaskProgress
   });
 
 } catch (err) {
@@ -2360,6 +2359,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
