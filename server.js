@@ -396,6 +396,25 @@ app.get("/api/admin/payments", authMiddleware, async (req, res) => {
   }
 });
 
+
+app.post("/api/debug/update", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    console.log("Received update request:", req.body);
+    res.json({ 
+      message: "Debug received", 
+      receivedData: req.body 
+    });
+  } catch (err) {
+    console.error("Debug error:", err);
+    res.status(500).json({ message: "Debug error" });
+  }
+});
+
+
 // Verify payment and activate subscription
 app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
   try {
@@ -1087,6 +1106,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
