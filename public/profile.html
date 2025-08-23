@@ -293,12 +293,8 @@
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            userId, userId,
-            reward: rewardAmount, 
-            subscriptionType: subscriptionType || 'none', 
-            isReset,
-            resetProgress: true,
-            incrementCompletedTasks: true
+            userId: userId,
+            isReset: isReset
           })
         });
         
@@ -418,7 +414,7 @@
       const resetBtn = document.getElementById('resetTaskBtn');
       resetBtn.onclick = async () => {
         const rewardAmount = calculateReward(user.subscriptionType, progress);
-        await completeTask(user.id || user._id, rewardAmount, user.subscriptionType, true);
+        await completeTask(user.id || user._id, true);
         location.reload();
       }
 
@@ -430,6 +426,37 @@
       } else {
         nextRewardEl.textContent = "Complete more steps to earn a reward";
       }
+
+ // تحديث البيانات مباشرة دون الحاجة لإعادة تحميل الصفحة
+      user.balance = (user.balance || 0) + rewardAmount;
+      user.completedTasks = (user.completedTasks || 0) + 1;
+      user.successfulInvites = 0; // أو القيمة التي يعيدها الخادم
+      
+      // تحديث واجهة المستخدم
+      document.getElementById('balanceAmount').textContent = user.balance;
+      document.getElementById('completedTasks').textContent = user.completedTasks;
+      document.getElementById('progressText').textContent = '0/6';
+      document.getElementById('progressFill').style.width = '0%';
+      document.getElementById('subscribedInvited').textContent = '0';
+      
+      // إعادة تعيين الخطوات
+      const steps = document.querySelectorAll('#stepsWrap .step');
+      steps.forEach(step => step.classList.remove('done'));
+      
+      // إخفاء زر الإعادة
+      resetBtn.style.display = 'none';
+      document.getElementById('resetInfo').style.display = 'none';
+      
+      // تحديث تفاصيل التقدم
+      updateProgressBreakdown(0, user.subscriptionType, 0);
+    }
+  } catch(err) {
+    alert('Error: ' + err.message);
+    resetBtn.disabled = false;
+    resetBtn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reset Task & Claim Reward';
+  }
+    }
+
 
       // Copy referral link
       document.getElementById('btnCopyRef').onclick = () => {
