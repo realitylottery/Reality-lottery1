@@ -866,36 +866,33 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
   }
 });
 
-// إكمال المهمة وإضافة المكافأة
+/// إكمال المهمة وإضافة المكافأة
 app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
   try {
-    const { userId, reward, subscriptionType, isReset } = req.body;
+    const { userId, progress } = req.body;
     
-    if (!req.user.roles?.includes("admin")) {
-      return res.status(403).json({ message: "Forbidden" });
-    }
-
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // إضافة المكافأة إلى الرصيد
-    user.balance += Number(reward || 0);
+    // حساب المكافأة بناءً على نوع الاشتراك والتقدم
+    const rewardAmount = calculateTaskReward(user.subscriptionType, progress);
     
-    if (isReset) {
-      // إذا كان reset، نزيد عدد المهام المكتملة
-      user.completedTasks = (user.completedTasks || 0) + 1;
-    } else {
-      // إذا كان اكتمال المهمة كاملة، نزيد عدد المهام المكتملة
-      user.completedTasks = (user.completedTasks || 0) + 1;
-    }
+    // إضافة المكافأة إلى الرصيد
+    user.balance += rewardAmount;
+    
+    // زيادة عدد المهام المكتملة وإعادة التقدم إلى الصفر
+    user.completedTasks += 1;
+    user.currentTaskProgress = 0;
 
     await user.save();
 
     res.json({ 
       success: true, 
       message: "Task completed successfully",
+      reward: rewardAmount,
       newBalance: user.balance,
-      completedTasks: user.completedTasks
+      completedTasks: user.completedTasks,
+      currentTaskProgress: user.currentTaskProgress
     });
 
   } catch (err) {
@@ -903,6 +900,71 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Error completing task" });
   }
 });
+
+// دالة حساب المكافأة
+function calculateTaskReward(subscriptionType, progress) {
+  const rewards = {
+    'BASIC': { 2: 5, 3: 8, 6: 12 },
+    'PRO': { 2: 8, 3: 12, 6: 15 },
+    'VIP': { 2: 12, 3: 15, 6: 20 }
+  };
+  
+  const subscription = subscriptionType || 'BASIC';
+  return rewards[subscription][progress] || 0;
+}
+
+// تحديث تقدم المهمة عند اشتراك مدعو
+app.post("/api/tasks/update-progress", authMiddleware, async (req, res) => {
+  try {
+    const { referrerId } = req.body;
+    
+    const referrer = await User.findById(referrerId);
+    if (!referrer) return res.status(404).json({ message: "Referrer not found" });
+
+    // زيادة تقدم المهمة الحالية بمقدار 1
+    referrer.currentTaskProgress += 1;
+    
+    // زيادة عدد الدعوات الناجحة
+    referrer.successfulInvites += 1;
+
+    await referrer.save();
+
+    res.json({ 
+      success: true, 
+      message: "Progress updated successfully",
+      currentTaskProgress: referrer.currentTaskProgress,
+      successfulInvites: referrer.successfulInvites
+    });
+
+  } catch (err) {
+    console.error("Update progress error:", err);
+    res.status(500).json({ message: "Error updating progress" });
+  }
+});
+
+// الحصول على معلومات المهمة للمستخدم
+app.get("/api/user/task-info", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // حساب المكافأة المتوقعة
+    const expectedReward = calculateTaskReward(user.subscriptionType, user.currentTaskProgress);
+    
+    res.json({
+      completedTasks: user.completedTasks,
+      currentTaskProgress: user.currentTaskProgress,
+      successfulInvites: user.successfulInvites,
+      expectedReward: expectedReward,
+      canReset: user.currentTaskProgress >= 2 // يمكن إعادة المهمة عند التقدم 2 أو أكثر
+    });
+
+  } catch (err) {
+    console.error("Task info error:", err);
+    res.status(500).json({ message: "Error fetching task info" });
+  }
+});
+
 
 // الحصول على إحصائيات الدعوات للمستخدم الحالي
 app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
@@ -1183,6 +1245,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
