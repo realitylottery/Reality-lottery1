@@ -58,6 +58,20 @@ function generateToken(user) {
     { expiresIn: '7d' }
   );
 }
+async function initializeCompletedTasks() {
+  try {
+    const result = await User.updateMany(
+      { completedTasks: { $exists: false } },
+      { $set: { completedTasks: 0 } }
+    );
+    console.log(`Initialized completedTasks for ${result.nModified} users`);
+  } catch (error) {
+    console.error('Error initializing completedTasks:', error);
+  }
+}
+
+// استدعاء الدالة عند بدء التشغيل
+initializeCompletedTasks();
 
 async function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -1106,6 +1120,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
