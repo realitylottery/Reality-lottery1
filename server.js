@@ -78,7 +78,7 @@ async function removeTaskProgressField() {
   try {
     console.log('🔍 Removing taskProgress field from all users...');
     
-    // إزالة الحقل من جميع المستخدمين
+    // إزالة الحقل القديم إذا كان موجوداً
     const result = await User.updateMany(
       { taskProgress: { $exists: true } },
       { $unset: { taskProgress: "" } }
@@ -86,16 +86,22 @@ async function removeTaskProgressField() {
     
     console.log(`✅ Removed taskProgress field from ${result.nModified} users`);
     
-    // تأكد من أن completedTasks موجود لدى الجميع
-    const initResult = await User.updateMany(
+    // تهيئة الحقول الجديدة
+    const initCompleted = await User.updateMany(
       { completedTasks: { $exists: false } },
       { $set: { completedTasks: 0 } }
     );
     
-    console.log(`✅ Initialized completedTasks for ${initResult.nModified} users`);
+    const initCurrent = await User.updateMany(
+      { currentTaskProgress: { $exists: false } }, // التأكد من الاسم الصحيح
+      { $set: { currentTaskProgress: 0 } }
+    );
+    
+    console.log(`✅ Initialized completedTasks for ${initCompleted.nModified} users`);
+    console.log(`✅ Initialized currentTaskProgress for ${initCurrent.nModified} users`);
     
   } catch (error) {
-    console.error('❌ Error removing taskProgress field:', error);
+    console.error('❌ Error initializing task fields:', error);
   }
 }
 
@@ -996,7 +1002,7 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
     res.json({
       totalInvites,
       successfulInvites,
-      currentProgress // إرجاع التقدم الحالي المحسوب
+      currentProgress: user.currentTaskProgress || 0 // إرجاع التقدم الحالي المحسوب
     });
   } catch (err) {
     console.error('Referral stats error:', err);
@@ -1113,8 +1119,8 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
         balance: u.balance,
         subscriptionType: u.subscriptionType,
         subscriptionActive: u.subscriptionActive,
-        completedTasks: u.completedTasks,
-        currentTaskProgress: u.curgentTaskProgress,
+        completedTasks: u.completedTasks || 0,
+        currentTaskProgress: u.curgentTaskProgress || 0,
         registeredAt: u.registeredAt
       }))
     });
@@ -1137,7 +1143,7 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       totalInvites: user.totalInvites || 0,
       successfulInvites: user.successfulInvites || 0,
       referralCode: user.referralCode || '',
-      currentTaskProgress: user.curgentTaskProgress || 0,
+      currentTaskProgress: user.currentTaskProgress || 0,
       completedTasks: user.completedTasks || 0
     };
     
@@ -1254,6 +1260,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
