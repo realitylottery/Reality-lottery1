@@ -218,7 +218,6 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
   }
 });
 
- في نقطة تحديث المستخدم (Admin)
 app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
   if (!req.user.roles?.includes("admin")) {
     return res.status(403).json({ message: "Forbidden" });
@@ -1371,6 +1370,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
