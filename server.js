@@ -1415,7 +1415,7 @@ app.get('/api/health', (req, res) =>
 
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { fullName, email, phone, username, password, ref } = req.body;
+    const { fullName, email, phone, username, password, referralCode } = req.body;
 
     if (!fullName || !email || !username || !password) {
       return res.status(400).json({ message: 'Missing required fields' });
@@ -1433,13 +1433,13 @@ app.post('/api/auth/register', async (req, res) => {
     let referrer = null;
 
     // البحث عن المستخدم باستخدام كود الدعوة (ref)
-    if (ref) {
-      console.log('🔍 Searching for referrer with code:', ref);
+    if (referralCode) {
+      console.log('🔍 Searching for referrer with code:', referralCode);
       
       referrer = await User.findOne({ 
         $or: [
-          { referralCode: ref },  // البحث بكود الدعوة أولاً
-          { username: ref }       // ثم البحث باسم المستخدم
+          { referralCode: referralCode },  // البحث بكود الدعوة أولاً
+          { username: referralCode }       // ثم البحث باسم المستخدم
         ]
       });
 
@@ -2387,6 +2387,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
