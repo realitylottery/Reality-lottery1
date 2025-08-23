@@ -232,7 +232,11 @@
   <script>
     const API_BASE = 'https://realitylottery.koyeb.app';
     const LS_TOKEN = 'rl_token';
-    const REWARD_AMOUNTS = { 'basic':{2:5,3:8,6:12}, 'pro':{2:8,3:12,6:15}, 'vip':{2:12,3:15,6:20} };
+    const REWARD_AMOUNTS = { 
+      'basic': { 2: 5, 3: 8, 6: 12 },
+      'pro': { 2: 8, 3: 12, 6: 15 },
+      'vip': { 2: 12, 3: 15, 6: 20 }
+    };
 
     function getToken(){ return localStorage.getItem(LS_TOKEN)||''; }
     function isSigned(){ return !!getToken(); }
@@ -246,63 +250,123 @@
     }
     document.getElementById('btnLogout').addEventListener('click',signOut);
 
-    async function safeFetch(url, opts={}){ try{ const res = await fetch(url, opts); const ct = res.headers.get('content-type')||''; const data = ct.includes('application/json')? await res.json(): await res.text(); if(!res.ok) throw new Error((data&&data.message)?data.message:'HTTP '+res.status); return data; }catch(e){ console.warn('Fetch error:', url,e); throw e; } }
+    async function safeFetch(url, opts={}){ 
+      try{ 
+        const res = await fetch(url, opts); 
+        const ct = res.headers.get('content-type')||''; 
+        const data = ct.includes('application/json')? await res.json(): await res.text(); 
+        if(!res.ok) throw new Error((data&&data.message)?data.message:'HTTP '+res.status); 
+        return data; 
+      }catch(e){ 
+        console.warn('Fetch error:', url,e); 
+        throw e; 
+      } 
+    }
 
-    function showRewardNotification(amount, subscriptionType,isReset=false){
+    function showRewardNotification(amount, subscriptionType, isReset=false){
       const notification = document.getElementById('rewardNotification');
       const message = document.getElementById('rewardMessage');
-      message.textContent = isReset? `Task reset! You received $${amount} reward (${subscriptionType} plan).`:`Task completed! You received $${amount} reward (${subscriptionType} plan).`;
+      message.textContent = isReset? 
+        `Task reset! You received $${amount} reward (${subscriptionType} plan).` : 
+        `Task completed! You received $${amount} reward (${subscriptionType} plan).`;
       notification.classList.add('show');
       setTimeout(()=>{notification.classList.remove('show');},5000);
     }
 
-    function calculateReward(subscriptionType,progress){
-      const subType=(subscriptionType||'').toLowerCase();
-      const rewards=REWARD_AMOUNTS[subType]||REWARD_AMOUNTS.basic;
-      if(progress>=6)return rewards[6]; 
-      if(progress>=3)return rewards[3]; 
-      if(progress>=2)return rewards[2];
+    function calculateReward(subscriptionType, progress){
+      const subType = (subscriptionType||'').toLowerCase();
+      const rewards = REWARD_AMOUNTS[subType] || REWARD_AMOUNTS.basic;
+      
+      if(progress >= 6) return rewards[6];
+      if(progress >= 3) return rewards[3];
+      if(progress >= 2) return rewards[2];
+      
       return 0;
     }
 
-    async function completeTask(userId,rewardAmount,subscriptionType,isReset=false){
+    async function completeTask(userId, rewardAmount, subscriptionType, isReset=false){
       try{
-        const response=await fetch(API_BASE+'/api/tasks/complete',{method:'POST',headers:{'Authorization':'Bearer '+getToken(),'Content-Type':'application/json'},body:JSON.stringify({userId,reward:rewardAmount,subscriptionType,isReset})});
-        if(response.ok){const result=await response.json(); showRewardNotification(rewardAmount,subscriptionType,isReset); return result;}
-        else{console.error('Failed to complete task'); return null;}
-      }catch(err){console.error('Error completing task:',err); return null;}
-    }
-
-    function updateResetButton(progress,subscriptionType){
-      const resetBtn=document.getElementById('resetTaskBtn'); 
-      const resetInfo=document.getElementById('resetInfo');
-      
-      // فقط إذا كان التقدم 2 أو 3 أو 6
-      if((progress === 2 || progress === 3 || progress === 6) && subscriptionType){
-        const rewardAmount=calculateReward(subscriptionType,progress);
-        resetBtn.innerHTML=`<i class="fa-solid fa-rotate-left"></i> Reset Task & Claim $${rewardAmount}`;
-        resetBtn.style.display='block'; 
-        resetInfo.style.display='block';
-      } else { 
-        resetBtn.style.display='none'; 
-        resetInfo.style.display='none'; 
+        const response = await fetch(API_BASE+'/api/tasks/complete', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer '+getToken(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId, 
+            reward: rewardAmount, 
+            subscriptionType, 
+            isReset,
+            resetProgress: true, // إضافة هذا الحقل لتصفير التقدم
+            incrementCompletedTasks: true // إضافة هذا الحقل لزيادة المهام المكتملة
+          })
+        });
+        
+        if(response.ok){
+          const result = await response.json(); 
+          showRewardNotification(rewardAmount, subscriptionType, isReset); 
+          return result;
+        } else {
+          console.error('Failed to complete task'); 
+          return null;
+        }
+      } catch(err) {
+        console.error('Error completing task:',err); 
+        return null;
       }
     }
 
-    function updateProgressBreakdown(progress,subscriptionType,successfulInvites){
-      const el=document.getElementById('progressBreakdown');
+    function updateResetButton(progress, subscriptionType){
+      const resetBtn = document.getElementById('resetTaskBtn'); 
+      const resetInfo = document.getElementById('resetInfo');
+      
+      // فقط إذا كان التقدم 2 أو 3 أو 6
+      if((progress === 2 || progress === 3 || progress === 6) && subscriptionType){
+        const rewardAmount = calculateReward(subscriptionType, progress);
+        resetBtn.innerHTML = `<i class="fa-solid fa-rotate-left"></i> Reset Task & Claim $${rewardAmount}`;
+        resetBtn.style.display = 'block'; 
+        resetInfo.style.display = 'block';
+      } else { 
+        resetBtn.style.display = 'none'; 
+        resetInfo.style.display = 'none'; 
+      }
+    }
+
+    function updateProgressBreakdown(progress, subscriptionType, successfulInvites){
+      const el = document.getElementById('progressBreakdown');
       if(subscriptionType){
-        el.innerHTML=`<div>+1 <span class="sub-bonus">Subscription bonus</span></div><div>+${successfulInvites} from ${successfulInvites} subscribed referrals</div><div>Total: ${progress}/6</div>`;
+        el.innerHTML = `
+          <div>+1 <span class="sub-bonus">Subscription bonus</span></div>
+          <div>+${successfulInvites} from ${successfulInvites} subscribed referrals</div>
+          <div>Total: ${progress}/6</div>
+        `;
       } else {
-        el.innerHTML=`<div>+${successfulInvites} from ${successfulInvites} subscribed referrals</div><div>Subscribe to a plan to get +1 progress!</div><div>Total: ${progress}/6</div>`;
+        el.innerHTML = `
+          <div>+${successfulInvites} from ${successfulInvites} subscribed referrals</div>
+          <div>Subscribe to a plan to get +1 progress!</div>
+          <div>Total: ${progress}/6</div>
+        `;
       }
     }
 
     async function loadProfile(){
-      if(!isSigned()){ location.href='login.html?next=profile.html'; return; }
+      if(!isSigned()){ 
+        location.href='login.html?next=profile.html'; 
+        return; 
+      }
+      
       let me;
-      try{ me=await safeFetch(API_BASE+'/api/auth/me',{headers:{'Authorization':'Bearer '+getToken()}}); }
-      catch(e){ alert('Network error or session expired. Please login again.'); signOut(); return; }
+      try{ 
+        me = await safeFetch(API_BASE+'/api/auth/me', {
+          headers: {
+            'Authorization': 'Bearer '+getToken()
+          }
+        }); 
+      } catch(e){ 
+        alert('Network error or session expired. Please login again.'); 
+        signOut(); 
+        return; 
+      }
 
       const user = me;
       updateTopAuth(user);
@@ -328,8 +392,8 @@
       document.getElementById('totalInvited').textContent = user.totalInvites||0;
       document.getElementById('subscribedInvited').textContent = user.successfulInvites||0;
 
-      // Task progress
-      const progress = Math.min(6, (user.subscriptionActive?1:0) + (user.successfulInvites||0));
+      // Task progress - يتم حسابه بناءً على الاشتراك النشط + عدد المدعوين المشتركين
+      const progress = Math.min(6, (user.subscriptionActive ? 1 : 0) + (user.successfulInvites || 0));
       const progressFill = document.getElementById('progressFill');
       const progressText = document.getElementById('progressText');
       progressFill.style.width = `${(progress/6)*100}%`;
@@ -343,8 +407,8 @@
         else step.classList.remove('done');
       });
 
-      updateProgressBreakdown(progress,user.subscriptionType,user.successfulInvites);
-      updateResetButton(progress,user.subscriptionType);
+      updateProgressBreakdown(progress, user.subscriptionType, user.successfulInvites);
+      updateResetButton(progress, user.subscriptionType);
 
       // Completed tasks
       document.getElementById('completedTasks').textContent = user.completedTasks||0;
@@ -352,7 +416,9 @@
       // إذا كان التقدم 6، امنح المكافأة تلقائياً
       if (progress === 6 && user.subscriptionType) {
         const rewardAmount = calculateReward(user.subscriptionType, progress);
-        completeTask(user._id, rewardAmount, user.subscriptionType, false);
+        await completeTask(user._id, rewardAmount, user.subscriptionType, false);
+        // إعادة تحميل الصفحة لتحديث البيانات
+        location.reload();
       }
 
       // Reset button event
@@ -364,12 +430,25 @@
       }
 
       // Copy referral link
-      document.getElementById('btnCopyRef').onclick = ()=>{
+      document.getElementById('btnCopyRef').onclick = () => {
         const refInput = document.getElementById('refLink');
         refInput.select();
         refInput.setSelectionRange(0,99999);
         navigator.clipboard.writeText(refInput.value);
         alert('Referral link copied!');
+      }
+
+      // تحديث المكافأة التالية
+      const nextRewardEl = document.getElementById('nextReward');
+      if (user.subscriptionType) {
+        const rewardAmount = calculateReward(user.subscriptionType, progress);
+        if (rewardAmount > 0) {
+          nextRewardEl.innerHTML = `$${rewardAmount} (${user.subscriptionType} plan)`;
+        } else {
+          nextRewardEl.textContent = "Complete more steps to earn a reward";
+        }
+      } else {
+        nextRewardEl.textContent = "Subscribe to a plan to earn rewards";
       }
     }
 
