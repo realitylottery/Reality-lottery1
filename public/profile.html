@@ -254,6 +254,36 @@
     <i class="fa-solid fa-gift"></i>
     <span id="rewardMessage">Task completed! You received a reward.</span>
   </div>
+  <div style="background:#111;color:#0f0;padding:10px;font-size:12px;white-space:pre-wrap;" id="debugBox"></div>
+<script>
+function debug(msg){
+  const el = document.getElementById('debugBox');
+  el.innerText += msg + "\n";
+  console.log(msg);
+}
+
+async function loadProfile(){
+  if (!isSigned()){
+    updateTopAuth(null);
+    debug("Not signed in");
+    return;
+  }
+  try {
+    const token = getToken();
+    debug("DEBUG TOKEN: " + token);
+
+    let me = await safeFetch(API_BASE + '/api/auth/me', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+
+    debug("DEBUG RESPONSE: " + JSON.stringify(me));
+
+    updateTopAuth(me);
+    document.getElementById('username').innerText = me.username;
+    document.getElementById('email').innerText = me.email;
+  } catch(e){
+    debug("DEBUG ERROR: " + e.message);
+  }
 
   <!-- Bottom fixed nav -->
   <footer class="navbar">
