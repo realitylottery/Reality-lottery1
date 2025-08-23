@@ -171,8 +171,7 @@
     <section class="card" style="margin-top:12px">
       <div class="title"><i class="fa-solid fa-list-check"></i> 6-Step Task</div>
       <div class="muted">
-        Your active subscription adds +1 to your progress. Each subscribed referral also adds +1 to your progress. 
-        When you complete the task, you'll receive a reward based on your subscription type and the task will reset to 0.
+        Each subscribed referral adds +1 to your progress. When you complete the task, you'll receive a reward and the task will reset to 0.
       </div>
 
       <div class="row" style="margin:12px 0 8px">
@@ -183,12 +182,12 @@
       </div>
 
       <div id="stepsWrap" class="steps">
-        <div class="step" data-step="1"><div class="n">Step 1</div><div class="label">1 total progress</div></div>
-        <div class="step" data-step="2"><div class="n">Step 2</div><div class="label">2 total progress</div></div>
-        <div class="step" data-step="3"><div class="n">Step 3</div><div class="label">3 total progress</div></div>
-        <div class="step" data-step="4"><div class="n">Step 4</div><div class="label">4 total progress</div></div>
-        <div class="step" data-step="5"><div class="n">Step 5</div><div class="label">5 total progress</div></div>
-        <div class="step" data-step="6"><div class="n">Step 6</div><div class="label">6 total progress</div></div>
+        <div class="step" data-step="1"><div class="n">Step 1</div><div class="label">1 referral</div></div>
+        <div class="step" data-step="2"><div class="n">Step 2</div><div class="label">2 referrals</div></div>
+        <div class="step" data-step="3"><div class="n">Step 3</div><div class="label">3 referrals</div></div>
+        <div class="step" data-step="4"><div class="n">Step 4</div><div class="label">4 referrals</div></div>
+        <div class="step" data-step="5"><div class="n">Step 5</div><div class="label">5 referrals</div></div>
+        <div class="step" data-step="6"><div class="n">Step 6</div><div class="label">6 referrals</div></div>
       </div>
 
       <div class="field" style="margin-top:12px">
@@ -210,7 +209,7 @@
         <i class="fa-solid fa-rotate-left"></i> Reset Task & Claim Reward
       </button>
       <div id="resetInfo" class="muted" style="font-size:12px; margin-top:8px; display:none">
-        You can reset your task progress and claim a partial reward. The amount depends on your current progress and subscription type.
+        You can reset your task progress and claim a partial reward. The amount depends on your current progress.
       </div>
     </section>
 
@@ -235,7 +234,8 @@
     const REWARD_AMOUNTS = { 
       'basic': { 2: 5, 3: 8, 6: 12 },
       'pro': { 2: 8, 3: 12, 6: 15 },
-      'vip': { 2: 12, 3: 15, 6: 20 }
+      'vip': { 2: 12, 3: 15, 6: 20 },
+      'none': { 2: 2, 3: 3, 6: 5 } // مكافآت للمستخدمين بدون اشتراك
     };
 
     function getToken(){ return localStorage.getItem(LS_TOKEN)||''; }
@@ -267,15 +267,15 @@
       const notification = document.getElementById('rewardNotification');
       const message = document.getElementById('rewardMessage');
       message.textContent = isReset? 
-        `Task reset! You received $${amount} reward (${subscriptionType} plan).` : 
-        `Task completed! You received $${amount} reward (${subscriptionType} plan).`;
+        `Task reset! You received $${amount} reward.` : 
+        `Task completed! You received $${amount} reward.`;
       notification.classList.add('show');
       setTimeout(()=>{notification.classList.remove('show');},5000);
     }
 
     function calculateReward(subscriptionType, progress){
-      const subType = (subscriptionType||'').toLowerCase();
-      const rewards = REWARD_AMOUNTS[subType] || REWARD_AMOUNTS.basic;
+      const subType = (subscriptionType||'none').toLowerCase();
+      const rewards = REWARD_AMOUNTS[subType] || REWARD_AMOUNTS.none;
       
       if(progress >= 6) return rewards[6];
       if(progress >= 3) return rewards[3];
@@ -295,10 +295,10 @@
           body: JSON.stringify({
             userId, 
             reward: rewardAmount, 
-            subscriptionType, 
+            subscriptionType: subscriptionType || 'none', 
             isReset,
-            resetProgress: true, // إضافة هذا الحقل لتصفير التقدم
-            incrementCompletedTasks: true // إضافة هذا الحقل لزيادة المهام المكتملة
+            resetProgress: true,
+            incrementCompletedTasks: true
           })
         });
         
@@ -320,8 +320,8 @@
       const resetBtn = document.getElementById('resetTaskBtn'); 
       const resetInfo = document.getElementById('resetInfo');
       
-      // فقط إذا كان التقدم 2 أو 3 أو 6
-      if((progress === 2 || progress === 3 || progress === 6) && subscriptionType){
+      // يمكن لأي شخص المطالبة بالمكافأة إذا كان التقدم 2 أو 3 أو 6 (حتى بدون اشتراك)
+      if(progress === 2 || progress === 3 || progress === 6){
         const rewardAmount = calculateReward(subscriptionType, progress);
         resetBtn.innerHTML = `<i class="fa-solid fa-rotate-left"></i> Reset Task & Claim $${rewardAmount}`;
         resetBtn.style.display = 'block'; 
@@ -334,19 +334,10 @@
 
     function updateProgressBreakdown(progress, subscriptionType, successfulInvites){
       const el = document.getElementById('progressBreakdown');
-      if(subscriptionType){
-        el.innerHTML = `
-          <div>+1 <span class="sub-bonus">Subscription bonus</span></div>
-          <div>+${successfulInvites} from ${successfulInvites} subscribed referrals</div>
-          <div>Total: ${progress}/6</div>
-        `;
-      } else {
-        el.innerHTML = `
-          <div>+${successfulInvites} from ${successfulInvites} subscribed referrals</div>
-          <div>Subscribe to a plan to get +1 progress!</div>
-          <div>Total: ${progress}/6</div>
-        `;
-      }
+      el.innerHTML = `
+        <div>+${successfulInvites} from ${successfulInvites} subscribed referrals</div>
+        <div>Total: ${progress}/6</div>
+      `;
     }
 
     async function loadProfile(){
@@ -389,11 +380,13 @@
       document.getElementById('balanceAmount').textContent = user.balance||0;
       document.getElementById('subType').textContent = user.subscriptionType||'None';
       document.getElementById('refLink').value = `${location.origin}/register.html?ref=${user.referralCode||''}`;
-      document.getElementById('totalInvited').textContent = user.totalInvites||0;
-      document.getElementById('subscribedInvited').textContent = user.successfulInvites||0;
+      
+      // إحصائيات الدعوات - إصلاح الخطأ
+      document.getElementById('totalInvited').textContent = user.totalInvites || 0; // كل المدعوين
+      document.getElementById('subscribedInvited').textContent = user.successfulInvites || 0; // فقط المشتركين
 
-      // Task progress - يتم حسابه بناءً على الاشتراك النشط + عدد المدعوين المشتركين
-      const progress = Math.min(6, (user.subscriptionActive ? 1 : 0) + (user.successfulInvites || 0));
+      // Task progress - يعتمد فقط على عدد المدعوين المشتركين (كل مشترك = +1 تقدم)
+      const progress = Math.min(6, user.successfulInvites || 0);
       const progressFill = document.getElementById('progressFill');
       const progressText = document.getElementById('progressText');
       progressFill.style.width = `${(progress/6)*100}%`;
@@ -414,7 +407,7 @@
       document.getElementById('completedTasks').textContent = user.completedTasks||0;
 
       // إذا كان التقدم 6، امنح المكافأة تلقائياً
-      if (progress === 6 && user.subscriptionType) {
+      if (progress === 6) {
         const rewardAmount = calculateReward(user.subscriptionType, progress);
         await completeTask(user._id, rewardAmount, user.subscriptionType, false);
         // إعادة تحميل الصفحة لتحديث البيانات
@@ -429,6 +422,15 @@
         location.reload();
       }
 
+      // تحديث المكافأة التالية
+      const nextRewardEl = document.getElementById('nextReward');
+      const rewardAmount = calculateReward(user.subscriptionType, progress);
+      if (rewardAmount > 0) {
+        nextRewardEl.innerHTML = `$${rewardAmount}`;
+      } else {
+        nextRewardEl.textContent = "Complete more steps to earn a reward";
+      }
+
       // Copy referral link
       document.getElementById('btnCopyRef').onclick = () => {
         const refInput = document.getElementById('refLink');
@@ -436,19 +438,6 @@
         refInput.setSelectionRange(0,99999);
         navigator.clipboard.writeText(refInput.value);
         alert('Referral link copied!');
-      }
-
-      // تحديث المكافأة التالية
-      const nextRewardEl = document.getElementById('nextReward');
-      if (user.subscriptionType) {
-        const rewardAmount = calculateReward(user.subscriptionType, progress);
-        if (rewardAmount > 0) {
-          nextRewardEl.innerHTML = `$${rewardAmount} (${user.subscriptionType} plan)`;
-        } else {
-          nextRewardEl.textContent = "Complete more steps to earn a reward";
-        }
-      } else {
-        nextRewardEl.textContent = "Subscribe to a plan to earn rewards";
       }
     }
 
