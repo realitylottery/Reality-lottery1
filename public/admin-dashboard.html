@@ -132,6 +132,51 @@
       </div>
     </section>
 
+    <!-- DEBUG -->
+<section id="tab-debug" class="section hidden">
+  <div class="title"><i class="fa-solid fa-bug"></i> Debug & Testing</div>
+  
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="title" style="font-size:16px"><i class="fa-solid fa-database"></i> Database Debug</div>
+      
+      <label>User ID to Test</label>
+      <input id="debugUserId" placeholder="Enter user ID" />
+      
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="btnDebugUser"><i class="fa-solid fa-magnifying-glass"></i> Check User Data</button>
+        <button class="btn btn-outline" id="btnDebugAllUsers"><i class="fa-solid fa-users"></i> Check All Users</button>
+      </div>
+      
+      <div id="debugResult" class="notice" style="margin-top:12px; max-height:200px; overflow:auto;">
+        Results will appear here...
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="title" style="font-size:16px"><i class="fa-solid fa-wrench"></i> Server Testing</div>
+      
+      <label>Test Endpoint</label>
+      <select id="debugEndpoint">
+        <option value="/api/admin/users">GET /api/admin/users</option>
+        <option value="/api/admin/users/ID">PUT /api/admin/users/ID</option>
+        <option value="/api/debug/fields">Debug User Fields</option>
+      </select>
+      
+      <label style="margin-top:8px">Test Data (JSON)</label>
+      <textarea id="debugData" placeholder='{"completedTasks": 5}' style="height:60px;"></textarea>
+      
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="btnTestEndpoint"><i class="fa-solid fa-play"></i> Test Endpoint</button>
+      </div>
+      
+      <div id="debugEndpointResult" class="notice" style="margin-top:12px; max-height:200px; overflow:auto;">
+        Endpoint results will appear here...
+      </div>
+    </div>
+  </div>
+</section>
+    
     <!-- USERS -->
     <section id="tab-users" class="section hidden">
       <div class="title"><i class="fa-solid fa-users"></i> Users Management</div>
@@ -533,6 +578,283 @@
     }
   });
 
+  // ========= DEBUG FUNCTIONS =========
+async function debugUserData(userId) {
+  const resultDiv = $('#debugResult');
+  resultDiv.innerHTML = 'Loading user data...';
+  
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/users/' + userId, { 
+      headers: authHeaders(false) 
+    });
+    
+    if (r._error) {
+      resultDiv.innerHTML = `<span class="danger">Error: ${r.message}</span>`;
+      return;
+    }
+    
+    const user = r.user || r;
+    let debugInfo = `
+      <strong>User Data for ${user.username || 'Unknown'}:</strong><br>
+      <pre style="font-size:12px; overflow:auto;">${JSON.stringify(user, null, 2)}</pre>
+      <br>
+      <strong>Field Analysis:</strong><br>
+    `;
+    
+    // Check for completedTasks field
+    if (user.completedTasks !== undefined) {
+      debugInfo += `<span class="ok">✓ completedTasks: ${user.completedTasks}</span><br>`;
+    } else {
+      debugInfo += `<span class="danger">✗ completedTasks: UNDEFINED</span><br>`;
+    }
+    
+    // Check for taskProgress field
+    if (user.taskProgress !== undefined) {
+      debugInfo += `<span class="info">taskProgress: ${user.taskProgress}</span><br>`;
+    } else {
+      debugInfo += `<span class="muted">taskProgress: UNDEFINED</span><br>`;
+    }
+    
+    resultDiv.innerHTML = debugInfo;
+    
+  } catch (error) {
+    resultDiv.innerHTML = `<span class="danger">Exception: ${error.message}</span>`;
+  }
+}
+
+async function debugAllUsers() {
+  const resultDiv = $('#debugResult');
+  resultDiv.innerHTML = 'Loading all users data...';
+  
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/users', { 
+      headers: authHeaders(false) 
+    });
+    
+    if (r._error) {
+      resultDiv.innerHTML = `<span class="danger">Error: ${r.message}</span>`;
+      return;
+    }
+    
+    const users = r.users || [];
+    let debugInfo = `
+      <strong>Users Analysis (${users.length} users):</strong><br>
+    `;
+    
+    let hasCompletedTasks = 0;
+    let hasTaskProgress = 0;
+    
+    users.forEach(user => {
+      if (user.completedTasks !== undefined) hasCompletedTasks++;
+      if (user.taskProgress !== undefined) hasTaskProgress++;
+    });
+    
+    debugInfo += `
+      <span class="${hasCompletedTasks > 0 ? 'ok' : 'danger'}">
+        Users with completedTasks: ${hasCompletedTasks}/${users.length}
+      </span><br>
+      <span class="${hasTaskProgress > 0 ? 'info' : 'muted'}">
+        Users with taskProgress: ${hasTaskProgress}/${users.length}
+      </span><br>
+      <br>
+      <strong>Sample User Fields:</strong><br>
+    `;
+    
+    // Show first 3 users as sample
+    users.slice(0, 3).forEach(user => {
+      debugInfo += `
+        ${user.username}: 
+        completedTasks=${user.completedTasks !== undefined ? user.completedTasks : 'UNDEFINED'}, 
+        taskProgress=${user.taskProgress !== undefined ? user.taskProgress : 'UNDEFINED'}<br>
+      `;
+    });
+    
+    resultDiv.innerHTML = debugInfo;
+    
+  } catch (error) {
+    resultDiv.innerHTML = `<span class="danger">Exception: ${error.message}</span>`;
+  }
+}
+
+async function testEndpoint() {
+  const endpoint = $('#debugEndpoint').value;
+  const data = $('#debugData').value;
+  const resultDiv = $('#debugEndpointResult');
+  resultDiv.innerHTML = 'Testing endpoint...';
+  
+  try {
+    let url = API_BASE + endpoint;
+    let options = { headers: authHeaders(true) };
+    
+    // Replace ID placeholder if needed
+    if (endpoint.includes('ID')) {
+      const userId = $('#debugUserId').value.trim();
+      if (!userId) {
+        resultDiv.innerHTML = '<span class="danger">Please enter a User ID first</span>';
+        return;
+      }
+      url = url.replace('ID', userId);
+    }
+    
+    if (data && data.trim() !== '') {
+      options.method = 'POST';
+      options.body = data;
+    } else if (endpoint.startsWith('PUT')) {
+      options.method = 'PUT';
+      options.body = JSON.stringify({ completedTasks: 5 }); // Default test
+    }
+    
+    const r = await safeFetch(url, options);
+    
+    let resultHtml = `
+      <strong>Endpoint:</strong> ${url}<br>
+      <strong>Method:</strong> ${options.method || 'GET'}<br>
+      <strong>Status:</strong> ${r._error ? '<span class="danger">ERROR</span>' : '<span class="ok">SUCCESS</span>'}<br>
+      <br>
+      <strong>Response:</strong><br>
+      <pre style="font-size:12px; overflow:auto;">${JSON.stringify(r, null, 2)}</pre>
+    `;
+    
+    resultDiv.innerHTML = resultHtml;
+    
+  } catch (error) {
+    resultDiv.innerHTML = `<span class="danger">Exception: ${error.message}</span>`;
+  }
+}
+
+// ========= EVENT LISTENERS FOR DEBUG =========
+$('#btnDebugUser').addEventListener('click', () => {
+  const userId = $('#debugUserId').value.trim();
+  if (!userId) {
+    $('#debugResult').innerHTML = '<span class="danger">Please enter a User ID</span>';
+    return;
+  }
+  debugUserData(userId);
+});
+
+$('#btnDebugAllUsers').addEventListener('click', debugAllUsers);
+$('#btnTestEndpoint').addEventListener('click', testEndpoint);
+
+// ========= ENHANCED USER LOADING WITH DEBUG INFO =========
+async function loadUsersWithDebug(){
+  const tb = $('#usersTbody');
+  tb.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
+  
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/users', { 
+      headers: authHeaders(false) 
+    });
+    
+    if (r._error){
+      tb.innerHTML = '<tr><td colspan="7"><div class="notice">'+ r.message +'</div></td></tr>';
+      return;
+    }
+    
+    const users = (r.users || []);
+    if (!users.length){
+      tb.innerHTML = '<tr><td colspan="7" class="muted">No users yet.</td></tr>';
+      return;
+    }
+    
+    // Debug: log what fields we're receiving
+    console.log('Users API Response:', users[0]);
+    
+    const q = $('#userSearch').value.trim().toLowerCase();
+    const filtered = q ? users.filter(u => {
+      const searchText = (u.username || '') + ' ' + (u.email || '') + ' ' + (u.fullName || '');
+      return searchText.toLowerCase().includes(q);
+    }) : users;
+
+    tb.innerHTML = '';
+    
+    filtered.forEach(u => {
+      const completedTasks = Number(u.completedTasks || 0);
+      
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <div><strong>${u.username || '-'}</strong></div>
+          <div class="small muted mono">${u._id || ''}</div>
+        </td>
+        <td>${u.email || '-'}</td>
+        <td>
+          <input type="number" data-field="balance" data-id="${u._id}" value="${Number(u.balance || 0)}" />
+        </td>
+        <td>
+          <select data-field="subscriptionType" data-id="${u._id}">
+            <option value="">None</option>
+            <option value="BASIC" ${u.subscriptionType === 'BASIC' ? 'selected' : ''}>BASIC</option>
+            <option value="PRO" ${u.subscriptionType === 'PRO' ? 'selected' : ''}>PRO</option>
+            <option value="VIP" ${u.subscriptionType === 'VIP' ? 'selected' : ''}>VIP</option>
+          </select>
+        </td>
+        <td>
+          <input type="number" min="0" data-field="completedTasks" data-id="${u._id}" value="${completedTasks}" />
+          <div class="muted small" style="margin-top:4px">Completed Tasks</div>
+          ${u.completedTasks === undefined ? '<div class="danger small">NOT IN DB</div>' : ''}
+        </td>
+        <td>
+          <div class="muted small">Invites: ${u.successfulInvites || 0}/${u.totalInvites || 0}</div>
+          <div class="muted small">Sub: ${u.subscriptionType || 'None'}</div>
+        </td>
+        <td class="nowrap">
+          <button class="btn small" data-action="save" data-id="${u._id}">
+            <i class="fa-solid fa-floppy-disk"></i> Save
+          </button>
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    // إضافة event listeners لأزرار الحفظ
+    tb.querySelectorAll('button[data-action="save"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
+        const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
+        const completedTasks = Number(tb.querySelector(`input[data-field="completedTasks"][data-id="${id}"]`).value || 0);
+
+        btn.disabled = true; 
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+        
+        try {
+          console.log('Sending update:', { balance, subscriptionType, completedTasks });
+          
+          const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
+            method: 'PUT',
+            headers: authHeaders(true),
+            body: JSON.stringify({ balance, subscriptionType, completedTasks })
+          });
+          
+          console.log('Update response:', r);
+          
+          if (r._error) {
+            alert('Update failed: ' + r.message);
+          } else {
+            alert('Saved successfully!');
+            loadUsersWithDebug(); // إعادة تحميل البيانات
+          }
+        } catch (error) {
+          console.error('Update error:', error);
+          alert('Error: ' + error.message);
+        } finally {
+          btn.disabled = false; 
+          btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save';
+        }
+      });
+    });
+    
+  } catch (error) {
+    console.error('Error loading users:', error);
+    tb.innerHTML = '<tr><td colspan="7"><div class="notice">Error loading users: ' + error.message + '</div></td></tr>';
+      }
+}
+
+// استبدال دالة loadUsers الأصلية بالدالة المحسنة
+$('#btnReloadUsers').addEventListener('click', loadUsersWithDebug);
+$('#userSearch').addEventListener('input', loadUsersWithDebug);
+
+  
   // ========= STATS =========
   async function loadStats(){
     const wrap = $('#statsWrap');
@@ -1312,7 +1634,7 @@ $('#invitesSearch').addEventListener('input', loadInvites);
   // Auto-load after login if token exists
   if (isSigned()){
     loadStats();
-    loadUsers();
+    loadUsersWithDebug();
     loadPayments();
     loadWithdrawals();
     loadNewsList();
