@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema({
 
   // الرصيد والتقدم في المهام
   balance: { type: Number, default: 0 },
-  completedTasks: { type: Number, default: 0, min: 0, max: 6 },
+  completedTasks: { type: Number, default: 0 },
   currentTaskProgress: { type: Number, default: 0, min: 0, max: 6 },
 
   // نظام الدعوات
