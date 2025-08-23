@@ -108,6 +108,31 @@ async function removeTaskProgressField() {
 // تشغيل الدالة عند بدء السيرفر
 removeTaskProgressField();
 
+function calculateTotalProgress(user) {
+  // التقدم التلقائي من الدعوات (لا يتجاوز 6)
+  const autoProgress = Math.min(6, (user.subscriptionActive ? 1 : 0) + (user.successfulInvites || 0));
+  
+  // التقدم اليدوي من الإدارة (لا يتجاوز 6)
+  const manualProgress = Math.min(6, user.manualProgress || 0);
+  
+  // أخذ أعلى قيمة بينهما (Auto له الأولوية إلا إذا Manual أكبر)
+  return Math.max(autoProgress, manualProgress);
+}
+
+// تحديث التقدم الكلي عند أي تغيير
+async function updateTotalProgress(userId) {
+  const user = await User.findById(userId);
+  if (!user) return;
+  
+  const newTotalProgress = calculateTotalProgress(user);
+  
+  // تحديث فقط إذا اختلفت القيمة
+  if (user.currentTaskProgress !== newTotalProgress) {
+    user.currentTaskProgress = newTotalProgress;
+    await user.save();
+  }
+}
+
 async function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
   if (!authHeader) return res.status(401).json({ message: 'No token provided' });
@@ -125,6 +150,38 @@ async function authMiddleware(req, res, next) {
 }
 
 // ================= ROUTES =================
+
+app.post("/api/tasks/update-progress", authMiddleware, async (req, res) => {
+  try {
+    const { referrerId } = req.body;
+    
+    const referrer = await User.findById(referrerId);
+    if (!referrer) return res.status(404).json({ message: "Referrer not found" });
+
+    // زيادة التقدم التلقائي فقط
+    referrer.autoProgress = Math.min(6, (referrer.autoProgress || 0) + 1);
+    
+    // زيادة عدد الدعوات الناجحة
+    referrer.successfulInvites += 1;
+
+    await referrer.save();
+    
+    // تحديث التقدم الكلي
+    await updateTotalProgress(referrerId);
+
+    res.json({ 
+      success: true, 
+      message: "Auto progress updated successfully",
+      autoProgress: referrer.autoProgress,
+      totalProgress: referrer.currentTaskProgress,
+      successfulInvites: referrer.successfulInvites
+    });
+
+  } catch (err) {
+    console.error("Update progress error:", err);
+    res.status(500).json({ message: "Error updating progress" });
+  }
+});
 
 // Create withdrawal
 app.post("/api/withdrawals", authMiddleware, async (req, res) => {
@@ -161,7 +218,7 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
   }
 });
 
-// Update user (Admin only)
+ في نقطة تحديث المستخدم (Admin)
 app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
   if (!req.user.roles?.includes("admin")) {
     return res.status(403).json({ message: "Forbidden" });
@@ -169,30 +226,17 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { subscriptionType, balance, currentTaskProgress, completedTasks } = req.body;
+    const { manualProgress, completedTasks, ...otherFields } = req.body;
 
-    // Validate subscription type
-    if (subscriptionType && !['', 'BASIC', 'PRO', 'VIP'].includes(subscriptionType)) {
-      return res.status(400).json({ message: "Invalid subscription type" });
+    const updateFields = { ...otherFields };
+    
+    // إذا تم إرسال manualProgress، نحدثه
+    if (manualProgress !== undefined) {
+      updateFields.manualProgress = Math.min(6, manualProgress);
     }
-
-    if (currentTaskProgress !== undefined && (currentTaskProgress < 0 || currentTaskProgress > 6)) {
-      return res.status(400).json({ message: "Current task progress must be between 0 and 6" });
-    }
-
-    const updateFields = {};
-    if (subscriptionType !== undefined) updateFields.subscriptionType = subscriptionType;
-    if (balance !== undefined) updateFields.balance = balance;
-    if (completedTasks !== undefined) updateFields.completedTasks = completedTasks;
-    if (currentTaskProgress !== undefined) updateFields.currentTaskProgress = currentTaskProgress;
-
-    // If subscription is being set, activate it
-    if (subscriptionType && subscriptionType !== '') {
-      updateFields.subscriptionActive = true;
-      updateFields.subscriptionExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    } else if (subscriptionType === '') {
-      updateFields.subscriptionActive = false;
-      updateFields.subscriptionExpires = null;
+    
+    if (completedTasks !== undefined) {
+      updateFields.completedTasks = completedTasks;
     }
 
     const user = await User.findByIdAndUpdate(
@@ -204,8 +248,18 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+    
+    // تحديث التقدم الكلي بعد التعديل
+    await updateTotalProgress(id);
 
-    res.json({ message: "User updated successfully", user });
+    res.json({ 
+      message: "User updated successfully", 
+      user: {
+        ...user.toObject(),
+        currentTaskProgress: user.currentTaskProgress // التأكد من إرجاع القيمة المحدثة
+      }
+    });
+    
   } catch (err) {
     console.error("Update user error:", err);
     res.status(500).json({ message: "Server error" });
@@ -881,31 +935,42 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 /// إكمال المهمة وإضافة المكافأة
 app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
   try {
-    const { userId, progress } = req.body;
-    
-    const user = await User.findById(userId);
+    const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // حساب المكافأة بناءً على نوع الاشتراك والتقدم
-    const rewardAmount = calculateTaskReward(user.subscriptionType, progress);
-    
-    // إضافة المكافأة إلى الرصيد
-    user.balance += rewardAmount;
-    
-    // زيادة عدد المهام المكتملة وإعادة التقدم إلى الصفر
-    user.completedTasks += 1;
-    user.currentTaskProgress = 0;
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    await user.save();
+    try {
+      const rewardAmount = calculateTaskReward(user.subscriptionType, user.currentTaskProgress);
+      
+      user.balance += rewardAmount;
+      user.completedTasks += 1;
+      
+      // تصفير كلا نوعي التقدم
+      user.autoProgress = 0;
+      user.manualProgress = 0;
+      user.currentTaskProgress = 0;
 
-    res.json({ 
-      success: true, 
-      message: "Task completed successfully",
-      reward: rewardAmount,
-      newBalance: user.balance,
-      completedTasks: user.completedTasks,
-      currentTaskProgress: user.currentTaskProgress
-    });
+      await user.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      res.json({ 
+        success: true, 
+        message: "Task completed successfully",
+        reward: rewardAmount,
+        newBalance: user.balance,
+        completedTasks: user.completedTasks,
+        currentTaskProgress: user.currentTaskProgress
+      });
+
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
 
   } catch (err) {
     console.error("Complete task error:", err);
@@ -913,17 +978,26 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
   }
 });
 
-// دالة حساب المكافأة
-function calculateTaskReward(subscriptionType, progress) {
-  const rewards = {
-    'BASIC': { 2: 5, 3: 8, 6: 12 },
-    'PRO': { 2: 8, 3: 12, 6: 15 },
-    'VIP': { 2: 12, 3: 15, 6: 20 }
-  };
-  
-  const subscription = subscriptionType || 'BASIC';
-  return rewards[subscription][progress] || 0;
-}
+app.get("/api/user/task-info", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({
+      completedTasks: user.completedTasks || 0,
+      currentTaskProgress: user.currentTaskProgress || 0,
+      autoProgress: user.autoProgress || 0,        // للتقدم التلقائي
+      manualProgress: user.manualProgress || 0,    // للتقدم اليدوي
+      successfulInvites: user.successfulInvites || 0,
+      expectedReward: calculateTaskReward(user.subscriptionType, user.currentTaskProgress),
+      progressSource: user.manualProgress > user.autoProgress ? 'manual' : 'auto'
+    });
+
+  } catch (err) {
+    console.error("Task info error:", err);
+    res.status(500).json({ message: "Error fetching task info" });
+  }
+});
 
 // تحديث تقدم المهمة عند اشتراك مدعو
 app.post("/api/tasks/update-progress", authMiddleware, async (req, res) => {
@@ -1297,6 +1371,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
