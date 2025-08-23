@@ -474,141 +474,100 @@
         }catch(err){ alert('Copy failed'); }
       });
 
-      // Load referral statistics
-      try {
-        console.log('🔄 Loading referral stats...');
-        const response = await fetch(API_BASE + '/api/user/referral-stats', {
-          headers: { 
-            'Authorization': 'Bearer ' + getToken(),
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        console.log('📨 Response status:', response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ Server error:', response.status, errorText);
-          throw new Error(`Server error: ${response.status}`);
-        }
-        
-        const referralStats = await response.json();
-        console.log('📊 Referral stats received:', referralStats);
-        
-        document.getElementById('totalInvited').textContent = referralStats.totalInvites || 0;
-        document.getElementById('subscribedInvited').textContent = referralStats.successfulInvites || 0;
-        
-         
-      // استخدام completedTasks مباشرة من المستخدم بدلاً من referralStats
-      let progress = Number(user.completedTasks || 0);
-      if (progress > 6) progress = 6;
-        const successfulInvites = referralStats.successfulInvites || 0;
-        
-        // Add +1 for active subscription
-        if (sub) {
-          progress += 1;
-        }
-        
-        // Add progress from referrals
-        progress += successfulInvites;
-        if (progress > 6) progress = 6;
+      // Load referral statistics - التعديل هنا فقط
+try {
+  const response = await fetch(API_BASE + '/api/user/referral-stats', {
+    headers: { 
+      'Authorization': 'Bearer ' + getToken(),
+      'Content-Type': 'application/json'
+    }
+  });
+  
+  if (response.ok) {
+    const referralStats = await response.json();
+    
+    document.getElementById('totalInvited').textContent = referralStats.totalInvites || 0;
+    document.getElementById('subscribedInvited').textContent = referralStats.successfulInvites || 0;
+    
+    // استخدام التقدم من referralStats مباشرة
+    let progress = Number(referralStats.currentProgress || 0);
+    if (progress > 6) progress = 6;
 
-        // Update progress breakdown
-        updateProgressBreakdown(progress, sub, successfulInvites);
+    // Update progress breakdown
+    updateProgressBreakdown(progress, sub, referralStats.successfulInvites || 0);
 
-        // Check if task is completed (progress reached 6)
-        if (progress === 6 && user.subscriptionType) {
-          const rewardAmount = calculateReward(user.subscriptionType, progress);
-          const result = await completeTask(user._id, rewardAmount, user.subscriptionType, false);
-          
-          if (result && result.success) {
-            // Update balance display
-            document.getElementById('balanceAmount').textContent = Number(result.newBalance || 0).toLocaleString();
-            // Reset progress for the next task
-            progress = sub ? 1 : 0; // Add +1 if user still has subscription
-            
-            // Update progress breakdown after reset
-            updateProgressBreakdown(progress, sub, 0);
-          }
-        }
+    // Update completed tasks count من المستخدم مباشرة
+    document.getElementById('completedTasks').textContent = user.completedTasks || 0;
 
-        // Update completed tasks count
-        document.getElementById('completedTasks').textContent = user.completedTasks || 0;
+    // Update next reward information
+    if (user.subscriptionType) {
+      const nextReward = calculateReward(user.subscriptionType, 6);
+      document.getElementById('nextReward').innerHTML = `
+        <span class="chip"><i class="fa-solid fa-gift"></i> $${nextReward} (${user.subscriptionType} plan)</span>
+      `;
+    } else {
+      document.getElementById('nextReward').textContent = "Subscribe to a plan to earn rewards";
+    }
 
-        // Update next reward information
-        if (user.subscriptionType) {
-          const nextReward = calculateReward(user.subscriptionType, 6);
-          document.getElementById('nextReward').innerHTML = `
-            <span class="chip"><i class="fa-solid fa-gift"></i> $${nextReward} (${user.subscriptionType} plan)</span>
-          `;
-        } else {
-          document.getElementById('nextReward').textContent = "Subscribe to a plan to earn rewards";
-        }
+    // Update reset button
+    updateResetButton(progress, user.subscriptionType);
 
-        // Update reset button
-        updateResetButton(progress, user.subscriptionType);
+    // paint steps
+    document.querySelectorAll('.step').forEach(box=>{
+      const n = Number(box.getAttribute('data-step'));
+      if (n <= progress) box.classList.add('done');
+      else box.classList.remove('done');
+    });
 
-        // paint steps
-        document.querySelectorAll('.step').forEach(box=>{
-          const n = Number(box.getAttribute('data-step'));
-          if (n <= progress) box.classList.add('done');
-          else box.classList.remove('done');
-        });
-
-        // progress bar
-        const pct = (progress/6)*100;
-        document.getElementById('progressFill').style.width = pct + '%';
-        document.getElementById('progressText').textContent = `${progress}/6`;
+    // progress bar
+    const pct = (progress/6)*100;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `${progress}/6`;
+    
+    // Add event listener for reset button
+    document.getElementById('resetTaskBtn').addEventListener('click', async function() {
+      if (progress >= 2 && user.subscriptionType) {
+        const rewardAmount = calculateReward(user.subscriptionType, progress);
+        const result = await completeTask(user._id, rewardAmount, user.subscriptionType, true);
         
-        // Add event listener for reset button
-        document.getElementById('resetTaskBtn').addEventListener('click', async function() {
-          if (progress >= 2 && user.subscriptionType) {
-            const rewardAmount = calculateReward(user.subscriptionType, progress);
-            const result = await completeTask(user._id, rewardAmount, user.subscriptionType, true);
-            
-            if (result && result.success) {
-              // Update balance display
-              document.getElementById('balanceAmount').textContent = Number(result.newBalance || 0).toLocaleString();
-              // Reset progress to 0 (or +1 if user still has subscription)
-              progress = user.subscriptionType ? 1 : 0;
-              
-              // Update progress breakdown after reset
-              updateProgressBreakdown(progress, user.subscriptionType, 0);
-              
-              // Update UI
-              document.querySelectorAll('.step').forEach(box=>{
-                const n = Number(box.getAttribute('data-step'));
-                if (n <= progress) box.classList.add('done');
-                else box.classList.remove('done');
-              });
-              
-              document.getElementById('progressFill').style.width = (progress/6)*100 + '%';
-              document.getElementById('progressText').textContent = `${progress}/6`;
-              
-              // Hide reset button
-              this.style.display = 'none';
-              document.getElementById('resetInfo').style.display = 'none';
-            }
-          }
-        });
-        
-      } catch (error) {
-        console.error('❌ Failed to load referral stats:', error);
-        document.getElementById('totalInvited').textContent = '0';
-        document.getElementById('subscribedInvited').textContent = '0';
-        
-        // إظهار رسالة خطأ للمستخدم
-        const statsGrid = document.querySelector('.stats-grid');
-        if (statsGrid) {
-          const errorDiv = document.createElement('div');
-          errorDiv.style.color = '#ff5252';
-          errorDiv.style.marginTop = '10px';
-          errorDiv.style.fontSize = '12px';
-          errorDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Could not load referral stats';
-          statsGrid.parentNode.insertBefore(errorDiv, statsGrid.nextSibling);
+        if (result && result.success) {
+          // Update balance display
+          document.getElementById('balanceAmount').textContent = Number(result.newBalance || 0).toLocaleString();
+          // إعادة تحميل الصفحة لتحديث كل شيء
+          location.reload();
         }
       }
+    });
+
+    // Check if task is completed (progress reached 6)
+    if (progress === 6 && user.subscriptionType) {
+      const rewardAmount = calculateReward(user.subscriptionType, progress);
+      const result = await completeTask(user._id, rewardAmount, user.subscriptionType, false);
+      
+      if (result && result.success) {
+        // Update balance display
+        document.getElementById('balanceAmount').textContent = Number(result.newBalance || 0).toLocaleString();
+        // إعادة تحميل الصفحة لتحديث كل شيء
+        location.reload();
+      }
     }
+  }
+} catch (error) {
+  console.error('❌ Failed to load referral stats:', error);
+  document.getElementById('totalInvited').textContent = '0';
+  document.getElementById('subscribedInvited').textContent = '0';
+  
+  // إظهار رسالة خطأ للمستخدم
+  const statsGrid = document.querySelector('.stats-grid');
+  if (statsGrid) {
+    const errorDiv = document.createElement('div');
+    errorDiv.style.color = '#ff5252';
+    errorDiv.style.marginTop = '10px';
+    errorDiv.style.fontSize = '12px';
+    errorDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Could not load referral stats';
+    statsGrid.parentNode.insertBefore(errorDiv, statsGrid.nextSibling);
+  }
+}
 
     // ====== INIT ======
     // If token missing, show guest header immediately to avoid flicker
