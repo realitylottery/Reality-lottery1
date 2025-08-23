@@ -1113,6 +1113,8 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
         balance: u.balance,
         subscriptionType: u.subscriptionType,
         subscriptionActive: u.subscriptionActive,
+        completedTasks: u.completedTasks,
+        currentTaskProgress: u.curgentTaskProgress,
         registeredAt: u.registeredAt
       }))
     });
@@ -1135,6 +1137,7 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       totalInvites: user.totalInvites || 0,
       successfulInvites: user.successfulInvites || 0,
       referralCode: user.referralCode || '',
+      currentTaskProgress: user.curgentTaskProgress || 0,
       completedTasks: user.completedTasks || 0
     };
     
@@ -1251,6 +1254,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
