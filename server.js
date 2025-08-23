@@ -1706,8 +1706,6 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
   res.status(500).json({ message: "Error completing task" });
   }
 
-// دالة حساب المكافأة
-
 
 // تحديث تقدم المهمة عند اشتراك مدعو
 
@@ -2359,3 +2357,4 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
