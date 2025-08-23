@@ -770,7 +770,8 @@ async function loadUsersWithDebug(){
     
     filtered.forEach(u => {
       const completedTasks = Number(u.completedTasks || 0);
-      
+      const progress = Number(tb.querySelector(`input[data-field="currentTaskProgress"][data-id="${id}"]`).value || 0);
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>
@@ -793,6 +794,10 @@ async function loadUsersWithDebug(){
           <input type="number" min="0" data-field="completedTasks" data-id="${u._id}" value="${completedTasks}" />
           <div class="muted small" style="margin-top:4px">Completed Tasks</div>
           ${u.completedTasks === undefined ? '<div class="danger small">NOT IN DB</div>' : ''}
+        </td>
+        <td>
+      <input type="number" min="0" max="6" data-field="currentTaskProgress" data-id="${u._id}" value="${progress}" />
+      <div class="muted small" style="margin-top:4px">Task Progress (0-6)</div>
         </td>
         <td>
           <div class="muted small">Invites: ${u.successfulInvites || 0}/${u.totalInvites || 0}</div>
