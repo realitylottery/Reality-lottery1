@@ -319,12 +319,24 @@
       document.getElementById('totalInvited').textContent = user.totalInvites||0;
       document.getElementById('subscribedInvited').textContent = user.successfulInvites||0;
 
-      // Task progress
-      const progress = Math.min(6, (user.subscriptionActive?1:0) + (user.successfulInvites||0));
-      const progressFill = document.getElementById('progressFill');
-      const progressText = document.getElementById('progressText');
-      progressFill.style.width = `${(progress/6)*100}%`;
-      progressText.textContent = `${progress}/6`;
+      // Task progress - استخدام البيانات من DB مع الاحتفاظ بالحساب كاحتياطي
+const progressFromDB = user.currentTaskProgress || 0; // القراءة من الحقل في DB
+const calculatedProgress = Math.min(6, (user.subscriptionActive ? 1 : 0) + (user.successfulInvites || 0)); // الحساب التقليدي
+
+// استخدام القيمة من DB إذا كانت متاحة، وإلا استخدام القيمة المحسوبة
+const progress = progressFromDB > 0 ? progressFromDB : calculatedProgress;
+
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+progressFill.style.width = `${(progress/6)*100}%`;
+progressText.textContent = `${progress}/6`;
+
+// إضافة معلومات إضافية للتصحيح (يمكن إزالتها لاحقاً)
+console.log('تقدم المهام:', {
+  من_قاعدة_البيانات: progressFromDB,
+  محسوب: calculatedProgress,
+  مستخدم: progress
+});
 
       // Steps visual
       const steps = document.querySelectorAll('#stepsWrap .step');
