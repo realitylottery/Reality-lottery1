@@ -28,6 +28,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  autoProgress: {
+    type: Number,
+    default: 0
+  },
+  
+  // التقدم اليدوي (Manual) - من لوحة الإدارة
+  manualProgress: {
+    type: Number,
+    default: 0
+  },
   referralCode: {
     type: String,
     unique: true,
