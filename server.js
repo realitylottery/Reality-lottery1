@@ -923,7 +923,7 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
     ).length;
 
     // حساب تقدم المهمة الحالي
-    const currentProgress = Math.min(6, successfulInvites + (user.subscriptionActive ? 1 : 0));
+    const currentProgress = Math.min(6, user.completedTasks || 0));
 
     res.json({
       totalInvites,
@@ -1067,8 +1067,7 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       totalInvites: user.totalInvites || 0,
       successfulInvites: user.successfulInvites || 0,
       referralCode: user.referralCode || '',
-      completedTasks: user.completedTasks || 0,
-      currentProgress: currentProgress // إضافة تقدم حالي محسوب
+      completedTasks: user.completedTasks || 0
     };
     
     res.json({ user: userResponse });
@@ -1184,6 +1183,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
