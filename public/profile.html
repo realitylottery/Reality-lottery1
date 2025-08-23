@@ -273,13 +273,13 @@
       setTimeout(()=>{notification.classList.remove('show');},5000);
     }
 
-    function calculateReward(subscriptionType, progress){
+    function calculateReward(subscriptionType, currentTaskProgress){
       const subType = (subscriptionType||'none').toLowerCase();
       const rewards = REWARD_AMOUNTS[subType] || REWARD_AMOUNTS.none;
       
-      if(progress >= 6) return rewards[6];
-      if(progress >= 3) return rewards[3];
-      if(progress >= 2) return rewards[2];
+      if(currentTaskProgress >= 6) return rewards[6];
+      if(currentTaskProgress >= 3) return rewards[3];
+      if(currentTaskProgress >= 2) return rewards[2];
       
       return 0;
     }
@@ -425,7 +425,7 @@ resetBtn.onclick = async () => {
     resetBtn.disabled = true;
     resetBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
     
-    const rewardAmount = calculateReward(user.subscriptionType, progress);
+    const rewardAmount = calculateReward(user.subscriptionType, user.currentTaskProgress || 0);
     const result = await completeTask(user.id || user._id, rewardAmount, user.subscriptionType, true);
     
     if (result && result.success) {
@@ -464,7 +464,7 @@ resetBtn.onclick = async () => {
 
       // تحديث المكافأة التالية
       const nextRewardEl = document.getElementById('nextReward');
-      const rewardAmount = calculateReward(user.subscriptionType, progress);
+      const rewardAmount = calculateReward(user.subscriptionType, user.currentTaskProgress);
       if (rewardAmount > 0) {
         nextRewardEl.innerHTML = `$${rewardAmount}`;
       } else {
