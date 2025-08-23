@@ -332,7 +332,7 @@
       }
     }
 
-    function updateProgressBreakdown(progress, subscriptionType, successfulInvites){
+    function updateProgressBreakdown(progress, subscriptionType, successfulInvites, currentTaskProgress){
       const el = document.getElementById('progressBreakdown');
       el.innerHTML = `
         <div>+${successfulInvites} from ${successfulInvites} subscribed referrals</div>
@@ -386,7 +386,7 @@
       document.getElementById('subscribedInvited').textContent = user.successfulInvites || 0; // فقط المشتركين
 
       // Task progress - يعتمد فقط على عدد المدعوين المشتركين (كل مشترك = +1 تقدم)
-      const progress = Math.min(6, user.successfulInvites || 0);
+      const progress = Math.min(6, user.currentTaskProgress || 0);
       const progressFill = document.getElementById('progressFill');
       const progressText = document.getElementById('progressText');
       progressFill.style.width = `${(progress/6)*100}%`;
@@ -400,7 +400,7 @@
         else step.classList.remove('done');
       });
 
-      updateProgressBreakdown(progress, user.subscriptionType, user.successfulInvites);
+      updateProgressBreakdown(progress, user.subscriptionType, user.successfulInvites, user.currentTaskProgress || 0);
       updateResetButton(progress, user.subscriptionType);
 
       // Completed tasks
@@ -434,6 +434,7 @@ resetBtn.onclick = async () => {
       // تحديث البيانات من الاستجابة
       user.balance = result.newBalance || user.balance;
       user.completedTasks = result.completedTasks || user.completedTasks;
+      user.currentTaskProgress = result.curentTaskProgress || 0;
       
       // تحديث واجهة المستخدم
       document.getElementById('balanceAmount').textContent = user.balance;
