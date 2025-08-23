@@ -887,17 +887,17 @@ $('#userSearch').addEventListener('input', loadUsersWithDebug);
  // ========= USERS =========
 async function loadUsers(){
   const tb = $('#usersTbody');
-  tb.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
+  tb.innerHTML = '<tr><td colspan="9" class="muted">Loading…</td></tr>';
   const r = await safeFetch(API_BASE + '/api/admin/users', { headers: authHeaders(false) });
   
   if (r._error){
-    tb.innerHTML = '<tr><td colspan="7"><div class="notice">'+ r.message +'</div></td></tr>';
+    tb.innerHTML = '<tr><td colspan="9"><div class="notice">'+ r.message +'</div></td></tr>';
     return;
   }
   
   const users = (r.users || []);
   if (!users.length){
-    tb.innerHTML = '<tr><td colspan="7" class="muted">No users yet.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="9" class="muted">No users yet.</td></tr>';
     return;
   }
   
@@ -911,7 +911,9 @@ async function loadUsers(){
   
   filtered.forEach(u => {
     const completedTasks = Number(u.completedTasks || 0);
-    
+    const currentTaskProgress = Number(u.currentTaskProgress || 0);
+    const progress = Math.min(6, (u.subscriptionActive ? 1 : 0) + (u.successfulInvites || 0));
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>
@@ -935,7 +937,12 @@ async function loadUsers(){
         <div class="muted small" style="margin-top:4px">Completed Tasks</div>
       </td>
       <td>
+        <input type="number" min="0" max="6" data-field="currentTaskProgress" data-id="${u._id}" value="${currentTaskProgress}" />
+        <div class="muted small" style="margin-top:4px">Current Task Progress</div>
+      </td>
+      <td>
         <div class="muted small">Invites: ${u.successfulInvites || 0}/${u.totalInvites || 0}</div>
+        <div class="muted small">Progress (auto): ${progress}/6</div>
         <div class="muted small">Sub: ${u.subscriptionType || 'None'}</div>
       </td>
       <td class="nowrap">
@@ -954,6 +961,7 @@ async function loadUsers(){
       const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
       const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
       const completedTasks = Number(tb.querySelector(`input[data-field="completedTasks"][data-id="${id}"]`).value || 0);
+      const currentTaskProgress = Number(tb.querySelector(`input[data-field="currentTaskProgress"][data-id="${id}"]`).value || 0);
 
       btn.disabled = true; 
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
@@ -962,13 +970,14 @@ async function loadUsers(){
         const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
           method: 'PUT',
           headers: authHeaders(true),
-          body: JSON.stringify({ balance, subscriptionType, completedTasks })
+          body: JSON.stringify({ balance, subscriptionType, completedTasks, currentTaskProgress })
         });
         
         if (r._error) {
           alert('Update failed: ' + r.message);
         } else {
           alert('Saved successfully!');
+          loadUsers(); // إعادة تحميل لتحديث الجدول بعد الحفظ
         }
       } catch (error) {
         alert('Error: ' + error.message);
