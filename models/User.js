@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
   currentTaskProgress: { type: Number, default: 0, min: 0, max: 6 },
 
   // نظام الدعوات
-  referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  referredBy: { type: String, default: null },
   referralCode: { type: String, unique: true, sparse: true },
   totalInvites: { type: Number, default: 0 },
   successfulInvites: { type: Number, default: 0 },
