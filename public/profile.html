@@ -293,4 +293,72 @@
       if(!isSigned()){ location.href='login.html?next=profile.html'; return; }
       let me;
       try{ me=await safeFetch(API_BASE+'/api/auth/me',{headers:{'Authorization':'Bearer '+getToken()}}); }
-      catch(e){ alert('Network error or session
+      catch(e){ alert('Network error or session expired. Please login again.'); signOut(); return; }
+
+      const user = me.user;
+      updateTopAuth(user);
+
+      // Profile display
+      const profileWrap = document.getElementById('profileWrap');
+      profileWrap.innerHTML = `
+        <div class="field"><label>Full Name</label><div>${user.fullName||'-'}</div></div>
+        <div class="field"><label>Username</label><div>${user.username||'-'}</div></div>
+        <div class="field"><label>Email</label><div>${user.email||'-'}</div></div>
+        <div class="field"><label>Phone</label><div>${user.phone||'-'}</div></div>
+        <div class="field"><label>Roles</label><div>${(user.roles||[]).join(', ')}</div></div>
+        <div class="field"><label>Registered At</label><div>${new Date(user.registeredAt).toLocaleString()}</div></div>
+        <div class="field"><label>Last Login</label><div>${new Date(user.lastLogin).toLocaleString()}</div></div>
+        <div class="field"><label>Subscription Type</label><div>${user.subscriptionType||'None'} ${user.subscriptionActive?'<span class="sub-bonus">Active</span>':'<span class="sub-bonus" style="color:red">Inactive</span>'}</div></div>
+        <div class="field"><label>Subscription Expires</label><div>${user.subscriptionExpires?new Date(user.subscriptionExpires).toLocaleDateString():'-'}</div></div>
+      `;
+
+      // Balance & referral
+      document.getElementById('balanceAmount').textContent = user.balance||0;
+      document.getElementById('subType').textContent = user.subscriptionType||'None';
+      document.getElementById('refLink').value = `${location.origin}/register.html?ref=${user.referralCode||''}`;
+      document.getElementById('totalInvited').textContent = user.totalInvites||0;
+      document.getElementById('subscribedInvited').textContent = user.successfulInvites||0;
+
+      // Task progress
+      const progress = Math.min(6, (user.subscriptionActive?1:0) + (user.successfulInvites||0));
+      const progressFill = document.getElementById('progressFill');
+      const progressText = document.getElementById('progressText');
+      progressFill.style.width = `${(progress/6)*100}%`;
+      progressText.textContent = `${progress}/6`;
+
+      // Steps visual
+      const steps = document.querySelectorAll('#stepsWrap .step');
+      steps.forEach(step => {
+        const stepNum = parseInt(step.dataset.step);
+        if(stepNum <= progress) step.classList.add('done');
+        else step.classList.remove('done');
+      });
+
+      updateProgressBreakdown(progress,user.subscriptionType,user.successfulInvites);
+      updateResetButton(progress,user.subscriptionType);
+
+      // Completed tasks
+      document.getElementById('completedTasks').textContent = user.completedTasks||0;
+
+      // Reset button event
+      const resetBtn = document.getElementById('resetTaskBtn');
+      resetBtn.onclick = async () => {
+        const rewardAmount = calculateReward(user.subscriptionType, progress);
+        await completeTask(user._id, rewardAmount, user.subscriptionType, true);
+        location.reload();
+      }
+
+      // Copy referral link
+      document.getElementById('btnCopyRef').onclick = ()=>{
+        const refInput = document.getElementById('refLink');
+        refInput.select();
+        refInput.setSelectionRange(0,99999);
+        navigator.clipboard.writeText(refInput.value);
+        alert('Referral link copied!');
+      }
+    }
+
+    window.onload = loadProfile;
+  </script>
+</body>
+</html>
