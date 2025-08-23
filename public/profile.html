@@ -335,7 +335,7 @@
     function updateProgressBreakdown(progress, subscriptionType, successfulInvites, currentTaskProgress){
       const el = document.getElementById('progressBreakdown');
       el.innerHTML = `
-        <div>+${successfulInvites} from ${successfulInvites} subscribed referrals</div>
+        <div>+${currentTaskProgress} from ${successfulInvites} subscribed referrals</div>
         <div>Total: ${progress}/6</div>
       `;
     }
@@ -434,7 +434,7 @@ resetBtn.onclick = async () => {
       // تحديث البيانات من الاستجابة
       user.balance = result.newBalance || user.balance;
       user.completedTasks = result.completedTasks || user.completedTasks;
-      user.currentTaskProgress = result.curentTaskProgress || 0;
+      user.currentTaskProgress = result.currentTaskProgress || 0;
       
       // تحديث واجهة المستخدم
       document.getElementById('balanceAmount').textContent = user.balance;
@@ -451,7 +451,7 @@ resetBtn.onclick = async () => {
       document.getElementById('resetInfo').style.display = 'none';
       
       // التصحيح المهم: استخدام user.successfulInvites بدلاً من 0
-      updateProgressBreakdown(0, user.subscriptionType, user.successfulInvites || 0);
+      updateProgressBreakdown(0, user.subscriptionType, user.successfulInvites, 0);
     } else {
       throw new Error('Failed to reset task');
     }
