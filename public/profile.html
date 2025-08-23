@@ -465,14 +465,16 @@
       const refInput = document.getElementById('refLink');
       refInput.value = refLink;
       
-      document.getElementById('btnCopyRef').addEventListener('click', async ()=>{
-        try{
-          await navigator.clipboard.writeText(refInput.value);
-          const old = event.target.innerHTML;
-          event.target.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
-          setTimeout(()=> event.target.innerHTML = old, 1200);
-        }catch(err){ alert('Copy failed'); }
-      });
+      document.getElementById('btnCopyRef').addEventListener('click', async (e)=>{
+  try {
+    await navigator.clipboard.writeText(refInput.value);
+    const old = e.target.innerHTML;
+    e.target.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+    setTimeout(()=> e.target.innerHTML = old, 1200);
+  } catch(err) {
+    alert('Copy failed');
+  }
+});
 
       // Load referral statistics - التصحيح هنا
 try {
