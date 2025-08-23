@@ -163,17 +163,22 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { subscriptionType, balance, completedTasks } = req.body;
+    const { subscriptionType, balance, currentTaskProgress, completedTasks } = req.body;
 
     // Validate subscription type
     if (subscriptionType && !['', 'BASIC', 'PRO', 'VIP'].includes(subscriptionType)) {
       return res.status(400).json({ message: "Invalid subscription type" });
     }
 
+    if (currentTaskProgress !== undefined && (currentTaskProgress < 0 || currentTaskProgress > 6)) {
+      return res.status(400).json({ message: "Current task progress must be between 0 and 6" });
+    }
+
     const updateFields = {};
     if (subscriptionType !== undefined) updateFields.subscriptionType = subscriptionType;
     if (balance !== undefined) updateFields.balance = balance;
     if (completedTasks !== undefined) updateFields.completedTasks = completedTasks;
+    if (CurrentTaskProgress !== undefined) updateFields.currentTaskProgress = currentTaskProgress;
 
     // If subscription is being set, activate it
     if (subscriptionType && subscriptionType !== '') {
@@ -1245,6 +1250,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
