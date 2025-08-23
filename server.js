@@ -1414,34 +1414,50 @@ app.get('/api/health', (req, res) =>
 // Auth
 
 app.post('/api/auth/register', async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     const { fullName, email, phone, username, password, ref } = req.body;
 
-    // ... التحقق من الحقول والوجود السابق
+    if (!fullName || !email || !username || !password) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const existing = await User.findOne({
+      $or: [{ email: email.toLowerCase() }, { username }]
+    });
+    
+    if (existing) {
+      return res.status(409).json({ message: 'Email or username already used' });
+    }
 
     let referredBy = null;
     let referrer = null;
 
-    // البحث عن المدعِي
+    // البحث عن المستخدم باستخدام كود الدعوة (ref)
     if (ref) {
+      console.log('🔍 Searching for referrer with code:', ref);
+      
       referrer = await User.findOne({ 
-        $or: [{ referralCode: ref }, { username: ref }]
-      }).session(session);
+        $or: [
+          { referralCode: ref },  // البحث بكود الدعوة أولاً
+          { username: ref }       // ثم البحث باسم المستخدم
+        ]
+      });
 
       if (referrer) {
+        console.log('✅ Found referrer:', referrer.username);
         referredBy = referrer.referralCode;
+        
+        // إذا كان البحث باسم مستخدم ولم يكن لديه كود دعوة، ننشئ له واحد
         if (!referrer.referralCode) {
           referrer.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-          await referrer.save({ session });
+          await referrer.save();
           referredBy = referrer.referralCode;
         }
+      } else {
+        console.log('❌ No referrer found with code:', ref);
       }
     }
 
-    // إنشاء المستخدم الجديد
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
 
@@ -1451,30 +1467,29 @@ app.post('/api/auth/register', async (req, res) => {
       phone,
       username,
       password: hash,
-      referredBy
+      referredBy: referredBy // ⚠️ هذا هو الحقل المهم
     });
 
-    await user.save({ session });
+    await user.save();
+    console.log('✅ User saved with referredBy:', user.referredBy);
 
-    // ✅ تحديث إحصائيات المدعِي إذا وجد - الآن باستخدام المعاملة
+    // إذا كان هناك مدعٍ، تحديث إحصائياته
     if (referrer) {
-      await User.findByIdAndUpdate(
-        referrer._id,
-        { $inc: { totalInvites: 1 } },
-        { session }
-      );
-      console.log(`✅ Updated totalInvites for referrer: ${referrer.username}`);
+      try {
+        await User.findByIdAndUpdate(referrer._id, {
+          $inc: { totalInvites: 1 }
+        });
+        console.log(`✅ Updated totalInvites for referrer: ${referrer.username}`);
+      } catch (updateError) {
+        console.error('Error updating referrer stats:', updateError);
+      }
     }
 
     // إنشاء كود دعوة للمستخدم الجديد إذا لم يكن لديه
     if (!user.referralCode) {
       user.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-      await user.save({ session });
+      await user.save();
     }
-
-    // ✅ تأكيد المعاملة إذا كل شيء نجح
-    await session.commitTransaction();
-    session.endSession();
 
     const token = generateToken(user);
 
@@ -1492,10 +1507,6 @@ app.post('/api/auth/register', async (req, res) => {
     });
 
   } catch (err) {
-    // ✅ التراجع عن كل التغييرات إذا حدث خطأ
-    await session.abortTransaction();
-    session.endSession();
-
     console.error('Registration error:', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -2376,6 +2387,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
