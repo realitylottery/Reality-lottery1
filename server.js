@@ -139,35 +139,6 @@ function calculateTaskReward(subscriptionType, progress) {
 }
 
 
-async function initializeCompletedTasks() {
-
-  try {
-
-    const result = await User.updateMany(
-
-      { completedTasks: { $exists: false } },
-
-      { $set: { completedTasks: 0 } }
-
-    );
-
-    console.log(`Initialized completedTasks for ${result.nModified} users`);
-
-  } catch (error) {
-
-    console.error('Error initializing completedTasks:', error);
-
-  }
-
-}
-
-
-
-// استدعاء الدالة عند بدء التشغيل
-
-initializeCompletedTasks();
-
-
 
 async function authMiddleware(req, res, next) {
 
@@ -2393,5 +2364,6 @@ app.listen(PORT, () => {
 });
   
 });
+
 
 
