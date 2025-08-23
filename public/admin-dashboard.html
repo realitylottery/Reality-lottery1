@@ -199,7 +199,7 @@
             </tr>
           </thead>
           <tbody id="usersTbody">
-            <tr><td colspan="6" class="muted">Loading…</td></tr>
+            <tr><td colspan="8" class="muted">Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -814,6 +814,7 @@ async function loadUsersWithDebug(){
         const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
         const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
         const completedTasks = Number(tb.querySelector(`input[data-field="completedTasks"][data-id="${id}"]`).value || 0);
+        const currentProgress = Number(tb.querySelector(`input[data-field="currentTaskProgress"][data-id="${id}"]`).value || 0);
 
         btn.disabled = true; 
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
