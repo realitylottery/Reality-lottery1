@@ -235,7 +235,7 @@
       'basic': { 2: 5, 3: 8, 6: 12 },
       'pro': { 2: 8, 3: 12, 6: 15 },
       'vip': { 2: 12, 3: 15, 6: 20 },
-      'none': { 2: 2, 3: 3, 6: 5 } // مكافآت للمستخدمين بدون اشتراك
+      'none': { 2: 2, 3: 3, 6: 5 }
     };
 
     function getToken(){ return localStorage.getItem(LS_TOKEN)||''; }
@@ -381,8 +381,8 @@
       document.getElementById('subType').textContent = user.subscriptionType||'None';
       document.getElementById('refLink').value = `${location.origin}/register.html?ref=${user.referralCode||''}`;
       
-      // إحصائيات الدعوات - إصلاح الخطأ
-      document.getElementById('totalInvited').textContent = user.totalInvites || 0; // كل المدعوين
+      // إحصائيات الدعوات - استخدام الحقول الصحيحة من الخادم
+      document.getElementById('totalInvited').textContent = user.totalInvites || 0; // جميع المدعوين
       document.getElementById('subscribedInvited').textContent = user.successfulInvites || 0; // فقط المشتركين
 
       // Task progress - يعتمد فقط على عدد المدعوين المشتركين (كل مشترك = +1 تقدم)
