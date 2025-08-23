@@ -275,6 +275,7 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
         subscriptionActive: user.subscriptionActive,
         subscriptionExpires: user.subscriptionExpires,
         completedTasks: user.completedTasks,
+        currentTaskProgress: user.currentTaskProgress || 0,
         createdAt: user.createdAt,
         // معلومات إضافية
         payments: userPayments,
@@ -1250,6 +1251,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
