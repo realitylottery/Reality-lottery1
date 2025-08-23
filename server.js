@@ -2136,6 +2136,7 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       referredBy: user.referredBy,
       totalInvites: user.totalInvites,
       successfulInvites: user.successfulInvites,
+      currentTaskProgress: user.currentTaskProgress || 0,
       completedTasks: user.completedTasks,
       currentProgress: currentProgress,
       expectedReward,
@@ -2356,6 +2357,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
