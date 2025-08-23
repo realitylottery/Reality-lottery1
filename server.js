@@ -1049,6 +1049,41 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
   }
 });
 
+// نقطة نهاية التصحيح - التحقق من الحقول
+app.get('/api/debug/fields', authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    // الحصول على عينة من المستخدمين
+    const users = await User.find().limit(5).select('username completedTasks taskProgress');
+    
+    // التحقق من وجود الحقول في النموذج
+    const userSchema = User.schema.obj;
+    const hasCompletedTasks = userSchema.completedTasks !== undefined;
+    const hasTaskProgress = userSchema.taskProgress !== undefined;
+    
+    res.json({
+      schemaFields: {
+        completedTasks: hasCompletedTasks,
+        taskProgress: hasTaskProgress
+      },
+      sampleUsers: users.map(u => ({
+        username: u.username,
+        completedTasks: u.completedTasks,
+        taskProgress: u.taskProgress
+      })),
+      message: hasCompletedTasks ? 
+        "completedTasks field exists in schema" : 
+        "WARNING: completedTasks field missing from schema"
+    });
+  } catch (err) {
+    console.error("Debug fields error:", err);
+    res.status(500).json({ message: "Debug error", error: err.message });
+  }
+});
+
 // Admin stats
 app.get("/api/admin/stats", authMiddleware, async (req, res) => {
   try {
@@ -1120,6 +1155,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
