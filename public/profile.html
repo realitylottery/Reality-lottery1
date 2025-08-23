@@ -259,7 +259,9 @@
     function calculateReward(subscriptionType,progress){
       const subType=(subscriptionType||'').toLowerCase();
       const rewards=REWARD_AMOUNTS[subType]||REWARD_AMOUNTS.basic;
-      if(progress>=6)return rewards[6]; if(progress>=3)return rewards[3]; if(progress>=2)return rewards[2];
+      if(progress>=6)return rewards[6]; 
+      if(progress>=3)return rewards[3]; 
+      if(progress>=2)return rewards[2];
       return 0;
     }
 
@@ -272,12 +274,19 @@
     }
 
     function updateResetButton(progress,subscriptionType){
-      const resetBtn=document.getElementById('resetTaskBtn'); const resetInfo=document.getElementById('resetInfo');
-      if(progress>=2 && subscriptionType){
+      const resetBtn=document.getElementById('resetTaskBtn'); 
+      const resetInfo=document.getElementById('resetInfo');
+      
+      // فقط إذا كان التقدم 2 أو 3 أو 6
+      if((progress === 2 || progress === 3 || progress === 6) && subscriptionType){
         const rewardAmount=calculateReward(subscriptionType,progress);
         resetBtn.innerHTML=`<i class="fa-solid fa-rotate-left"></i> Reset Task & Claim $${rewardAmount}`;
-        resetBtn.style.display='block'; resetInfo.style.display='block';
-      } else { resetBtn.style.display='none'; resetInfo.style.display='none'; }
+        resetBtn.style.display='block'; 
+        resetInfo.style.display='block';
+      } else { 
+        resetBtn.style.display='none'; 
+        resetInfo.style.display='none'; 
+      }
     }
 
     function updateProgressBreakdown(progress,subscriptionType,successfulInvites){
@@ -339,6 +348,12 @@
 
       // Completed tasks
       document.getElementById('completedTasks').textContent = user.completedTasks||0;
+
+      // إذا كان التقدم 6، امنح المكافأة تلقائياً
+      if (progress === 6 && user.subscriptionType) {
+        const rewardAmount = calculateReward(user.subscriptionType, progress);
+        completeTask(user._id, rewardAmount, user.subscriptionType, false);
+      }
 
       // Reset button event
       const resetBtn = document.getElementById('resetTaskBtn');
