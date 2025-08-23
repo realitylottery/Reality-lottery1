@@ -1154,6 +1154,43 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
   }
 });
 
+// نقطة نهاية للتحقق من الحقول في قاعدة البيانات
+app.get('/api/debug/user-fields/:id?', authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes('admin')) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+    
+    const userId = req.params.id || req.user.id;
+    const user = await User.findById(userId).select('username completedTasks currentTaskProgress');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // التحقق من وجود الحقول في قاعدة البيانات
+    const hasCompletedTasks = user.completedTasks !== undefined && user.completedTasks !== null;
+    const hasCurrentProgress = user.currentTaskProgress !== undefined && user.currentTaskProgress !== null;
+    
+    res.json({
+      user: {
+        username: user.username,
+        completedTasks: user.completedTasks,
+        currentTaskProgress: user.currentTaskProgress,
+        fieldsExist: {
+          completedTasks: hasCompletedTasks,
+          currentTaskProgress: hasCurrentProgress
+        },
+        rawData: user.toObject() // لعرض البيانات الخام
+      }
+    });
+    
+  } catch (err) {
+    console.error('Debug user fields error:', err);
+    res.status(500).json({ message: 'Debug error', error: err.message });
+  }
+});
+
 // نقطة نهاية التصحيح - التحقق من الحقول
 app.get('/api/debug/fields', authMiddleware, async (req, res) => {
   try {
@@ -1260,6 +1297,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
