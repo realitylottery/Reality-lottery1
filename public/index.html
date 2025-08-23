@@ -715,79 +715,70 @@
         }
       }
 
-      // Display subscription status - MODIFIED TO READ FROM API
       async function displaySubscriptionStatus() {
-        const statusElement = document.getElementById('subscriptionStatus');
-        const messageElement = document.getElementById('statusMessage');
-        statusElement.style.display = 'block';
-        
-        // Check if user is logged in
+        // إخفاء العنصر إذا لم يكن المستخدم مسجلاً
         if (!token || !userData.username) {
-          messageElement.textContent = 'Please login to view your subscription status';
-          messageElement.className = 'status-inactive';
+          subscriptionStatus.style.display = 'none';
           return;
         }
         
+        subscriptionStatus.style.display = 'block';
+        statusMessage.innerHTML = '<span class="loader"></span> Checking subscription status...';
+        statusMessage.className = 'status-loading';
+        
         try {
-          // Fetch latest subscription data from API
+          // جلب بيانات المستخدم الحالية من الخادم
           const response = await fetch(`${API_BASE}/api/auth/me`, {
             headers: {
               'Authorization': 'Bearer ' + token
             }
           });
           
-          if (response.ok) {
-            const data = await response.json();
-            
-            // Update localStorage with fresh data
-            if (data.user) {
-              localStorage.setItem('rl_user', JSON.stringify(data));
-              
-              // Read subscriptionType from updated user data
-              if (data.subscriptionType) {
-                messageElement.innerHTML = `
-                  <span class="status-active">Active Subscription</span><br>
-                  <strong>${data.user.subscriptionType}</strong> - Valid until lottery draw date
-                `;
-                disableSubscriptionButtons(data.subscriptionType);
-              } else {
-                messageElement.textContent = 'You do not have an active subscription';
-                messageElement.className = 'status-inactive';
-              }
-            } else {
-              messageElement.textContent = 'Error loading subscription data';
-              messageElement.className = 'status-inactive';
-            }
+          if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          
+          // تحديث localStorage بالبيانات الجديدة
+          localStorage.setItem('rl_user', JSON.stringify(data));
+          
+          // التحقق من وجود اشتراك نشط
+          if (data.subscriptionType && data.subscriptionActive) {
+            const expiresDate = new Date(data.subscriptionExpires).toLocaleDateString();
+            statusMessage.innerHTML = `
+              <span class="status-active">✅ Active Subscription</span><br>
+              <strong>${data.subscriptionType}</strong> plan - Valid until ${expiresDate}
+            `;
+            statusMessage.className = 'status-active';
+            disableSubscriptionButtons(data.subscriptionType);
           } else {
-            // Fallback to localStorage if API fails
-            if (data.subscriptionType) {
-              messageElement.innerHTML = `
-                <span class="status-active">Active Subscription</span><br>
-                <strong>${userData.subscriptionType}</strong> - Valid until lottery draw date
-              `;
-              disableSubscriptionButtons(data.subscriptionType);
-            } else {
-              messageElement.textContent = 'You do not have an active subscription';
-              messageElement.className = 'status-inactive';
-            }
+            statusMessage.textContent = 'You do not have an active subscription';
+            statusMessage.className = 'status-inactive';
           }
         } catch (error) {
           console.error('Error fetching subscription data:', error);
-          // Fallback to localStorage on error
-          if (data.subscriptionType) {
-            messageElement.innerHTML = `
-              <span class="status-active">Active Subscription</span><br>
-              <strong>${data.subscriptionType}</strong> - Valid until lottery draw date
+          
+          // استخدام البيانات المحلية كحل بديل إذا فشل الاتصال
+          if (userData.subscriptionType && userData.subscriptionActive) {
+            const expiresDate = new Date(userData.subscriptionExpires).toLocaleDateString();
+            statusMessage.innerHTML = `
+              <span class="status-active">✅ Active Subscription (cached)</span><br>
+              <strong>${userData.subscriptionType}</strong> plan - Valid until ${expiresDate}
             `;
-            disableSubscriptionButtons(data.subscriptionType);
+            statusMessage.className = 'status-active';
+            disableSubscriptionButtons(userData.subscriptionType);
           } else {
-            messageElement.textContent = 'You do not have an active subscription';
-            messageElement.className = 'status-inactive';
+            statusMessage.innerHTML = `
+              <span class="status-inactive">❌ Unable to verify subscription status</span><br>
+              <small>Please check your connection and try again</small>
+            `;
+            statusMessage.className = 'status-inactive';
           }
         }
       }
       
-      // Disable subscription buttons if user has active subscription
+      // تعطيل أزرار الاشتراك إذا كان لدى المستخدم اشتراك نشط
       function disableSubscriptionButtons(activePlan) {
         document.querySelectorAll('.subscribe-btn').forEach(button => {
           const planName = button.getAttribute('data-plan');
@@ -803,8 +794,8 @@
           }
         });
       }
-      
-      // Handle subscription button clicks - MODIFIED TO GO DIRECTLY TO PAYMENT
+
+      // Handle subscription button clicks
       document.querySelectorAll('.subscribe-btn').forEach(button => {
         button.addEventListener('click', async function() {
           const token = localStorage.getItem('rl_token');
@@ -834,7 +825,7 @@
               const data = await response.json();
               
               if (data.subscriptionType) {
-                alert(`You already have an active subscription: ${data.user.subscriptionType}`);
+                alert(`You already have an active subscription: ${data.subscriptionType}`);
                 this.innerHTML = originalText;
                 this.disabled = false;
                 return;
@@ -859,6 +850,9 @@
       loadBanners();
       loadTicker();
       displaySubscriptionStatus();
+      
+      // إضافة event listener لتحديث حالة الاشتراك عند النقر
+      subscriptionStatus.addEventListener('click', displaySubscriptionStatus);
       
       // Refresh ticker every 5 minutes
       setInterval(loadTicker, 5 * 60 * 1000);
