@@ -119,25 +119,19 @@ function generateToken(user) {
 }
 
 function calculateTaskReward(subscriptionType, progress) {
-
   const rewards = {
-
     'BASIC': { 2: 5, 3: 8, 6: 12 },
-
     'PRO': { 2: 8, 3: 12, 6: 15 },
-
     'VIP': { 2: 12, 3: 15, 6: 20 },
-
-    'none': { 2: 2, 3: 3, 6: 6 }
-
+    'NONE': { 2: 2, 3: 3, 6: 6 },      // غير إلى 'NONE' (كبيرة)
+    '': { 2: 2, 3: 3, 6: 6 }           // أضف هذا للقيم الفارغة
   };
-
   
-
-  const subscription = subscriptionType || 'BASIC';
-
-  return rewards[subscription][progress] || 0;
-
+  // تحويل إلى uppercase للتأكد من المطابقة
+  const subscription = (subscriptionType || 'NONE').toUpperCase();
+  const rewardTable = rewards[subscription] || rewards['NONE'];
+  
+  return rewardTable[progress] || 0;
 }
 
 
@@ -2359,6 +2353,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
