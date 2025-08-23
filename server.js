@@ -73,6 +73,35 @@ async function initializeCompletedTasks() {
 // استدعاء الدالة عند بدء التشغيل
 initializeCompletedTasks();
 
+// سكريبت لإزالة حقل taskProgress من جميع المستخدمين
+async function removeTaskProgressField() {
+  try {
+    console.log('🔍 Removing taskProgress field from all users...');
+    
+    // إزالة الحقل من جميع المستخدمين
+    const result = await User.updateMany(
+      { taskProgress: { $exists: true } },
+      { $unset: { taskProgress: "" } }
+    );
+    
+    console.log(`✅ Removed taskProgress field from ${result.nModified} users`);
+    
+    // تأكد من أن completedTasks موجود لدى الجميع
+    const initResult = await User.updateMany(
+      { completedTasks: { $exists: false } },
+      { $set: { completedTasks: 0 } }
+    );
+    
+    console.log(`✅ Initialized completedTasks for ${initResult.nModified} users`);
+    
+  } catch (error) {
+    console.error('❌ Error removing taskProgress field:', error);
+  }
+}
+
+// تشغيل الدالة عند بدء السيرفر
+removeTaskProgressField();
+
 async function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
   if (!authHeader) return res.status(401).json({ message: 'No token provided' });
@@ -1155,6 +1184,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
