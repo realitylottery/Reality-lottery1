@@ -964,18 +964,18 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
       // 🔥 زيادة successfulInvites للمدعِي إذا كان هذا المستخدم لديه مدعٍ
     if (user.referredBy) {
-      try {
-        // البحث عن المدعِي باستخدام كود الدعوة
-        const referrer = await User.findOne({ referralCode: user.referredBy });
-        if (referrer) {
-          referrer.successfulInvites += 1;
-          await referrer.save();
-          console.log(`✅ Increased successfulInvites for referrer: ${referrer.username}`);
-        }
-      } catch (referralError) {
-        console.error("Error updating referrer successfulInvites:", referralError);
-        // لا نوقف العملية إذا حدث خطأ في تحديث الإحصائيات
-      }
+  try {
+    // البحث عن المدعِي باستخدام كود الدعوة
+    const referrer = await User.findOne({ referralCode: user.referredBy });
+    if (referrer) {
+      referrer.successfulInvites += 1;
+      await referrer.save();
+      console.log(`✅ Increased successfulInvites for referrer: ${referrer.username}`);
+    }
+  } catch (referralError) {
+    console.error("Error updating referrer successfulInvites:", referralError);
+    // لا نوقف العملية إذا حدث خطأ في تحديث الإحصائيات
+  }
     }
 
     res.json({ 
@@ -1520,32 +1520,18 @@ app.post('/api/auth/register', async (req, res) => {
     // إذا كان هناك مدعٍ، تحديث إحصائياته بعد 1 ثانية (لضمان حفظ المستخدم أولاً)
 
     if (referrer) {
-
-      setTimeout(async () => {
-
-        try {
-
-          await User.findByIdAndUpdate(referrer._id, {
-
-            $inc: { 
-
-              totalInvites: 1
-
-
-            }
-
-          });
-
-          console.log(`✅ Updated stats for referrer: ${referrer.username}`);
-
-        } catch (updateError) {
-
-          console.error('Error updating referrer stats:', updateError);
-
+  setTimeout(async () => {
+    try {
+      await User.findByIdAndUpdate(referrer._id, {
+        $inc: { 
+          totalInvites: 1 // فقط totalInvites يزيد هنا
         }
-
-      }, 1000);
-
+      });
+      console.log(`✅ Updated totalInvites for referrer: ${referrer.username}`);
+    } catch (updateError) {
+      console.error('Error updating referrer stats:', updateError);
+    }
+  }, 1000);
     }
 
 
@@ -2472,6 +2458,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
