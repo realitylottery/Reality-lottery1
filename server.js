@@ -1503,54 +1503,6 @@ app.post('/api/auth/register', async (req, res) => {
 
 
 
-    // إنشاء كود دعوة للمستخدم الجديد إذا لم يكن لديه واحد
-
-    if (!user.referralCode) {
-
-      user.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-
-      await user.save();
-    }
-
-
-
-    const token = generateToken(user);
-
-
-
-    return res.status(201).json({
-
-      message: 'User registered',
-
-      user: {
-
-        id: user._id,
-
-        username: user.username,
-
-        fullName: user.fullName,
-
-        email: user.email,
-        referredBy: user.referredBy
-        referralCode: user.referralCode
-
-      },
-
-      token
-
-    });
-
-  } catch (err) {
-
-    console.error('Registration error:', err);
-
-    return res.status(500).json({ message: 'Server error', error: err.message });
-
-  }
-
-});
-
-
 // إضافة route جديد عند اشتراك مدعو
 app.post("/api/referrals/subscribed", authMiddleware, async (req, res) => {
   try {
@@ -2424,6 +2376,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
