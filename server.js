@@ -344,9 +344,37 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 });
 
-// ================= INVITES & SUBSCRIPTIONS ROUTES =================
+app.get('/api/profile', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
+    const referralLink = `${process.env.FRONTEND_ORIGIN || 'https://realitylottery.koyeb.app'}/register?ref=${user.referralCode}`;
 
+    res.json({
+      user: {
+        id: user._id,
+        username: user.username,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        balance: user.balance,
+        subscriptionType: user.subscriptionType,
+        subscriptionActive: user.subscriptionActive,
+        subscriptionExpires: user.subscriptionExpires,
+        completedTasks: user.completedTasks,
+        currentTaskProgress: user.currentTaskProgress,
+        referralCode: user.referralCode,
+        referralLink,
+        totalInvites: user.totalInvites,
+        successfulInvites: user.successfulInvites
+      }
+    });
+  } catch (err) {
+    console.error('Profile error:', err);
+    res.status(500).json({ message: 'Error fetching profile' });
+  }
+});
 
 // Get invites and subscriptions statistics (admin only)
 
@@ -2403,6 +2431,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
