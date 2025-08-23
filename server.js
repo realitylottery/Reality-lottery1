@@ -126,7 +126,9 @@ function calculateTaskReward(subscriptionType, progress) {
 
     'PRO': { 2: 8, 3: 12, 6: 15 },
 
-    'VIP': { 2: 12, 3: 15, 6: 20 }
+    'VIP': { 2: 12, 3: 15, 6: 20 },
+
+    'none': { 2: 2, 3: 3, 6: 6 }
 
   };
 
@@ -2358,5 +2360,6 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
