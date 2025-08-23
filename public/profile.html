@@ -417,16 +417,27 @@
       }
 
       // get user
-      let me;
-      try{
-        me = await safeFetch(API_BASE + '/api/auth/me', {
-          headers: { 'Authorization':'Bearer ' + getToken() }
-        });
-      }catch(e){
-        alert('Network error or session expired. Please login again.');
-        signOut();
-        return;
-      }
+let me;
+try{
+  const token = getToken();
+  if (!token) {
+    // ما في توكن فعلياً — رجوع لتسجيل الدخول
+    location.href = 'login.html?next=profile.html';
+    return;
+  }
+
+  me = await safeFetch(API_BASE + '/api/auth/me', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+}catch(e){
+  // لا تمسح التوكن تلقائياً إذا كان الخطأ من السيرفر (مثلاً رسالة نصية)
+  alert((e && e.message) ? e.message : 'Network error or session expired. Please login again.');
+  // لو كانت الجلسة فعلاً منتهية، سيرجع السيرفر 401 مع رسالة واضحة
+  if (String(e.message).toLowerCase().includes('expired') || String(e.message).includes('401')){
+    signOut();
+  }
+  return;
+}
 
       const user = me.user || me || {};
       updateTopAuth(user);
