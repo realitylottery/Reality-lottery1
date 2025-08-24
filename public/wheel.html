@@ -188,61 +188,53 @@
   }
 
   spinBtn.addEventListener("click", async () => {
-    if (!canSpin) return;
+  if (!canSpin) return;
 
-    const deg = Math.floor(2000 + Math.random() * 2000);
-    wheel.style.transform = `rotate(${deg}deg)`;
-    spinBtn.disabled = true;
+  const deg = Math.floor(2000 + Math.random() * 2000);
+  wheel.style.transform = `rotate(${deg}deg)`;
+  spinBtn.disabled = true;
 
-    setTimeout(async () => {
-      const sector = ((deg % 360) / 60) | 0;
-      const prize = prizes[5 - sector];
+  setTimeout(async () => {
+    const sector = ((deg % 360) / 60) | 0;
+    const prize = prizes[5 - sector];
 
-      try {
-        let bodyData = {};
-        if (prize.type === "money") {
-          bodyData = { prize: prize.label, amount: prize.amount };
-        } else if (prize.type === "lose") {
-          bodyData = { prize: "lose" };
-        }
+    try {
+      // أرسل الدوران للسيرفر دائمًا
+      const response = await fetch(`${API_BASE}/api/wheel/spin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify({
+          prize: prize.label,
+          amount: prize.amount || 0
+        })
+      });
 
-        // إرسال النتيجة للسيرفر فقط إذا ليست Extra Spin
-        let updatedUser = {};
-        if (prize.type !== "extra") {
-          const response = await fetch(`${API_BASE}/api/wheel/spin`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + token
-            },
-            body: JSON.stringify(bodyData)
-          });
-          updatedUser = await response.json();
-          localStorage.setItem("rl_user", JSON.stringify(updatedUser));
-        }
+      if (!response.ok) throw new Error("Spin API failed");
 
-        // تحديث النصوص
-        if (prize.type === "money") {
-          result.textContent = `🎁 You won ${prize.label}`;
-        } else if (prize.type === "extra") {
-          result.textContent = `🔄 Congrats! You earned an Extra Spin`;
-          canSpin = true;
-          spinBtn.disabled = false;
-        } else {
-          result.textContent = `❌ Better Luck Next Time`;
-        }
+      const updatedUser = await response.json(); // البيانات الحقيقية من السيرفر
+      localStorage.setItem("rl_user", JSON.stringify(updatedUser));
 
-        // إعادة تحديث حالة الزر بعد كل لفة
-        await checkEligibility();
-
-      } catch (err) {
-        console.error("Error processing spin:", err);
-        result.textContent = "Error processing spin.";
+      // تحديث النتيجة على الصفحة
+      if (prize.type === "money") {
+        result.textContent = `🎁 You won ${prize.label} ! Balance updated.`;
+      } else if (prize.type === "extra") {
+        result.textContent = `🔄 Congrats! You earned an Extra Spin`;
+      } else {
+        result.textContent = `❌ Better Luck Next Time`;
       }
 
-    }, 6000); // مدة دوران العجلة
-  });
+      // إعادة التحقق من حالة الزر بعد كل لفة
+      await checkEligibility();
 
+    } catch (err) {
+      console.error("Error processing spin:", err);
+      result.textContent = "Error processing spin.";
+    }
+  }, 6000);
+});
   // تحقق عند تحميل الصفحة
   checkEligibility();
 </script>
