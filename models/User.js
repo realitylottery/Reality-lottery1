@@ -25,7 +25,10 @@ const userSchema = new mongoose.Schema({
   referralCode: { type: String, unique: true, sparse: true },
   totalInvites: { type: Number, default: 0 },
   successfulInvites: { type: Number, default: 0 },
-
+  spinsUsed: {
+    type: Boolean,
+    default: false
+  },
   // الاشتراك
   subscriptionType: { type: String, enum: ['', 'BASIC', 'PRO', 'VIP'], default: '' },
   subscriptionActive: { type: Boolean, default: false },
