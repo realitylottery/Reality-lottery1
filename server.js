@@ -683,30 +683,41 @@ app.delete("/api/admin/ticker/:id", authMiddleware, async (req, res) => {
 // Banners
 
 app.get("/api/admin/banners", authMiddleware, async (req, res) => {
+app.get("/api/admin/banners", authMiddleware, async (req, res) => {
   try {
-    // التحقق من صلاحية الأدمن
-    if (!req.user.roles?.includes("admin")) {
-      return res.status(403).json({ message: "Forbidden: Admin access required" });
+    // التحقق من وجود المستخدم أولاً
+    if (!req.user) {
+      return res.status(401).json({ 
+        success: false,
+        message: "Unauthorized: User not authenticated" 
+      });
+    }
+    
+    // التحقق من صلاحية الأدمن - مع معالجة حالات عدم وجود roles
+    const userRoles = req.user.roles || [];
+    if (!userRoles.includes("admin")) {
+      return res.status(403).json({ 
+        success: false,
+        message: "Forbidden: Admin access required" 
+      });
     }
     
     // جلب البانرات من قاعدة البيانات
     const banners = await Banner.find().sort({ createdAt: -1 });
     
-    // إرجاع البيانات بنفس الهيكل الذي تتوقعه الواجهة
     res.json({ 
       success: true,
       banners: banners 
     });
     
   } catch (error) {
-    console.error("Error fetching banners:", error);
+    console.error("Error in /api/admin/banners:", error);
     res.status(500).json({ 
+      success: false,
       message: "Internal server error",
-      error: error.message 
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
     });
-
   }
-
 });
 
 
@@ -2489,6 +2500,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
