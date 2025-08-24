@@ -1561,17 +1561,11 @@ async function loadBannerList() {
             banner.image
               ? el('img', { src: banner.image, class: 'img-preview' })
               : el('div', { class: 'muted small' }, ['No image']),
-            el(
-              'div',
-              { class: 'small muted', style: 'margin-top:6px' },
-              [
-                'Button: ',
-                banner.buttonText || '-',
-                ' → ',
-                banner.buttonLink || '-',
-              ]
-            ),
-          ]),
+            el('div', { class: 'small muted', style: 'margin-top:6px' }, [
+  document.createTextNode(
+    'Button: ' + (banner.buttonText || '-') + ' → ' + (banner.buttonLink || '-')
+  )
+]),
         ]),
         el('div', { class: 'row', style: 'margin-top:8px' }, [
           el(
