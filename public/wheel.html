@@ -137,14 +137,12 @@
 <script>
   const API_BASE = "https://realitylottery.koyeb.app";
   const token = localStorage.getItem("rl_token");
-  const userData = JSON.parse(localStorage.getItem("rl_user") || "{}");
 
   const wheel = document.getElementById("wheel");
   const spinBtn = document.getElementById("spinBtn");
   const result = document.getElementById("result");
   let canSpin = false;
 
-  // القطاعات (بنفس ترتيب العجلة)
   const prizes = [
     { label: "$1", type: "money", amount: 1 },
     { label: "$2", type: "money", amount: 2 },
@@ -154,38 +152,39 @@
     { label: "❌ Better Luck", type: "lose" }
   ];
 
+  // تحقق من إمكانية الدوران
   async function checkEligibility() {
-  if (!token) {
-    spinBtn.disabled = true;
-    result.textContent = "Login & subscribe to unlock your spin!";
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE}/api/auth/me`, {
-      headers: { Authorization: "Bearer " + token }
-    });
-    if (!res.ok) throw new Error("Failed to fetch user");
-
-    const data = await res.json();
-    localStorage.setItem("rl_user", JSON.stringify(data));
-
-    if (data.subscriptionActive && !data.hasSpunWheel) {
-      canSpin = true;
-      spinBtn.disabled = false;
-      result.textContent = "You have 1 spin available 🎉";
-    } else if (data.subscriptionActive && data.hasSpunWheel) {
+    if (!token) {
       spinBtn.disabled = true;
-      result.textContent = "You already used your spin this subscription ❌";
-    } else {
-      spinBtn.disabled = true;
-      result.textContent = "Subscribe to unlock your spin!";
+      result.textContent = "Login & subscribe to unlock your spin!";
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    result.textContent = "Error checking spin eligibility.";
-    spinBtn.disabled = true;
-  }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/me`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+      if (!res.ok) throw new Error("Failed to fetch user");
+
+      const data = await res.json();
+      localStorage.setItem("rl_user", JSON.stringify(data));
+
+      if (data.subscriptionActive && !data.hasSpunWheel) {
+        canSpin = true;
+        spinBtn.disabled = false;
+        result.textContent = "You have 1 spin available 🎉";
+      } else if (data.subscriptionActive && data.hasSpunWheel) {
+        spinBtn.disabled = true;
+        result.textContent = "You already used your spin this subscription ❌";
+      } else {
+        spinBtn.disabled = true;
+        result.textContent = "Subscribe to unlock your spin!";
+      }
+    } catch (err) {
+      console.error(err);
+      spinBtn.disabled = true;
+      result.textContent = "Error checking spin eligibility.";
+    }
   }
 
   spinBtn.addEventListener("click", async () => {
@@ -197,54 +196,54 @@
 
     setTimeout(async () => {
       const sector = ((deg % 360) / 60) | 0;
-      const prize = prizes[5 - sector]; // حساب القطاع العكسي
+      const prize = prizes[5 - sector];
 
-      if (prize.type === "money") {
-        result.textContent = `🎁 You won ${prize.label}`;
-        try {
-          await fetch(`${API_BASE}/api/wheel/spin`, {
+      try {
+        let bodyData = {};
+        if (prize.type === "money") {
+          bodyData = { prize: prize.label, amount: prize.amount };
+        } else if (prize.type === "lose") {
+          bodyData = { prize: "lose" };
+        }
+
+        // إرسال النتيجة للسيرفر فقط إذا ليست Extra Spin
+        let updatedUser = {};
+        if (prize.type !== "extra") {
+          const response = await fetch(`${API_BASE}/api/wheel/spin`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: "Bearer " + token
             },
-            body: JSON.stringify({ prize: prize.label, amount: prize.amount })
+            body: JSON.stringify(bodyData)
           });
-
-          let updatedUser = { ...userData };
-          updatedUser.balance = (updatedUser.balance || 0) + prize.amount;
-          updatedUser.hasSpunWheel = true;
+          updatedUser = await response.json();
           localStorage.setItem("rl_user", JSON.stringify(updatedUser));
-        } catch (err) {
-          console.error("Error saving spin result:", err);
         }
 
-      } else if (prize.type === "extra") {
-        result.textContent = `🔄 Congrats! You earned an Extra Spin`;
-        canSpin = true;
-        spinBtn.disabled = false;
-
-      } else {
-        result.textContent = `❌ Better Luck Next Time`;
-        try {
-          await fetch(`${API_BASE}/api/wheel/spin`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + token
-            },
-            body: JSON.stringify({ prize: "lose" })
-          });
-          let updatedUser = { ...userData };
-          updatedUser.hasSpunWheel = true;
-          localStorage.setItem("rl_user", JSON.stringify(updatedUser));
-        } catch (err) {
-          console.error("Error saving spin result:", err);
+        // تحديث النصوص
+        if (prize.type === "money") {
+          result.textContent = `🎁 You won ${prize.label}`;
+        } else if (prize.type === "extra") {
+          result.textContent = `🔄 Congrats! You earned an Extra Spin`;
+          canSpin = true;
+          spinBtn.disabled = false;
+        } else {
+          result.textContent = `❌ Better Luck Next Time`;
         }
+
+        // إعادة تحديث حالة الزر بعد كل لفة
+        await checkEligibility();
+
+      } catch (err) {
+        console.error("Error processing spin:", err);
+        result.textContent = "Error processing spin.";
       }
-    }, 6000);
+
+    }, 6000); // مدة دوران العجلة
   });
 
+  // تحقق عند تحميل الصفحة
   checkEligibility();
 </script>
 
