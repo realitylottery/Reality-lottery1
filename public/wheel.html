@@ -517,10 +517,12 @@
     statusMessage.textContent = "";
 
     setTimeout(async () => {
-      const normalizedDeg = deg % 360;
-      const sector = Math.floor(normalizedDeg / 60);
-      const prizeIndex = (6 - sector) % 6; // Calculate prize based on sector
-      const prize = prizes[prizeIndex];
+  const normalizedDeg = deg % 360;
+  // احسب القطاع بشكل صحيح
+  const sector = Math.floor(normalizedDeg / 60) % 6;
+  const prizeIndex = (6 - sector) % 6; // اضبط هذه المعادلة حسب اتجاه العجلة
+  
+  const prize = prizes[prizeIndex];
 
       try {
         // Send spin to server
