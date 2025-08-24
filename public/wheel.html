@@ -421,18 +421,19 @@
 </div>
 
 <script>
-  const API_BASE = "https://realitylottery.koyeb.app";
-  const token = localStorage.getItem("rl_token");
+const API_BASE = "https://realitylottery.koyeb.app";
+const token = localStorage.getItem("rl_token");
 
-  const wheel = document.getElementById("wheel");
-  const spinBtn = document.getElementById("spinBtn");
-  const result = document.getElementById("result");
-  const statusMessage = document.getElementById("statusMessage");
-  const userStatus = document.getElementById("userStatus");
-  const userBalance = document.getElementById("userBalance");
-  let canSpin = false;
+const wheel = document.getElementById("wheel");
+const spinBtn = document.getElementById("spinBtn");
+const result = document.getElementById("result");
+const statusMessage = document.getElementById("statusMessage");
+const userStatus = document.getElementById("userStatus");
+const userBalance = document.getElementById("userBalance");
+let canSpin = false;
 
-  const prizes = [
+// الجوائز مع type
+const prizes = [
   { label: "$3", type: "money", amount: 3, section: 0, prize: "$3" },
   { label: "$2", type: "money", amount: 2, section: 1, prize: "$2" },
   { label: "$1", type: "money", amount: 1, section: 2, prize: "$1" },
@@ -441,157 +442,123 @@
   { label: "Extra Spin", type: "extra", amount: 0, section: 5, prize: "extra" }
 ];
 
-  // Check eligibility to spin
-  async function checkEligibility() {
-    statusMessage.textContent = "Checking your spin eligibility...";
-    userStatus.textContent = "Checking status...";
-    
-    if (!token) {
-      spinBtn.disabled = true;
-      result.textContent = "Login & subscribe to unlock your spin!";
-      statusMessage.textContent = "You need to be logged in to spin the wheel";
-      userStatus.textContent = "Not logged in";
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE}/api/auth/me`, {
-        headers: { Authorization: "Bearer " + token }
-      });
-      
-      if (!res.ok) {
-        if (res.status === 401) {
-          localStorage.removeItem("rl_token");
-          localStorage.removeItem("rl_user");
-          statusMessage.textContent = "Your session has expired. Please log in again.";
-          result.textContent = "Login required";
-          userStatus.textContent = "Session expired";
-          throw new Error("Token expired or invalid");
-        }
-        throw new Error(`Server returned ${res.status} ${res.statusText}`);
-      }
-
-      const data = await res.json();
-      localStorage.setItem("rl_user", JSON.stringify(data));
-      
-      // Update user interface
-      userBalance.textContent = `Balance: $${data.balance || 0}`;
-      
-      if (data.subscriptionActive && !data.hasSpunWheel) {
-        canSpin = true;
-        spinBtn.disabled = false;
-        result.textContent = "You have 1 spin available 🎉";
-        statusMessage.textContent = "Ready to spin!";
-        userStatus.textContent = "Active subscription - Spin available";
-        userStatus.style.color = "var(--success-color)";
-      } else if (data.subscriptionActive && data.hasSpunWheel) {
-        spinBtn.disabled = true;
-        result.textContent = "You already used your spin this subscription ❌";
-        statusMessage.textContent = "Wait for your next subscription period to spin again";
-        userStatus.textContent = "Active subscription - Already spun";
-        userStatus.style.color = "var(--error-color)";
-      } else {
-        spinBtn.disabled = true;
-        result.textContent = "Subscribe to unlock your spin!";
-        statusMessage.textContent = "Active subscription required";
-        userStatus.textContent = "No active subscription";
-        userStatus.style.color = "var(--error-color)";
-      }
-    } catch (err) {
-      console.error("Eligibility check error:", err);
-      spinBtn.disabled = true;
-      result.innerHTML = `<span class="error">Error checking eligibility</span>`;
-      statusMessage.textContent = "Please check your connection and try again";
-      userStatus.textContent = "Error loading status";
-      userStatus.style.color = "var(--error-color)";
-    }
+// التحقق من الاشتراك والدوران
+async function checkEligibility() {
+  statusMessage.textContent = "Checking your spin eligibility...";
+  userStatus.textContent = "Checking status...";
+  
+  if (!token) {
+    spinBtn.disabled = true;
+    result.textContent = "Login & subscribe to unlock your spin!";
+    statusMessage.textContent = "You need to be logged in to spin the wheel";
+    userStatus.textContent = "Not logged in";
+    return;
   }
 
-  spinBtn.addEventListener("click", async () => {
-    if (!canSpin) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/me`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    if (!res.ok) throw new Error("Failed to fetch user data");
+    const data = await res.json();
+    localStorage.setItem("rl_user", JSON.stringify(data));
+    userBalance.textContent = `Balance: $${data.balance || 0}`;
 
-    const deg = Math.floor(2000 + Math.random() * 2000);
-    wheel.style.transform = `rotate(${deg}deg)`;
+    if (data.subscriptionActive && !data.hasSpunWheel) {
+      canSpin = true;
+      spinBtn.disabled = false;
+      result.textContent = "You have 1 spin available 🎉";
+      statusMessage.textContent = "Ready to spin!";
+      userStatus.textContent = "Active subscription - Spin available";
+      userStatus.style.color = "var(--success-color)";
+    } else if (data.subscriptionActive && data.hasSpunWheel) {
+      spinBtn.disabled = true;
+      result.textContent = "You already used your spin this subscription ❌";
+      statusMessage.textContent = "Wait for your next subscription period to spin again";
+      userStatus.textContent = "Active subscription - Already spun";
+      userStatus.style.color = "var(--error-color)";
+    } else {
+      spinBtn.disabled = true;
+      result.textContent = "Subscribe to unlock your spin!";
+      statusMessage.textContent = "Active subscription required";
+      userStatus.textContent = "No active subscription";
+      userStatus.style.color = "var(--error-color)";
+    }
+  } catch (err) {
+    console.error("Eligibility check error:", err);
     spinBtn.disabled = true;
-    result.innerHTML = `<div class="loading"></div> Spinning...`;
-    statusMessage.textContent = "";
+    result.innerHTML = `<span class="error">Error checking eligibility</span>`;
+    statusMessage.textContent = "Please check your connection and try again";
+    userStatus.textContent = "Error loading status";
+    userStatus.style.color = "var(--error-color)";
+  }
+}
 
-    setTimeout(async () => {
-  const normalizedDeg = deg % 360;
-  // احسب القطاع بشكل صحيح
-  const sector = Math.floor(normalizedDeg / 60) % 6;
-  const prizeIndex = (6 - sector) % 6; // اضبط هذه المعادلة حسب اتجاه العجلة
-  
-  const prize = prizes[prizeIndex];
+// دوران العجلة
+spinBtn.addEventListener("click", async () => {
+  if (!canSpin) return;
 
-      try {
-        // Send spin to server
-        const response = await fetch(`${API_BASE}/api/wheel/spin`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token
-          },
-          body: JSON.stringify({
-            prize: prize.prize,
-            amount: prize.amount 
-          })
-        });
+  const deg = Math.floor(2000 + Math.random() * 2000);
+  wheel.style.transform = `rotate(${deg}deg)`;
+  spinBtn.disabled = true;
+  result.innerHTML = `<div class="loading"></div> Spinning...`;
+  statusMessage.textContent = "";
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Server error:", response.status, errorText);
-          
-          if (response.status === 401) {
-            throw new Error("Authentication failed. Please log in again.");
-          } else if (response.status === 400) {
-            throw new Error("You've already used your spin for this period.");
-          } else {
-            throw new Error(`Server error: ${response.status} ${response.statusText}`);
-          }
-        }
+  setTimeout(async () => {
+    const normalizedDeg = deg % 360;
+    const sector = Math.floor(normalizedDeg / 60) % 6;
+    const prizeIndex = (6 - sector) % 6; // اضبط حسب اتجاه العجلة
+    const prize = prizes[prizeIndex];
 
-        const updatedUser = await response.json();
-        
-        if (!updatedUser) {
-          throw new Error("Invalid response from server");
-        }
-        
-        localStorage.setItem("rl_user", JSON.stringify(updatedUser));
+    try {
+      const response = await fetch(`${API_BASE}/api/wheel/spin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify({
+          prize: prize.prize,
+          amount: prize.amount
+        })
+      });
 
-        // Display result
-        if (prize.type === "money") {
-          result.innerHTML = `<span class="success">🎉 You won $${prize.amount}! Balance updated.</span>`;
-          statusMessage.textContent = `Your new balance: $${updatedUser.balance || 0}`;
-        } else if (prize.type === "extra") {
-          result.innerHTML = `<span class="success">🔄 Congrats! You earned an Extra Spin</span>`;
-          canSpin = true;
-          spinBtn.disabled = false;
-          statusMessage.textContent = "You can spin again now!";
-        } else {
-          result.innerHTML = `<span>❌ Better Luck Next Time</span>`;
-          statusMessage.textContent = "Thanks for playing!";
-        }
-
-        // Update user balance
-        userBalance.textContent = `Balance: $${updatedUser.balance || 0}`;
-
-      } catch (err) {
-        console.error("Error processing spin:", err);
-        result.innerHTML = `<span class="error">Error processing spin</span>`;
-        statusMessage.textContent = err.message || "Please try again later";
-        
-        // Reset wheel in case of error
-        wheel.style.transform = 'rotate(0deg)';
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.msg || "Server error");
       }
-      
-      // Re-check eligibility after attempt
-      await checkEligibility();
-    }, 5000);
-  });
 
-  // Check on page load
-  checkEligibility();
+      const updatedUser = await response.json();
+      localStorage.setItem("rl_user", JSON.stringify(updatedUser));
+
+      // عرض النتيجة
+      if (prize.type === "money") {
+        result.innerHTML = `<span class="success">🎉 فزت بـ $${prize.amount}! الرصيد تم تحديثه.</span>`;
+        canSpin = false;
+      } else if (prize.type === "extra") {
+        result.innerHTML = `<span class="success">🔄 حصلت على دورة إضافية!</span>`;
+        canSpin = true;
+        spinBtn.disabled = false;
+      } else {
+        result.innerHTML = `<span>❌ حاول مرة أخرى</span>`;
+        canSpin = false;
+      }
+
+      userBalance.textContent = `Balance: $${updatedUser.balance || 0}`;
+    } catch (err) {
+      console.error("Error processing spin:", err);
+      result.innerHTML = `<span class="error">Error processing spin</span>`;
+      statusMessage.textContent = err.message || "Please try again later";
+      wheel.style.transform = 'rotate(0deg)';
+    }
+
+    // إعادة التحقق من الاشتراك بعد الدوران
+    await checkEligibility();
+  }, 5000);
+});
+
+// عند تحميل الصفحة
+checkEligibility();
 </script>
 
 </body>
