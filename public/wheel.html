@@ -433,12 +433,12 @@
   let canSpin = false;
 
   const prizes = [
-  { label: "$3", prize: "$3", amount: 3, section: 0 },
-  { label: "$2", prize: "$2", amount: 2, section: 1 },
-  { label: "$1", prize: "$1", amount: 1, section: 2 },
-  { label: "Better Luck", prize: "lose", amount: 0, section: 3 },
-  { label: "Better Luck", prize: "lose", amount: 0, section: 4 },
-  { label: "Extra Spin", prize: "extra", amount: 0, section: 5 }
+  { label: "$3", type: "money", amount: 3, section: 0, prize: "$3" },
+  { label: "$2", type: "money", amount: 2, section: 1, prize: "$2" },
+  { label: "$1", type: "money", amount: 1, section: 2, prize: "$1" },
+  { label: "Better Luck", type: "lose", amount: 0, section: 3, prize: "lose" },
+  { label: "Better Luck", type: "lose", amount: 0, section: 4, prize: "lose" },
+  { label: "Extra Spin", type: "extra", amount: 0, section: 5, prize: "extra" }
 ];
 
   // Check eligibility to spin
@@ -533,8 +533,8 @@
             Authorization: "Bearer " + token
           },
           body: JSON.stringify({
-            prize: selectedPrize.prize,
-            amount: selectedPrize.amount 
+            prize: prize.prize,
+            amount: prize.amount 
           })
         });
 
