@@ -683,7 +683,6 @@ app.delete("/api/admin/ticker/:id", authMiddleware, async (req, res) => {
 // Banners
 
 app.get("/api/admin/banners", authMiddleware, async (req, res) => {
-app.get("/api/admin/banners", authMiddleware, async (req, res) => {
   try {
     // التحقق من وجود المستخدم أولاً
     if (!req.user) {
@@ -2500,6 +2499,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
