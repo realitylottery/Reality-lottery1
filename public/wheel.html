@@ -433,9 +433,9 @@
   let canSpin = false;
 
   const prizes = [
-    { label: "$1", type: "money", amount: 1, section: 0 },
+    { label: "$3", type: "money", amount: 3, section: 0 },
     { label: "$2", type: "money", amount: 2, section: 1 },
-    { label: "$3", type: "money", amount: 3, section: 2 },
+    { label: "$1", type: "money", amount: 1, section: 2 },
     { label: "Better Luck", type: "lose", section: 3 },
     { label: "Better Luck", type: "lose", section: 4 },
     { label: "Extra Spin", type: "extra", section: 5 }
@@ -531,7 +531,7 @@
             Authorization: "Bearer " + token
           },
           body: JSON.stringify({
-            prize: prize.type,
+            prize: prize.label,
             amount: prize.amount || 0
           })
         });
