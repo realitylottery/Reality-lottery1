@@ -1410,11 +1410,7 @@ app.get("/api/admin/banners", authMiddleware, async (req, res) => {
 
     });
 
-
-
   }
-
-
 
 });
 
@@ -4979,10 +4975,6 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
-
-
-
-
 
 
 
