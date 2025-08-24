@@ -535,6 +535,7 @@ spinBtn.addEventListener("click", async () => {
       if (prize.type === "money") {
         result.innerHTML = `<span class="success">🎉 فزت بـ $${prize.amount}! الرصيد تم تحديثه.</span>`;
         canSpin = false;
+        spinBtn.disabled = true;
       } else if (prize.type === "extra") {
         result.innerHTML = `<span class="success">🔄 حصلت على دورة إضافية!</span>`;
         canSpin = true;
@@ -542,6 +543,7 @@ spinBtn.addEventListener("click", async () => {
       } else {
         result.innerHTML = `<span>❌ حاول مرة أخرى</span>`;
         canSpin = false;
+        spinBtn.disabled = true;
       }
 
       userBalance.textContent = `Balance: $${updatedUser.balance || 0}`;
