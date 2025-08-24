@@ -695,12 +695,29 @@ app.delete("/api/admin/ticker/:id", authMiddleware, async (req, res) => {
 
 // Banners
 
-app.get("/api/banners", async (req, res) => {
-
-  const banners = await Banner.find().sort({ createdAt: -1 });
-
-  res.json({ banners });
-
+app.get("/api/admin/banners", authMiddleware, async (req, res) => {
+  try {
+    // التحقق من صلاحية الأدمن
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden: Admin access required" });
+    }
+    
+    // جلب البانرات من قاعدة البيانات
+    const banners = await Banner.find().sort({ createdAt: -1 });
+    
+    // إرجاع البيانات بنفس الهيكل الذي تتوقعه الواجهة
+    res.json({ 
+      success: true,
+      banners: banners 
+    });
+    
+  } catch (error) {
+    console.error("Error fetching banners:", error);
+    res.status(500).json({ 
+      message: "Internal server error",
+      error: error.message 
+    });
+  }
 });
 
 
@@ -2483,6 +2500,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
