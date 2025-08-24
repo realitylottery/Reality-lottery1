@@ -1653,60 +1653,61 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 
 app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
   try {
-  const { userId, isReset } = req.body;
-  if (!userId) return res.status(400).json({ message: "userId is required" });
+    const { userId, isReset } = req.body;
+    if (!userId) return res.status(400).json({ message: "userId is required" });
 
-  const user = await User.findById(userId);
-  if (!user) return res.status(404).json({ message: "User not found" });
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-  // حساب التقدم الصحيح: يعتمد فقط على عدد المدعوين المشتركين
-  const progress = Math.min(6, user.currentTaskProgress || 0);
-  
-  // مكافأة حسب التقدم
-  const rewardAmount = calculateTaskReward(user.subscriptionType, progress);
+    // حساب التقدم الصحيح
+    const progress = Math.min(6, user.currentTaskProgress || 0);
+    
+    // مكافأة حسب التقدم
+    const rewardAmount = calculateTaskReward(user.subscriptionType, progress);
 
-  if (!isReset) {
-    return res.json({ 
-      success: true, 
-      message: "Nothing to do without reset", 
-      progress, 
-      reward: rewardAmount 
+    // 🔥 التصفير التلقائي عندما تصل المهمة إلى 6/6 (حتى بدون isReset)
+    const shouldAutoReset = progress === 6;
+
+    if (!isReset && !shouldAutoReset) {
+      return res.json({ 
+        success: true, 
+        message: "Nothing to do without reset", 
+        progress, 
+        reward: rewardAmount 
+      });
+    }
+
+    // يُسمح بالريست فقط لو التقدم >= 2
+    if (progress < 2) {
+      return res.status(400).json({ 
+        message: "Progress too low to reset/claim", 
+        progress 
+      });
+    }
+
+    // إضافة المكافأة + زيادة المهام المنجزة + تصفير تقدم الدورة
+    user.balance = (user.balance || 0) + rewardAmount;
+    user.completedTasks = (user.completedTasks || 0) + 1;
+    user.currentTaskProgress = 0;
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: shouldAutoReset ? "Task auto-completed & reward claimed" : "Task reset & reward claimed",
+      reward: rewardAmount,
+      newBalance: user.balance,
+      completedTasks: user.completedTasks,
+      currentTaskProgress: user.currentTaskProgress,
+      successfulInvites: user.successfulInvites,
+      autoReset: shouldAutoReset // إضافة هذا الحقل للتمييز بين التلقائي واليدوي
     });
-  }
 
-   const shouldAutoReset = progress === 6;
-
-  // يُسمح بالريست فقط لو التقدم >= 2
-  if (progress < 2) {
-    return res.status(400).json({ 
-      message: "Progress too low to reset/claim", 
-      progress 
-    });
-  }
-
-  // إضافة المكافأة + زيادة المهام المنجزة + تصفير تقدم الدورة
-  user.balance = (user.balance || 0) + rewardAmount;
-  user.completedTasks = (user.completedTasks || 0) + 1;
-  user.currentTaskProgress = 0;
-
-  await user.save();
-
-  return res.json({
-    success: true,
-    message: "Task reset & reward claimed",
-    reward: rewardAmount,
-    newBalance: user.balance,
-    completedTasks: user.completedTasks,
-    currentTaskProgress: user.currentTaskProgress,
-    successfulInvites: user.successfulInvites 
-  });
-
-} catch (err) {
-  console.error("Complete task error:", err);
-  res.status(500).json({ message: "Error completing task" });
+  } catch (err) {
+    console.error("Complete task error:", err);
+    res.status(500).json({ message: "Error completing task" });
   }
 });
-
 
 // تحديث تقدم المهمة عند اشتراك مدعو
 
@@ -1729,7 +1730,15 @@ app.post("/api/tasks/update-progress", authMiddleware, async (req, res) => {
     referrer.currentTaskProgress += 1;
 
     
-
+if (referrer.currentTaskProgress >= 6) {
+      const rewardAmount = calculateTaskReward(referrer.subscriptionType, 6);
+      referrer.balance = (referrer.balance || 0) + rewardAmount;
+      referrer.completedTasks = (referrer.completedTasks || 0) + 1;
+      referrer.currentTaskProgress = 0;
+      
+      console.log(`🎉 Auto-completed task for ${referrer.username}! Reward: $${rewardAmount}`);
+}
+    
     // زيادة عدد الدعوات الناجحة
 
     referrer.successfulInvites += 1;
@@ -2359,6 +2368,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
