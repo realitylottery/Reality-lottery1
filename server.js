@@ -882,9 +882,6 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
   try {
 
-     // Give user a spin when they subscribe
-    user.spinsUsed = false; // Reset spins
-    await user.save();
 
     if (!req.user.roles?.includes("admin")) {
 
@@ -912,7 +909,9 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-
+     // Give user a spin when they subscribe
+    user.spinsUsed = false; // Reset spins
+    await user.save();
 
     // Update payment status
 
@@ -2433,6 +2432,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
