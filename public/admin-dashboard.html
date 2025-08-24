@@ -1605,7 +1605,8 @@ async function createBannerHandler() {
 
 document.querySelector('#btnCreateBanner').addEventListener('click', createBannerHandler);
 document.querySelector('#btnReloadBanners').addEventListener('click', loadBannerList);
-/ ========= CONTENT =========
+
+  
   async function loadContentAdmin(){
     const r = await safeFetch(API_BASE + '/api/admin/content', { headers: authHeaders(false) });
     if (r._error){
