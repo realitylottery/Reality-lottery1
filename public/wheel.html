@@ -1,473 +1,252 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lucky Wheel - Reality Lottery</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --gold-primary: #FFD700;
-            --gold-secondary: #D4AF37;
-            --gold-light: #FFF8DC;
-            --black-primary: #000000;
-            --black-secondary: #1A1A1A;
-            --black-dark: #0D0D0D;
-            --gray-dark: #2C2C2C;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lucky Wheel - RealityLottery</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #ffd700;  /* ذهبي */
+      --secondary-color: #ffa500;
+      --dark-bg: #000;           /* أسود */
+      --card-bg: #111;
+      --text-light: #eee;
+    }
 
-        body {
-            background: linear-gradient(135deg, var(--black-dark) 0%, var(--black-secondary) 100%);
-            color: var(--gold-light);
-            font-family: 'Arial', sans-serif;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
+    body {
+      background: var(--dark-bg);
+      color: var(--text-light);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+    header {
+      padding: 15px;
+      background: var(--card-bg);
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--primary-color);
+      box-shadow: 0 2px 10px rgba(255,215,0,0.3);
+    }
 
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
+    .wheel-container {
+      position: relative;
+      width: 360px;
+      height: 360px;
+      margin: 50px auto 20px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 0 25px rgba(255,215,0,0.4);
+    }
 
-        .logo {
-            font-size: 36px;
-            font-weight: bold;
-            color: var(--gold-primary);
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-            margin-bottom: 10px;
-        }
+    .wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 10px solid var(--primary-color);
+      background: conic-gradient(
+        #1a1a1a 0deg 60deg,
+        #2b2b2b 60deg 120deg,
+        #1a1a1a 120deg 180deg,
+        #2b2b2b 180deg 240deg,
+        #1a1a1a 240deg 300deg,
+        #2b2b2b 300deg 360deg
+      );
+      transition: transform 6s cubic-bezier(0.25, 1, 0.5, 1);
+      position: relative;
+    }
 
-        .subtitle {
-            color: var(--gold-light);
-            opacity: 0.8;
-            font-size: 18px;
-        }
+    .wheel::after {
+      content: "$1  $2  $3  ❌  🔄  ❌";
+      font-size: 26px;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      color: var(--primary-color);
+      text-shadow: 0 0 8px rgba(255,215,0,0.8);
+    }
 
-        .wheel-section {
-            background: linear-gradient(135deg, var(--black-secondary) 0%, var(--gray-dark) 100%);
-            border: 3px solid var(--gold-primary);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            position: relative;
-            overflow: hidden;
-        }
+    .pointer {
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 25px solid transparent;
+      border-right: 25px solid transparent;
+      border-bottom: 35px solid var(--primary-color);
+      filter: drop-shadow(0 0 5px var(--primary-color));
+    }
 
-        .wheel-section::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, var(--gold-primary), transparent, var(--gold-primary));
-            z-index: -1;
-            border-radius: 22px;
-            animation: borderGlow 3s ease-in-out infinite;
-        }
+    .spin-btn {
+      margin-top: 25px;
+      background: var(--primary-color);
+      color: #000;
+      padding: 14px 35px;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 35px;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 0 15px rgba(255,215,0,0.5);
+    }
 
-        @keyframes borderGlow {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
+    .spin-btn:hover:enabled {
+      transform: scale(1.05);
+      background: var(--secondary-color);
+    }
 
-        .wheel-title {
-            text-align: center;
-            font-size: 32px;
-            color: var(--gold-primary);
-            margin-bottom: 30px;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-        }
+    .spin-btn:disabled {
+      background: #444;
+      color: #999;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
 
-        .wheel-wrapper {
-            position: relative;
-            width: 350px;
-            height: 350px;
-            margin: 0 auto;
-        }
-
-        #wheel {
-            width: 100%;
-            height: 100%;
-            transition: transform 4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
-        }
-
-        .wheel-pointer {
-            position: absolute;
-            top: -35px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 50px;
-            background: var(--gold-primary);
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-            z-index: 10;
-            box-shadow: 0 0 15px var(--gold-primary);
-            animation: pointerGlow 2s ease-in-out infinite;
-        }
-
-        @keyframes pointerGlow {
-            0%, 100% { box-shadow: 0 0 15px var(--gold-primary); }
-            50% { box-shadow: 0 0 25px var(--gold-primary); }
-        }
-
-        .spin-button {
-            background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-secondary) 100%);
-            color: var(--black-dark);
-            border: none;
-            padding: 18px 40px;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            margin: 40px auto 20px;
-            display: block;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .spin-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5);
-            background: linear-gradient(135deg, var(--gold-secondary) 0%, var(--gold-primary) 100%);
-        }
-
-        .spin-button:disabled {
-            background: var(--gray-dark);
-            color: var(--gold-light);
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .spins-info {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 18px;
-        }
-
-        .spins-count {
-            color: var(--gold-primary);
-            font-weight: bold;
-            font-size: 24px;
-        }
-
-        .subscription-info {
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px solid var(--gold-primary);
-            border-radius: 10px;
-            padding: 20px;
-            margin: 30px auto;
-            max-width: 400px;
-            text-align: center;
-        }
-
-        .reward-popup {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, var(--black-secondary) 0%, var(--gray-dark) 100%);
-            border: 3px solid var(--gold-primary);
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            min-width: 300px;
-        }
-
-        .reward-title {
-            color: var(--gold-primary);
-            font-size: 28px;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-        }
-
-        .reward-amount {
-            font-size: 48px;
-            color: var(--gold-primary);
-            font-weight: bold;
-            margin: 20px 0;
-            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-            animation: rewardPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes rewardPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .close-popup {
-            background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-secondary) 100%);
-            color: var(--black-dark);
-            border: none;
-            padding: 15px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 25px;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .close-popup:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
-        }
-
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 999;
-        }
-
-        .wheel-text {
-            font-size: 14px;
-            font-weight: bold;
-            fill: var(--black-dark);
-            text-anchor: middle;
-        }
-
-        .gold-text {
-            color: var(--gold-primary);
-        }
-
-        .info-text {
-            text-align: center;
-            margin-top: 20px;
-            opacity: 0.8;
-            font-size: 14px;
-        }
-
-        @media (max-width: 768px) {
-            .wheel-wrapper {
-                width: 280px;
-                height: 280px;
-            }
-            
-            .wheel-title {
-                font-size: 24px;
-            }
-            
-            .spin-button {
-                padding: 15px 30px;
-                font-size: 16px;
-            }
-        }
-    </style>
+    .result {
+      margin-top: 30px;
+      font-size: 22px;
+      font-weight: bold;
+      color: var(--primary-color);
+      min-height: 30px;
+    }
+  </style>
 </head>
 <body>
-    <div class="overlay" id="overlay"></div>
-    
-    <div class="container">
-        <div class="header">
-            <div class="logo">REALITY LOTTERY</div>
-            <div class="subtitle">Spin to Win Amazing Rewards</div>
-        </div>
 
-        <div class="wheel-section">
-            <h2 class="wheel-title">🎡 LUCKY WHEEL</h2>
-            
-            <div class="wheel-wrapper">
-                <div class="wheel-pointer"></div>
-                <svg id="wheel" width="350" height="350" viewBox="0 0 350 350"></svg>
-            </div>
+<header>🎡 Lucky Wheel</header>
 
-            <button class="spin-button" id="spinBtn">
-                <i class="fas fa-sync-alt"></i> SPIN THE WHEEL
-            </button>
+<div class="wheel-container">
+  <div class="wheel" id="wheel"></div>
+  <div class="pointer"></div>
+</div>
 
-            <div class="spins-info">
-                Spins available: <span class="spins-count" id="spinsCount">0</span>
-            </div>
+<button id="spinBtn" class="spin-btn">Spin Now</button>
 
-            <div class="subscription-info">
-                <i class="fas fa-crown gold-text"></i>
-                <span>Get 1 free spin when you subscribe to any plan!</span>
-            </div>
-        </div>
+<div class="result" id="result">Subscribe to unlock your spin!</div>
 
-        <div class="info-text">
-            * Spin the wheel to win amazing rewards. One spin per subscription.
-        </div>
-    </div>
+<script>
+  const API_BASE = "https://realitylottery.koyeb.app";
+  const token = localStorage.getItem("rl_token");
+  const userData = JSON.parse(localStorage.getItem("rl_user") || "{}");
 
-    <div class="reward-popup" id="rewardPopup">
-        <div class="reward-title">🎉 CONGRATULATIONS!</div>
-        <p>You've won:</p>
-        <div class="reward-amount" id="rewardAmount">$0</div>
-        <p>has been added to your balance</p>
-        <button class="close-popup" id="closePopup">
-            <i class="fas fa-check"></i> CLAIM REWARD
-        </button>
-    </div>
+  const wheel = document.getElementById("wheel");
+  const spinBtn = document.getElementById("spinBtn");
+  const result = document.getElementById("result");
+  let canSpin = false;
 
-    <script>
-        const rewards = [
-            { amount: 5, color: '#FFD700', text: '$5' },
-            { amount: 10, color: '#D4AF37', text: '$10' },
-            { amount: 3, color: '#FFD700', text: '$3' },
-            { amount: 20, color: '#D4AF37', text: '$20' },
-            { amount: 2, color: '#FFD700', text: '$2' },
-            { amount: 15, color: '#D4AF37', text: '$15' },
-            { amount: 8, color: '#FFD700', text: '$8' },
-            { amount: 25, color: '#D4AF37', text: '$25' }
-        ];
+  // القطاعات (بنفس ترتيب العجلة)
+  const prizes = [
+    { label: "$1", type: "money", amount: 1 },
+    { label: "$2", type: "money", amount: 2 },
+    { label: "$3", type: "money", amount: 3 },
+    { label: "❌ Better Luck", type: "lose" },
+    { label: "🔄 Extra Spin", type: "extra" },
+    { label: "❌ Better Luck", type: "lose" }
+  ];
 
-        let isSpinning = false;
-        let spinsAvailable = 0;
+  async function checkEligibility() {
+    if (!token) {
+      spinBtn.disabled = true;
+      result.textContent = "Login & subscribe to unlock your spin!";
+      return;
+    }
 
-        // Initialize wheel
-        function initWheel() {
-            const wheel = document.getElementById('wheel');
-            const centerX = 175;
-            const centerY = 175;
-            const radius = 160;
-            const anglePerSection = (2 * Math.PI) / rewards.length;
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/me`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+      if (!res.ok) throw new Error("Failed to fetch user");
 
-            rewards.forEach((reward, index) => {
-                const startAngle = index * anglePerSection;
-                const endAngle = (index + 1) * anglePerSection;
+      const data = await res.json();
+      localStorage.setItem("rl_user", JSON.stringify(data));
 
-                // Create wheel section
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                const x1 = centerX + radius * Math.cos(startAngle);
-                const y1 = centerY + radius * Math.sin(startAngle);
-                const x2 = centerX + radius * Math.cos(endAngle);
-                const y2 = centerY + radius * Math.sin(endAngle);
+      if (data.subscriptionActive && !data.hasSpunWheel) {
+        canSpin = true;
+        spinBtn.disabled = false;
+        result.textContent = "You have 1 spin available 🎉";
+      } else if (data.subscriptionActive && data.hasSpunWheel) {
+        spinBtn.disabled = true;
+        result.textContent = "You already used your spin this subscription ❌";
+      } else {
+        spinBtn.disabled = true;
+        result.textContent = "Subscribe to unlock your spin!";
+      }
+    } catch (err) {
+      console.error(err);
+      result.textContent = "Error checking spin eligibility.";
+      spinBtn.disabled = true;
+    }
+  }
 
-                path.setAttribute('d', `M${centerX},${centerY} L${x1},${y1} A${radius},${radius} 0 0,1 ${x2},${y2} Z`);
-                path.setAttribute('class', 'wheel-section');
-                path.setAttribute('fill', reward.color);
-                wheel.appendChild(path);
+  spinBtn.addEventListener("click", async () => {
+    if (!canSpin) return;
 
-                // Create text
-                const textAngle = startAngle + anglePerSection / 2;
-                const textX = centerX + (radius * 0.7) * Math.cos(textAngle);
-                const textY = centerY + (radius * 0.7) * Math.sin(textAngle);
+    const deg = Math.floor(2000 + Math.random() * 2000);
+    wheel.style.transform = `rotate(${deg}deg)`;
+    spinBtn.disabled = true;
 
-                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                text.setAttribute('x', textX);
-                text.setAttribute('y', textY);
-                text.setAttribute('class', 'wheel-text');
-                text.setAttribute('transform', `rotate(${textAngle * 180 / Math.PI + 90}, ${textX}, ${textY})`);
-                text.textContent = reward.text;
-                wheel.appendChild(text);
-            });
+    setTimeout(async () => {
+      const sector = ((deg % 360) / 60) | 0;
+      const prize = prizes[5 - sector]; // حساب القطاع العكسي
+
+      if (prize.type === "money") {
+        result.textContent = `🎁 You won ${prize.label}`;
+        try {
+          await fetch(`${API_BASE}/api/wheel/spin`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token
+            },
+            body: JSON.stringify({ prize: prize.label, amount: prize.amount })
+          });
+
+          let updatedUser = { ...userData };
+          updatedUser.balance = (updatedUser.balance || 0) + prize.amount;
+          updatedUser.hasSpunWheel = true;
+          localStorage.setItem("rl_user", JSON.stringify(updatedUser));
+        } catch (err) {
+          console.error("Error saving spin result:", err);
         }
 
-        // Spin the wheel
-        function spinWheel() {
-            if (isSpinning || spinsAvailable <= 0) return;
+      } else if (prize.type === "extra") {
+        result.textContent = `🔄 Congrats! You earned an Extra Spin`;
+        canSpin = true;
+        spinBtn.disabled = false;
 
-            isSpinning = true;
-            document.getElementById('spinBtn').disabled = true;
-
-            const wheel = document.getElementById('wheel');
-            const spinDegrees = 3600 + Math.random() * 3600;
-            const winningIndex = Math.floor(Math.random() * rewards.length);
-            const winningReward = rewards[winningIndex];
-
-            wheel.style.transform = `rotate(${spinDegrees}deg)`;
-
-            setTimeout(() => {
-                isSpinning = false;
-                spinsAvailable--;
-                updateSpinsDisplay();
-                
-                // Show reward popup
-                document.getElementById('rewardAmount').textContent = `$${winningReward.amount}`;
-                document.getElementById('rewardPopup').style.display = 'block';
-                document.getElementById('overlay').style.display = 'block';
-                
-                // Add reward to balance
-                addToBalance(winningReward.amount);
-
-            }, 4000);
+      } else {
+        result.textContent = `❌ Better Luck Next Time`;
+        try {
+          await fetch(`${API_BASE}/api/wheel/spin`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token
+            },
+            body: JSON.stringify({ prize: "lose" })
+          });
+          let updatedUser = { ...userData };
+          updatedUser.hasSpunWheel = true;
+          localStorage.setItem("rl_user", JSON.stringify(updatedUser));
+        } catch (err) {
+          console.error("Error saving spin result:", err);
         }
+      }
+    }, 6000);
+  });
 
-        // Add reward to user balance
-        async function addToBalance(amount) {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch('/api/user/add-balance', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ amount: amount })
-                });
+  checkEligibility();
+</script>
 
-                if (!response.ok) {
-                    throw new Error('Failed to add balance');
-                }
-            } catch (error) {
-                console.error('Error adding balance:', error);
-            }
-        }
-
-        // Check spins available
-        async function checkSpins() {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch('/api/user/spins', {
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    spinsAvailable = data.spinsAvailable || 0;
-                    updateSpinsDisplay();
-                }
-            } catch (error) {
-                console.error('Error checking spins:', error);
-            }
-        }
-
-        function updateSpinsDisplay() {
-            document.getElementById('spinsCount').textContent = spinsAvailable;
-            document.getElementById('spinBtn').disabled = spinsAvailable <= 0;
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            initWheel();
-            checkSpins();
-
-            document.getElementById('spinBtn').addEventListener('click', spinWheel);
-            document.getElementById('closePopup').addEventListener('click', function() {
-                document.getElementById('rewardPopup').style.display = 'none';
-                document.getElementById('overlay').style.display = 'none';
-                checkSpins(); // Refresh spins count
-            });
-
-            // Check authentication
-            if (!localStorage.getItem('token')) {
-                window.location.href = 'login.html';
-            }
-        });
-    </script>
 </body>
 </html>
