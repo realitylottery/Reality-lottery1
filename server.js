@@ -135,6 +135,19 @@ function calculateTaskReward(subscriptionType, progress) {
 }
 
 
+/* ==== دالة التحقق من التوكن (بدون ملف Middleware) ==== */
+async function authMiddleware(req, res, next) {
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+  if (!token) return res.status(401).json({ msg: "No token, authorization denied" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded.user; // هذا يحتوي على user.id
+    next();
+  } catch (err) {
+    res.status(401).json({ msg: "Token is not valid" });
+  }
+}
 
 async function authMiddleware(req, res, next) {
 
@@ -171,6 +184,44 @@ async function authMiddleware(req, res, next) {
 // ================= ROUTES =================
 
 
+/* ==== API spin العجلة ==== */
+app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
+  try {
+    const { prize, amount } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    if (!user.subscriptionActive) return res.status(400).json({ msg: "No active subscription" });
+    if (user.hasSpunWheel) return res.status(400).json({ msg: "You already used your spin" });
+
+    let message = "";
+
+    if (prize === "lose") {
+      user.hasSpunWheel = true;
+      message = "Better luck next time!";
+    } else if (prize === "extra") {
+      message = "You earned an extra spin!";
+    } else if (prize.startsWith("$") && amount > 0) {
+      user.balance += amount;
+      user.hasSpunWheel = true;
+      message = `You won ${prize}! Balance updated.`;
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      prize,
+      amount: amount || 0,
+      balance: user.balance,
+      hasSpunWheel: user.hasSpunWheel,
+      message
+    });
+  } catch (err) {
+    console.error("Wheel Spin Error:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
 
 // Create withdrawal
 
@@ -2432,6 +2483,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
