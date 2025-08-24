@@ -882,6 +882,10 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
   try {
 
+     // Give user a spin when they subscribe
+    user.spinsUsed = false; // Reset spins
+    await user.save();
+
     if (!req.user.roles?.includes("admin")) {
 
       return res.status(403).json({ message: "Forbidden" });
@@ -1100,7 +1104,68 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 });
 
+// Get user spins
+app.get("/api/user/spins", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
+    // User gets 1 spin when they subscribe
+    const hasSubscription = user.subscriptionActive && user.subscriptionExpires > new Date();
+    const spinsAvailable = hasSubscription ? 1 : 0;
+
+    res.json({ 
+      spinsAvailable,
+      hasSubscription 
+    });
+  } catch (err) {
+    console.error("Spins error:", err);
+    res.status(500).json({ message: "Error checking spins" });
+  }
+});
+
+// Add to user balance
+app.post("/api/user/add-balance", authMiddleware, async (req, res) => {
+  try {
+    const { amount } = req.body;
+    if (!amount) return res.status(400).json({ message: "Amount is required" });
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.balance = (user.balance || 0) + amount;
+    await user.save();
+
+    res.json({ 
+      success: true,
+      message: `$${amount} added to your balance`,
+      newBalance: user.balance
+    });
+  } catch (err) {
+    console.error("Add balance error:", err);
+    res.status(500).json({ message: "Error adding balance" });
+  }
+});
+
+// Reset spins when user subscribes (call this when payment is verified)
+app.post("/api/user/reset-spins", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Reset spins used flag when user subscribes
+    user.spinsUsed = false;
+    await user.save();
+
+    res.json({ 
+      success: true,
+      message: "Spins reset for new subscription"
+    });
+  } catch (err) {
+    console.error("Reset spins error:", err);
+    res.status(500).json({ message: "Error resetting spins" });
+  }
+});
 
 // Check subscription status
 
@@ -2368,6 +2433,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
