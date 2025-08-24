@@ -207,7 +207,7 @@
           Authorization: "Bearer " + token
         },
         body: JSON.stringify({
-          prize: prize.label,
+          prize: prize.type,
           amount: prize.amount || 0
         })
       });
@@ -219,13 +219,14 @@
 
       // تحديث النتيجة على الصفحة
       if (prize.type === "money") {
-        result.textContent = `🎁 You won ${prize.label} ! Balance updated.`;
-      } else if (prize.type === "extra") {
-        result.textContent = `🔄 Congrats! You earned an Extra Spin`;
-      } else {
-        result.textContent = `❌ Better Luck Next Time`;
+  result.textContent = `🎁 You won $${prize.amount}! Balance updated.`;
+} else if (prize.type === "extra") {
+  result.textContent = `🔄 Congrats! You earned an Extra Spin`;
+  canSpin = true;
+  spinBtn.disabled = false;
+} else {
+  result.textContent = `❌ Better Luck Next Time`;
       }
-
       // إعادة التحقق من حالة الزر بعد كل لفة
       await checkEligibility();
 
