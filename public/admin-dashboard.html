@@ -1439,68 +1439,74 @@ $('#invitesSearch').addEventListener('input', loadInvites);
   $('#bannerImage').addEventListener('input', updateBannerPreview);
   updateBannerPreview();
 
-  async function loadBannerList(){
+  async function loadBannerList() {
     const list = $('#bannerList');
     list.innerHTML = '<div class="muted">Loading…</div>';
-    const r = await safeFetch(API_BASE + '/api/admin/banners', { headers: authHeaders(false) });
     
-    if (r._error){
-      list.innerHTML = '';
-      list.appendChild(el('div',{class:'notice'},[r.message]));
-      return;
-    }
-    
-    const items = r.banners || [];
-    if (!items.length){
-      list.innerHTML = '<div class="muted">No banners yet.</div>';
-      return;
-    }
-    
-    list.innerHTML = '';
-    items.forEach(banner=>{
-      const card = el('div', {class:'card'}, [
-        el('div', {class:'row'}, [
-          el('div', {class:'col'}, [
-            el('div', {class:'title', style:'font-size:15px'}, [banner.title || '(no title)']),
-            el('div', {class:'muted small'}, [banner._id || '']),
-            el('div', {style:'margin-top:6px'}, [banner.description || ''])
-          ]),
-          el('div', {class:'col'}, [
-            banner.image ? el('img', {src:banner.image, class:'img-preview'}) : el('div', {class:'muted small'}, ['No image']),
-            el('div', {class:'small muted', style:'margin-top:6px'}, ['Button: ', (banner.buttonText||'-'), ' → ', (banner.buttonLink||'-')])
-          ])
-        ]),
-        el('div', {class:'row', style:'margin-top:8px'}, [
-          el('button', {class:'btn small', 'data-edit-banner': banner._id}, [el('i',{class:'fa-solid fa-pen'}), document.createTextNode(' Edit')]),
-          el('button', {class:'btn-danger small', 'data-del-banner': banner._id}, [el('i',{class:'fa-solid fa-trash'}), document.createTextNode(' Delete')])
-        ])
-      ]);
-      list.appendChild(card);
-    });
-
-    // Add event listeners for delete buttons
-    list.querySelectorAll('button[data-del-banner]').forEach(b=>{
-      b.addEventListener('click', async ()=>{
-        if (!confirm('Delete this banner?')) return;
-        const id = b.getAttribute('data-del-banner');
-        b.disabled = true; 
-        b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting…';
-        
-        const r = await safeFetch(API_BASE + '/api/admin/banners/' + id, {
-          method: 'DELETE', 
-          headers: authHeaders(false)
-        });
+    try {
+        const r = await safeFetch(API_BASE + '/api/admin/banners', { headers: authHeaders(false) });
         
         if (r._error) {
-          alert('Delete failed: ' + r.message);
-          b.disabled = false;
-          b.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
-        } else {
-          loadBannerList();
+            list.innerHTML = '';
+            list.appendChild(el('div', { class: 'notice' }, [r.message]));
+            return;
         }
-      });
-    });
+        
+        const items = r.banners || r || []; // حاول التعامل مع هياكل بيانات مختلفة
+        if (!items.length) {
+            list.innerHTML = '<div class="muted">No banners yet.</div>';
+            return;
+        }
+        
+        list.innerHTML = '';
+        items.forEach(banner => {
+            const card = el('div', { class: 'card' }, [
+                el('div', { class: 'row' }, [
+                    el('div', { class: 'col' }, [
+                        el('div', { class: 'title', style: 'font-size:15px' }, [banner.title || '(no title)']),
+                        el('div', { class: 'muted small' }, [banner._id || '']),
+                        el('div', { style: 'margin-top:6px' }, [banner.description || ''])
+                    ]),
+                    el('div', { class: 'col' }, [
+                        banner.image ? el('img', { src: banner.image, class: 'img-preview' }) : el('div', { class: 'muted small' }, ['No image']),
+                        el('div', { class: 'small muted', style: 'margin-top:6px' }, ['Button: ', (banner.buttonText || '-'), ' → ', (banner.buttonLink || '-')])
+                    ])
+                ]),
+                el('div', { class: 'row', style: 'margin-top:8px' }, [
+                    el('button', { class: 'btn small', 'data-edit-banner': banner._id }, [el('i', { class: 'fa-solid fa-pen' }), document.createTextNode(' Edit')]),
+                    el('button', { class: 'btn-danger small', 'data-del-banner': banner._id }, [el('i', { class: 'fa-solid fa-trash' }), document.createTextNode(' Delete')])
+                ])
+            ]);
+            list.appendChild(card);
+        });
 
+        // إضافة مستمعي الأحداث لأزرار الحذف
+        list.querySelectorAll('button[data-del-banner]').forEach(b => {
+            b.addEventListener('click', async () => {
+                if (!confirm('Delete this banner?')) return;
+                const id = b.getAttribute('data-del-banner');
+                b.disabled = true;
+                b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting…';
+                
+                const r = await safeFetch(API_BASE + '/api/admin/banners/' + id, {
+                    method: 'DELETE',
+                    headers: authHeaders(false)
+                });
+                
+                if (r._error) {
+                    alert('Delete failed: ' + r.message);
+                    b.disabled = false;
+                    b.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+                } else {
+                    loadBannerList(); // إعادة تحميل القائمة بعد الحذف
+                }
+            });
+        });
+
+    } catch (error) {
+        list.innerHTML = '<div class="notice">Error loading banners: ' + error.message + '</div>';
+    }
+  }
     // Add event listeners for edit buttons
     list.querySelectorAll('button[data-edit-banner]').forEach(b=>{
       b.addEventListener('click', async ()=>{
