@@ -506,9 +506,8 @@ spinBtn.addEventListener("click", async () => {
 
   setTimeout(async () => {
     const normalizedDeg = deg % 360;
-    const sector = Math.floor(normalizedDeg / 60) % 6;
-    const prizeIndex = (6 - sector) % 6; // اضبط حسب اتجاه العجلة
-    const prize = prizes[prizeIndex];
+    const sector = Math.floor(normalizedDeg / 60);
+    const prize = prizes[sector]; // مباشرة اختر القطاع الصحيح
 
     try {
       const response = await fetch(`${API_BASE}/api/wheel/spin`, {
@@ -529,22 +528,20 @@ spinBtn.addEventListener("click", async () => {
       }
 
       const updatedUser = await response.json();
-      localStorage.setItem("rl_user", JSON.stringify(updatedUser));
+localStorage.setItem("rl_user", JSON.stringify(updatedUser));
 
-      // عرض النتيجة
-      if (prize.type === "money") {
-        result.innerHTML = `<span class="success">🎉 فزت بـ $${prize.amount}! الرصيد تم تحديثه.</span>`;
-        canSpin = false;
-        spinBtn.disabled = true;
-      } else if (prize.type === "extra") {
-        result.innerHTML = `<span class="success">🔄 حصلت على دورة إضافية!</span>`;
-        canSpin = true;
-        spinBtn.disabled = false;
-      } else {
-        result.innerHTML = `<span>❌ حاول مرة أخرى</span>`;
-        canSpin = false;
-        spinBtn.disabled = true;
-      }
+// تحديث حالة الزر
+canSpin = updatedUser.hasSpunWheel === false || prize.type === "extra";
+spinBtn.disabled = updatedUser.hasSpunWheel && prize.type !== "extra";
+
+// عرض النتيجة
+if (prize.type === "money") {
+  result.innerHTML = `<span class="success">🎉 فزت بـ $${prize.amount}! الرصيد تم تحديثه.</span>`;
+} else if (prize.type === "extra") {
+  result.innerHTML = `<span class="success">🔄 حصلت على دورة إضافية!</span>`;
+} else {
+  result.innerHTML = `<span>❌ حاول مرة أخرى</span>`;
+}
 
       userBalance.textContent = `Balance: $${updatedUser.balance || 0}`;
     } catch (err) {
