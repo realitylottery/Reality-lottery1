@@ -155,37 +155,37 @@
   ];
 
   async function checkEligibility() {
-    if (!token) {
+  if (!token) {
+    spinBtn.disabled = true;
+    result.textContent = "Login & subscribe to unlock your spin!";
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/me`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    if (!res.ok) throw new Error("Failed to fetch user");
+
+    const data = await res.json();
+    localStorage.setItem("rl_user", JSON.stringify(data));
+
+    if (data.subscriptionActive && !data.hasSpunWheel) {
+      canSpin = true;
+      spinBtn.disabled = false;
+      result.textContent = "You have 1 spin available 🎉";
+    } else if (data.subscriptionActive && data.hasSpunWheel) {
       spinBtn.disabled = true;
-      result.textContent = "Login & subscribe to unlock your spin!";
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE}/api/auth/me`, {
-        headers: { Authorization: "Bearer " + token }
-      });
-      if (!res.ok) throw new Error("Failed to fetch user");
-
-      const data = await res.json();
-      localStorage.setItem("rl_user", JSON.stringify(data));
-
-      if (data.subscriptionActive && !data.hasSpunWheel) {
-        canSpin = true;
-        spinBtn.disabled = false;
-        result.textContent = "You have 1 spin available 🎉";
-      } else if (data.subscriptionActive && data.hasSpunWheel) {
-        spinBtn.disabled = true;
-        result.textContent = "You already used your spin this subscription ❌";
-      } else {
-        spinBtn.disabled = true;
-        result.textContent = "Subscribe to unlock your spin!";
-      }
-    } catch (err) {
-      console.error(err);
-      result.textContent = "Error checking spin eligibility.";
+      result.textContent = "You already used your spin this subscription ❌";
+    } else {
       spinBtn.disabled = true;
+      result.textContent = "Subscribe to unlock your spin!";
     }
+  } catch (err) {
+    console.error(err);
+    result.textContent = "Error checking spin eligibility.";
+    spinBtn.disabled = true;
+  }
   }
 
   spinBtn.addEventListener("click", async () => {
