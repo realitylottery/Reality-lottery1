@@ -1418,27 +1418,6 @@ app.get("/api/admin/banners", authMiddleware, async (req, res) => {
 
     });
 
-    
-
-  } catch (error) {
-
-    console.error("Error in /api/admin/banners:", error);
-
-    res.status(500).json({ 
-
-      success: false,
-
-      message: "Internal server error",
-
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
-
-    });
-
-  }
-
-});
-
-
 
 
 
@@ -4999,6 +4978,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
