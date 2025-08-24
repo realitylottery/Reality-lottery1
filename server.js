@@ -1370,11 +1370,35 @@ app.get("/api/admin/banners", authMiddleware, async (req, res) => {
 
   try {
 
-    // التحقق من صلاحية الأدمن
+    // التحقق من وجود المستخدم أولاً
 
-    if (!req.user.roles?.includes("admin")) {
+    if (!req.user) {
 
-      return res.status(403).json({ message: "Forbidden: Admin access required" });
+      return res.status(401).json({ 
+
+        success: false,
+
+        message: "Unauthorized: User not authenticated" 
+
+      });
+
+    }
+
+    
+
+    // التحقق من صلاحية الأدمن - مع معالجة حالات عدم وجود roles
+
+    const userRoles = req.user.roles || [];
+
+    if (!userRoles.includes("admin")) {
+
+      return res.status(403).json({ 
+
+        success: false,
+
+        message: "Forbidden: Admin access required" 
+
+      });
 
     }
 
@@ -1385,8 +1409,6 @@ app.get("/api/admin/banners", authMiddleware, async (req, res) => {
     const banners = await Banner.find().sort({ createdAt: -1 });
 
     
-
-    // إرجاع البيانات بنفس الهيكل الذي تتوقعه الواجهة
 
     res.json({ 
 
@@ -1400,13 +1422,15 @@ app.get("/api/admin/banners", authMiddleware, async (req, res) => {
 
   } catch (error) {
 
-    console.error("Error fetching banners:", error);
+    console.error("Error in /api/admin/banners:", error);
 
     res.status(500).json({ 
 
+      success: false,
+
       message: "Internal server error",
 
-      error: error.message 
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
 
     });
 
@@ -4975,6 +4999,14 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
+
+
+
+
+
+
+
 
 
 
