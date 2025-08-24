@@ -1804,29 +1804,129 @@ async function loadBannerList() {
           const image = $('#bannerImage').value.trim();
           const buttonText = $('#bannerBtnText').value.trim();
           const buttonLink = $('#bannerBtnLink').value.trim();
+// ========= BANNERS =========
+function updateBannerPreview() {
+  const url = document.querySelector('#bannerImage').value.trim();
+  document.querySelector('#bannerPreview').src =
+    url || 'https://via.placeholder.com/300x150?text=Banner+Preview';
+}
+document.querySelector('#bannerImage').addEventListener('input', updateBannerPreview);
+updateBannerPreview();
+
+// تحميل قائمة البانرات
+async function loadBannerList() {
+  const list = document.querySelector('#bannerList');
+  list.innerHTML = '<div class="muted">Loading…</div>';
+
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/banners', {
+      headers: authHeaders(false),
+    });
+
+    if (r._error) {
+      list.innerHTML = '<div class="notice">' + r.message + '</div>';
+      return;
+    }
+
+    const items = r.banners || r || [];
+    if (!items.length) {
+      list.innerHTML = '<div class="muted">No banners yet.</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    items.forEach((banner) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      card.innerHTML = `
+        <div class="row">
+          <div class="col">
+            <div class="title" style="font-size:15px">${banner.title || '(no title)'}</div>
+            <div class="muted small">${banner._id || ''}</div>
+            <div style="margin-top:6px">${banner.description || ''}</div>
+          </div>
+          <div class="col">
+            ${banner.image ? `<img src="${banner.image}" class="img-preview"/>` : '<div class="muted small">No image</div>'}
+            <div class="small muted" style="margin-top:6px">
+              Button: ${banner.buttonText || '-'} → ${banner.buttonLink || '-'}
+            </div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn small" data-edit-banner="${banner._id}"><i class="fa-solid fa-pen"></i> Edit</button>
+          <button class="btn-danger small" data-del-banner="${banner._id}"><i class="fa-solid fa-trash"></i> Delete</button>
+        </div>
+      `;
+
+      list.appendChild(card);
+    });
+
+    // أحداث الحذف
+    list.querySelectorAll('button[data-del-banner]').forEach((b) => {
+      b.addEventListener('click', async () => {
+        if (!confirm('Delete this banner?')) return;
+        const id = b.getAttribute('data-del-banner');
+        b.disabled = true;
+        b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting…';
+
+        const r = await safeFetch(API_BASE + '/api/admin/banners/' + id, {
+          method: 'DELETE',
+          headers: authHeaders(false),
+        });
+
+        if (r._error) {
+          alert('Delete failed: ' + r.message);
+          b.disabled = false;
+          b.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+        } else {
+          loadBannerList();
+        }
+      });
+    });
+
+    // أحداث التعديل
+    list.querySelectorAll('button[data-edit-banner]').forEach((b) => {
+      b.addEventListener('click', async () => {
+        const id = b.getAttribute('data-edit-banner');
+        const banner = items.find((item) => item._id === id);
+
+        if (!banner) return;
+
+        // تعبئة النموذج
+        document.querySelector('#bannerTitle').value = banner.title || '';
+        document.querySelector('#bannerDescription').value = banner.description || '';
+        document.querySelector('#bannerImage').value = banner.image || '';
+        document.querySelector('#bannerBtnText').value = banner.buttonText || '';
+        document.querySelector('#bannerBtnLink').value = banner.buttonLink || '';
+        updateBannerPreview();
+
+        // تحويل زر الإنشاء إلى تحديث
+        const createBtn = document.querySelector('#btnCreateBanner');
+        const originalHtml = createBtn.innerHTML;
+        createBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Update';
+        createBtn.onclick = async () => {
+          const title = document.querySelector('#bannerTitle').value.trim();
+          const description = document.querySelector('#bannerDescription').value.trim();
+          const image = document.querySelector('#bannerImage').value.trim();
+          const buttonText = document.querySelector('#bannerBtnText').value.trim();
+          const buttonLink = document.querySelector('#bannerBtnLink').value.trim();
 
           const r = await safeFetch(API_BASE + '/api/admin/banners/' + id, {
             method: 'PUT',
             headers: authHeaders(true),
-            body: JSON.stringify({
-              title,
-              description,
-              image,
-              buttonText,
-              buttonLink,
-            }),
+            body: JSON.stringify({ title, description, image, buttonText, buttonLink }),
           });
 
           if (r._error) {
             alert('Update failed: ' + r.message);
           } else {
             alert('Banner updated successfully!');
-            // إعادة تعيين النموذج
-            $('#bannerTitle').value = '';
-            $('#bannerDescription').value = '';
-            $('#bannerImage').value = '';
-            $('#bannerBtnText').value = '';
-            $('#bannerBtnLink').value = '';
+            document.querySelector('#bannerTitle').value = '';
+            document.querySelector('#bannerDescription').value = '';
+            document.querySelector('#bannerImage').value = '';
+            document.querySelector('#bannerBtnText').value = '';
+            document.querySelector('#bannerBtnLink').value = '';
             updateBannerPreview();
             createBtn.innerHTML = originalHtml;
             createBtn.onclick = createBannerHandler;
@@ -1836,20 +1936,19 @@ async function loadBannerList() {
       });
     });
   } catch (error) {
-    list.innerHTML =
-      '<div class="notice">Error loading banners: ' + error.message + '</div>';
+    list.innerHTML = '<div class="notice">Error loading banners: ' + error.message + '</div>';
   }
 }
 
 // إنشاء بانر جديد
 async function createBannerHandler() {
-  const title = $('#bannerTitle').value.trim();
-  const description = $('#bannerDescription').value.trim();
-  const image = $('#bannerImage').value.trim();
-  const buttonText = $('#bannerBtnText').value.trim();
-  const buttonLink = $('#bannerBtnLink').value.trim();
+  const title = document.querySelector('#bannerTitle').value.trim();
+  const description = document.querySelector('#bannerDescription').value.trim();
+  const image = document.querySelector('#bannerImage').value.trim();
+  const buttonText = document.querySelector('#bannerBtnText').value.trim();
+  const buttonLink = document.querySelector('#bannerBtnLink').value.trim();
 
-  $('#bannerCreateMsg').textContent = 'Creating…';
+  document.querySelector('#bannerCreateMsg').textContent = 'Creating…';
 
   const r = await safeFetch(API_BASE + '/api/admin/banners', {
     method: 'POST',
@@ -1858,29 +1957,27 @@ async function createBannerHandler() {
   });
 
   if (r._error) {
-    $('#bannerCreateMsg').innerHTML =
+    document.querySelector('#bannerCreateMsg').innerHTML =
       '<span class="danger">' + r.message + '</span>';
   } else {
-    $('#bannerCreateMsg').innerHTML =
+    document.querySelector('#bannerCreateMsg').innerHTML =
       '<span class="ok">Banner created successfully!</span>';
-    // تفريغ الحقول
-    $('#bannerTitle').value = '';
-    $('#bannerDescription').value = '';
-    $('#bannerImage').value = '';
-    $('#bannerBtnText').value = '';
-    $('#bannerBtnLink').value = '';
+    document.querySelector('#bannerTitle').value = '';
+    document.querySelector('#bannerDescription').value = '';
+    document.querySelector('#bannerImage').value = '';
+    document.querySelector('#bannerBtnText').value = '';
+    document.querySelector('#bannerBtnLink').value = '';
     updateBannerPreview();
     loadBannerList();
 
-    // إخفاء الرسالة بعد 3 ثواني
     setTimeout(() => {
-      $('#bannerCreateMsg').textContent = '';
+      document.querySelector('#bannerCreateMsg').textContent = '';
     }, 3000);
   }
 }
 
-$('#btnCreateBanner').addEventListener('click', createBannerHandler);
-$('#btnReloadBanners').addEventListener('click', loadBannerList);
+document.querySelector('#btnCreateBanner').addEventListener('click', createBannerHandler);
+document.querySelector('#btnReloadBanners').addEventListener('click', loadBannerList);
   // ========= CONTENT =========
   async function loadContentAdmin(){
     const r = await safeFetch(API_BASE + '/api/admin/content', { headers: authHeaders(false) });
