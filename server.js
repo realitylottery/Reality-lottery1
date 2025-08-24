@@ -1660,7 +1660,7 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
   if (!user) return res.status(404).json({ message: "User not found" });
 
   // حساب التقدم الصحيح: يعتمد فقط على عدد المدعوين المشتركين
-  const progress = Math.min(6, user.successfulInvites || 0);
+  const progress = Math.min(6, user.currentTaskProgress || 0);
   
   // مكافأة حسب التقدم
   const rewardAmount = calculateTaskReward(user.subscriptionType, progress);
@@ -2359,6 +2359,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
