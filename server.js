@@ -1674,6 +1674,8 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
     });
   }
 
+   const shouldAutoReset = progress === 6;
+
   // يُسمح بالريست فقط لو التقدم >= 2
   if (progress < 2) {
     return res.status(400).json({ 
@@ -2357,6 +2359,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
