@@ -1374,7 +1374,7 @@ app.get('/api/banners', async (req, res) => {
   }
 });
 
-app.get('/api/admin/banners', async (req, res) => {
+app.get('/api/admin/banners', authMiddleware, async (req, res) => {
 try {
 // التحقق من وجود المستخدم أولاً
 if (!req.user) {
@@ -4968,6 +4968,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
