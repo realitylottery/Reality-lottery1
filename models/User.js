@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
   subscriptionType: { type: String, enum: ['', 'BASIC', 'PRO', 'VIP'], default: '' },
   subscriptionActive: { type: Boolean, default: false },
   subscriptionExpires: { type: Date, default: null },
-
+  hasSpunWheel: { type: Boolean, default: false },
   // الطوابع الزمنية
   registeredAt: { type: Date, default: Date.now },
   lastLogin: { type: Date, default: Date.now }
