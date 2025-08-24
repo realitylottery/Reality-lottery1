@@ -1374,6 +1374,41 @@ app.get('/api/banners', async (req, res) => {
   }
 });
 
+app.get('/api/admin/banners', async (req, res) => {
+try {
+// التحقق من وجود المستخدم أولاً
+if (!req.user) {
+return res.status(401).json({
+success: false,
+message: "Unauthorized: User not authenticated"
+});
+}
+
+// التحقق من صلاحية الأدمن - مع معالجة حالات عدم وجود roles  
+const userRoles = req.user.roles || [];  
+if (!userRoles.includes("admin")) {  
+  return res.status(403).json({   
+    success: false,  
+    message: "Forbidden: Admin access required"   
+  });  
+}  
+  
+// جلب البانرات من قاعدة البيانات  
+const banners = await Banner.find().sort({ createdAt: -1 });  
+  
+res.json({   
+  success: true,  
+  banners: banners   
+});
+
+} catch (err) { // <-- هذا القوس كان ناقصاً
+console.error("Banners error:", err);
+res.status(500).json({
+success: false,
+message: "Error fetching banners"
+});
+}
+}); // <-- وهذا القوس أيضاً كان ناقصاً
 
 
 
@@ -4933,6 +4968,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
