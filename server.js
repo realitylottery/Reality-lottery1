@@ -1364,8 +1364,6 @@ app.delete("/api/admin/ticker/:id", authMiddleware, async (req, res) => {
 
 // Banners
 
-app.get("/api/banners", authMiddleware, async (req, res) => {
-// Public banners (no auth required)
 app.get('/api/banners', async (req, res) => {
   try {
     const banners = await Banner.find().sort({ createdAt: -1 });
@@ -4935,6 +4933,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
