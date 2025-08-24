@@ -704,7 +704,7 @@ app.get("/api/admin/banners", authMiddleware, async (req, res) => {
       message: "Internal server error",
       error: error.message 
     });
-  }
+
 });
 
 
@@ -2487,6 +2487,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
