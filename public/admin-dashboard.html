@@ -1535,7 +1535,7 @@ $('#invitesSearch').addEventListener('input', loadInvites);
           const buttonLink = $('#bannerBtnLink').value.trim();
           
           const r = await safeFetch(API_BASE + '/api/admin/banners/' + id, {
-            method: 'PUT',
+            method: 'POST',
             headers: authHeaders(true),
             body: JSON.stringify({ title, description, image, buttonText, buttonLink })
           });
