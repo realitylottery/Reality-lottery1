@@ -89,7 +89,7 @@
     <button class="navbtn" data-tab="tab-invites"><i class="fa-solid fa-user-plus"></i> Invites & Subscriptions</button>
     <button class="navbtn" data-tab="tab-news"><i class="fa-solid fa-newspaper"></i> News</button>
     <button class="navbtn" data-tab="tab-banners"><i class="fa-solid fa-image"></i> Banners</button>
-    <button class="navbtn" data-tab="tab-content"><i class="fa-solid fa-pen-ruler"></i> Site Content</button>
+    <button class="navbtn" data-tab="tab-tickers"><i class="fa-solid fa-scroll"></i> News Tickers</button>
     <div class="divider"></div>
     <div class="small muted">All actions require admin token.</div>
   </aside>
@@ -1755,14 +1755,14 @@ document.querySelector('[data-tab="tab-tickers"]').addEventListener('click', () 
     loadWithdrawals();
     loadNewsList();
     loadBannerList();
-    loadContentAdmin();
+    loadTickers();
     loadInvites();
   }
 
   // If the admin navigates into tabs while not signed, we keep UI friendly
   document.addEventListener('click', (e)=>{
     const tab = e.target.closest('.navbtn')?.dataset?.tab || '';
-    const needAuthTabs = ['tab-stats','tab-users','tab-payments','tab-withdrawals','tab-news','tab-banners','tab-content'];
+    const needAuthTabs = ['tab-stats','tab-users','tab-payments','tab-withdrawals','tab-news','tab-banners','tab-tickers'];
     if (tab && needAuthTabs.includes(tab) && !isSigned()){
       setTimeout(()=>{ alert('Please sign in as admin first.'); }, 0);
     }
