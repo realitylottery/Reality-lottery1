@@ -723,16 +723,12 @@
       
       const tickerText = document.getElementById('ticker-text');
       
-      if (tickers && tickers.length > 0) {
-        // تصفية التيكرات النشطة فقط
-        const activeTickers = tickers.filter(t => t.isActive);
-        
         if (activeTickers.length > 0) {
           // بناء محتوى التيكر مع الفواصل
           let tickerContent = '';
-          activeTickers.forEach((ticker, index) => {
+          tickers.forEach((ticker, index) => {
             tickerContent += `<span class="ticker-item">${ticker.text}</span>`;
-            if (index < activeTickers.length - 1) {
+            if (index < tickers.length - 1) {
               tickerContent += '<span class="ticker-separator">◆</span>';
             }
           });
