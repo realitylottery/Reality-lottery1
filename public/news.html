@@ -347,7 +347,7 @@ async function loadAndDisplayNews() {
         newsContainer.innerHTML = '<div class="loading">Loading news...</div>';
         
         // جلب البيانات من السيرفر
-        const news = await fetchNews();
+        const news = await fetchNews('/api/news');
         
         // مسح المحتوى الحالي
         newsContainer.innerHTML = '';
