@@ -365,7 +365,7 @@
         
         card.innerHTML = `
             ${newsItem.image ? `<img src="${newsItem.image}" class="news-image" alt="${newsItem.title || 'News image'}">` : ''}
-            <div class="news-content">
+            <div class="news-body">
                 <h2 class="news-title">${newsItem.title || 'Untitled'}</h2>
                 <p class="news-text">${newsItem.text || newsItem.content || ''}</p>
                 ${newsItem.buttonText ? `<a href="${newsItem.buttonLink || '#'}" class="news-button">${newsItem.buttonText}</a>` : ''}
