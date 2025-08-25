@@ -711,31 +711,36 @@
         }
       }
 
-      async function loadNewsTicker() {
-  try {
-    const response = await fetch('https://realitylottery.koyeb.app/api/newstickers');
-    const tickers = await response.json();
-    
-    const activeTickers = tickers.filter(t => t.isActive).sort((a, b) => b.priority - a.priority);
-    
-    if (activeTickers.length) {
-      const tickerItems = document.getElementById('newsTickerItems');
-      tickerItems.innerHTML = '';
       
-      activeTickers.forEach(ticker => {
-        const item = document.createElement('div');
-        item.className = 'ticker-item';
-        item.textContent = ticker.text;
-        tickerItems.appendChild(item);
-      });
-    }
-  } catch (error) {
-    console.error('Failed to load news ticker:', error);
-  }
-}
-
-// تحميل التيكر عند بدء الصفحة
-document.addEventListener('DOMContentLoaded', loadNewsTicker);
+      // دالة جديدة محسنة لتحميل وعرض الأخبار
+      async function loadTicker() {
+        try {
+          const response = await fetch(`${API_BASE}/api/newstickers`);
+          if (!response.ok) throw new Error('Failed to fetch news tickers');
+          
+          const tickers = await response.json();
+          const activeTickers = tickers.filter(t => t.isActive).sort((a, b) => b.priority - a.priority);
+          const tickerText = document.getElementById('ticker-text');
+          
+          if (activeTickers.length > 0) {
+            // بناء محتوى التيكر مع الفواصل
+            let tickerContent = '';
+            activeTickers.forEach((ticker, index) => {
+              tickerContent += `<span class="ticker-item">${ticker.text}</span>`;
+              if (index < activeTickers.length - 1) {
+                tickerContent += '<span class="ticker-separator">◆</span>';
+              }
+            });
+            
+            tickerText.innerHTML = tickerContent;
+          } else {
+            tickerText.textContent = 'No recent updates. Check back later!';
+          }
+        } catch (error) {
+          console.error('Error loading ticker:', error);
+          document.getElementById('ticker-text').textContent = 'Unable to load news updates';
+        }
+      }
 
       async function displaySubscriptionStatus() {
         // إخفاء العنصر إذا لم يكن المستخدم مسجلاً
