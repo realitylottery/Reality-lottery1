@@ -3136,42 +3136,26 @@ app.get('/api/news', async (req, res) => {
 
 
 
-app.post("/api/admin/news", authMiddleware, async (req, res) => {
-
-
-
-  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
-
-
-
+app.post('/api/admin/news', async (req, res) => {
   try {
+    const { title, body, imageUrl, buttonText, buttonLinkUrl } = req.body;
 
+    if (!title) return res.status(400).json({ success: false, message: 'Title is required' });
 
+    const news = new News({
+      title,
+      body,
+      imageUrl,
+      buttonText,
+      buttonLinkUrl
+    });
 
-    const n = new News(req.body);
-
-
-
-    await n.save();
-
-
-
-    res.json({ message: "News added", news: n });
-
-
-
+    await news.save();
+    res.json({ success: true, message: 'News added successfully', news });
   } catch (err) {
-
-
-
-    res.status(500).json({ message: "Server error" });
-
-
-
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
-
-
-
 });
 
 
@@ -5187,6 +5171,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
