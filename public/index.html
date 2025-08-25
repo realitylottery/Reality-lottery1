@@ -711,38 +711,31 @@
         }
       }
 
-      // Load news ticker
-      async function loadTicker() {
-        try {
-          const response = await fetch(`${API_BASE}/api/ticker`);
-          if (!response.ok) throw new Error('Failed to fetch ticker data');
-          
-          const data = await response.json();
-          const tickerText = document.getElementById('ticker-text');
-          
-          if (data.tickers && data.tickers.length > 0) {
-            const tickerItems = data.tickers.map(t => 
-              `<span class="ticker-item">${t.text}</span>`
-            ).join('<span class="ticker-separator"> ✦ </span>');
-            
-            tickerText.innerHTML = tickerItems;
-            
-            const textWidth = tickerText.scrollWidth;
-            const containerWidth = document.getElementById('ticker-content').offsetWidth;
-            const duration = Math.max(30, textWidth / 50);
-            
-            tickerText.style.animationDuration = `${duration}s`;
-            tickerText.style.animationName = 'ticker';
-          } else {
-            tickerText.textContent = 'No news updates available';
-            tickerText.style.animation = 'none';
-          }
-        } catch (error) {
-          console.error('Error loading ticker:', error);
-          document.getElementById('ticker-text').textContent = 'Latest news updates coming soon...';
-          document.getElementById('ticker-text').style.animation = 'none';
-        }
-      }
+      async function loadNewsTicker() {
+  try {
+    const response = await fetch('https://realitylottery.koyeb.app/api/newstickers');
+    const tickers = await response.json();
+    
+    const activeTickers = tickers.filter(t => t.isActive).sort((a, b) => b.priority - a.priority);
+    
+    if (activeTickers.length) {
+      const tickerItems = document.getElementById('newsTickerItems');
+      tickerItems.innerHTML = '';
+      
+      activeTickers.forEach(ticker => {
+        const item = document.createElement('div');
+        item.className = 'ticker-item';
+        item.textContent = ticker.text;
+        tickerItems.appendChild(item);
+      });
+    }
+  } catch (error) {
+    console.error('Failed to load news ticker:', error);
+  }
+}
+
+// تحميل التيكر عند بدء الصفحة
+document.addEventListener('DOMContentLoaded', loadNewsTicker);
 
       async function displaySubscriptionStatus() {
         // إخفاء العنصر إذا لم يكن المستخدم مسجلاً
