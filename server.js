@@ -32,6 +32,7 @@ const User = require('./models/User');
 
 const News = require('./models/News');
 
+const Notification = require('../models/Notification');
 
 
 const Withdrawal = require('./models/Withdrawal');
@@ -341,7 +342,266 @@ async function authMiddleware(req, res, next) {
 // ================= ROUTES =================
 
 
+// ========= NOTIFICATION ROUTES =========
 
+// GET /api/notifications - Get active notifications (public)
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const { active } = req.query;
+    let query = {};
+    
+    if (active === 'true') {
+      query.isActive = true;
+    }
+    
+    const notifications = await Notification.find(query)
+      .sort({ priority: -1, createdAt: -1 })
+      .select('-__v');
+    
+    res.json({
+      success: true,
+      notifications,
+      count: notifications.length
+    });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching notifications'
+    });
+  }
+});
+
+// GET /api/admin/notifications - Get all notifications (admin only)
+app.get('/api/admin/notifications', async (req, res) => {
+  try {
+    // Check admin authentication
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Access denied. No token provided.'
+      });
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token is not valid'
+      });
+    }
+    
+    // Check if user is admin
+    if (!user.roles.includes('admin')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+    
+    const notifications = await Notification.find()
+      .sort({ createdAt: -1 })
+      .select('-__v');
+    
+    res.json({
+      success: true,
+      notifications,
+      count: notifications.length
+    });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching notifications'
+    });
+  }
+});
+
+// POST /api/admin/notifications - Create notification (admin only)
+app.post('/api/admin/notifications', async (req, res) => {
+  try {
+    // Check admin authentication
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Access denied. No token provided.'
+      });
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token is not valid'
+      });
+    }
+    
+    // Check if user is admin
+    if (!user.roles.includes('admin')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+    
+    const { title, message, link, linkText, priority, isActive } = req.body;
+    
+    // Validation
+    if (!title || !message) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title and message are required'
+      });
+    }
+    
+    const notification = new Notification({
+      title,
+      message,
+      link: link || '',
+      linkText: linkText || 'Learn more',
+      priority: priority || 1,
+      isActive: isActive !== undefined ? isActive : true
+    });
+    
+    await notification.save();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Notification created successfully',
+      notification
+    });
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error creating notification'
+    });
+  }
+});
+
+// PUT /api/admin/notifications/:id - Update notification (admin only)
+app.put('/api/admin/notifications/:id', async (req, res) => {
+  try {
+    // Check admin authentication
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Access denied. No token provided.'
+      });
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token is not valid'
+      });
+    }
+    
+    // Check if user is admin
+    if (!user.roles.includes('admin')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+    
+    const { id } = req.params;
+    const updates = req.body;
+    
+    const notification = await Notification.findByIdAndUpdate(
+      id,
+      { ...updates, updatedAt: Date.now() },
+      { new: true, runValidators: true }
+    ).select('-__v');
+    
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: 'Notification not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Notification updated successfully',
+      notification
+    });
+  } catch (error) {
+    console.error('Error updating notification:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error updating notification'
+    });
+  }
+});
+
+// DELETE /api/admin/notifications/:id - Delete notification (admin only)
+app.delete('/api/admin/notifications/:id', async (req, res) => {
+  try {
+    // Check admin authentication
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Access denied. No token provided.'
+      });
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token is not valid'
+      });
+    }
+    
+    // Check if user is admin
+    if (!user.roles.includes('admin')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+    
+    const { id } = req.params;
+    
+    const notification = await Notification.findByIdAndDelete(id);
+    
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: 'Notification not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Notification deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error deleting notification'
+    });
+  }
+});
 
 
 /* ==== API spin العجلة ==== */
@@ -5031,6 +5291,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
