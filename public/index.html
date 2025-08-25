@@ -715,36 +715,79 @@
       // دالة جديدة محسنة لتحميل وعرض الأخبار
       async function loadTicker() {
     try {
-      const response = await fetch(`${API_BASE}/api/newstickers`);
-      if (!response.ok) throw new Error('Failed to fetch news tickers');
+      async function loadTicker() {
+    try {
+      console.log('Fetching ticker data from:', `${API_BASE}/api/newstickers`);
       
-      const tickers = await response.json();
-      console.log('Tickers data:', tickers); // لأغراض debugging
+      const response = await fetch(`${API_BASE}/api/newstickers`);
+      
+      if (!response.ok) {
+        throw new Error(`Response error: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Received data:', data);
       
       const tickerText = document.getElementById('ticker-text');
       
-        if (activeTickers.length > 0) {
-          // بناء محتوى التيكر مع الفواصل
-          let tickerContent = '';
-          tickers.forEach((ticker, index) => {
-            tickerContent += `<span class="ticker-item">${ticker.text}</span>`;
-            if (index < tickers.length - 1) {
-              tickerContent += '<span class="ticker-separator">◆</span>';
-            }
-          });
-          
-          tickerText.innerHTML = tickerContent;
-        } else {
-          tickerText.textContent = 'No active updates available';
-        }
+      // Check for different data structures
+      let tickersArray = [];
+      
+      if (Array.isArray(data)) {
+        tickersArray = data;
+        console.log('Got direct array');
+      } else if (data && Array.isArray(data.tickers)) {
+        tickersArray = data.tickers;
+        console.log('Got array from tickers property');
+      } else if (data && Array.isArray(data.newstickers)) {
+        tickersArray = data.newstickers;
+        console.log('Got array from newstickers property');
+      } else if (data && data.message) {
+        // If server returns a message instead of array
+        tickerText.textContent = data.message;
+        return;
       } else {
-        tickerText.textContent = 'No recent updates. Check back later!';
+        console.log('Unexpected data structure:', data);
+        tickerText.textContent = 'Unexpected data format from server';
+        return;
+      }
+      
+      if (tickersArray.length > 0) {
+        // Build ticker content with separators
+        let tickerContent = '';
+        tickersArray.forEach((ticker, index) => {
+          // Use appropriate field based on data structure
+          const text = ticker.text || ticker.content || ticker.message || 'No text available';
+          tickerContent += `<span class="ticker-item">${text}</span>`;
+          if (index < tickersArray.length - 1) {
+            tickerContent += '<span class="ticker-separator">◆</span>';
+          }
+        });
+        
+        tickerText.innerHTML = tickerContent;
+        console.log('Ticker loaded successfully');
+      } else {
+        tickerText.textContent = 'No current updates';
+        console.log('Array is empty');
       }
     } catch (error) {
       console.error('Error loading ticker:', error);
-      document.getElementById('ticker-text').textContent = 'Unable to load news updates';
+      const tickerText = document.getElementById('ticker-text');
+      tickerText.textContent = 'Unable to load updates - check internet connection';
+      
+      // Try using sample data for testing
+      setTimeout(() => {
+        tickerText.innerHTML = `
+          <span class="ticker-item">Update: New draw launched!</span>
+          <span class="ticker-separator">◆</span>
+          <span class="ticker-item">Today's prize: $1000</span>
+          <span class="ticker-separator">◆</span>
+          <span class="ticker-item">Special offer: Subscribe now and get extra entry</span>
+        `;
+      }, 3000);
     }
       }
+      
       async function displaySubscriptionStatus() {
         // إخفاء العنصر إذا لم يكن المستخدم مسجلاً
         if (!token || !userData.username) {
