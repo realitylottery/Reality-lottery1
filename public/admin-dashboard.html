@@ -90,6 +90,8 @@
     <button class="navbtn" data-tab="tab-news"><i class="fa-solid fa-newspaper"></i> News</button>
     <button class="navbtn" data-tab="tab-banners"><i class="fa-solid fa-image"></i> Banners</button>
     <button class="navbtn" data-tab="tab-tickers"><i class="fa-solid fa-scroll"></i> News Tickers</button>
+    <button class="navbtn" data-tab="tab-notifications">
+  <i class="fa-solid fa-bell"></i> Notifications</button>
     <div class="divider"></div>
     <div class="small muted">All actions require admin token.</div>
   </aside>
@@ -132,6 +134,69 @@
       </div>
     </section>
 
+    <section id="tab-notifications" class="section hidden">
+  <div class="title"><i class="fa-solid fa-bell"></i> Notification Management</div>
+  
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="title" style="font-size:16px"><i class="fa-solid fa-plus"></i> Create New Notification</div>
+      
+      <label>Notification Title</label>
+      <input id="notificationTitle" placeholder="Notification title" />
+      
+      <label style="margin-top:8px">Notification Message</label>
+      <textarea id="notificationMessage" placeholder="Notification message..." rows="3"></textarea>
+      
+      <div class="row" style="margin-top:8px">
+        <div class="col">
+          <label>Link (Optional)</label>
+          <input id="notificationLink" placeholder="https://..." />
+        </div>
+        <div class="col">
+          <label>Link Text (Optional)</label>
+          <input id="notificationLinkText" placeholder="Link text" />
+        </div>
+      </div>
+      
+      <div class="row" style="margin-top:8px">
+        <div class="col">
+          <label>Priority</label>
+          <input id="notificationPriority" type="number" value="1" min="1" max="10" />
+        </div>
+        <div class="col">
+          <label>Status</label>
+          <select id="notificationStatus">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="btnCreateNotification">
+          <i class="fa-solid fa-plus"></i> Create Notification
+        </button>
+        <span id="notificationCreateMsg" class="muted"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title" style="font-size:16px"><i class="fa-solid fa-list"></i> Current Notifications</div>
+      <div id="notificationsList" class="grid" style="grid-template-columns:1fr; gap:10px;">
+        <div class="muted">Loading notifications...</div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnReloadNotifications">
+          <i class="fa-solid fa-rotate"></i> Reload
+        </button>
+        <button class="btn btn-outline" id="btnClearDismissed">
+          <i class="fa-solid fa-trash"></i> Clear Dismissed Records
+        </button>
+      </div>
+    </div>
+  </div>
+    </section>
+    
     <!-- DEBUG -->
 <section id="tab-debug" class="section hidden">
   <div class="title"><i class="fa-solid fa-bug"></i> Debug & Testing</div>
@@ -1599,6 +1664,159 @@ async function createBannerHandler() {
 document.querySelector('#btnCreateBanner').addEventListener('click', createBannerHandler);
 document.querySelector('#btnReloadBanners').addEventListener('click', loadBannerList);
 
+  // ========= NOTIFICATION MANAGEMENT =========
+async function loadNotificationsList() {
+  const list = $('#notificationsList');
+  list.innerHTML = '<div class="muted">Loading notifications...</div>';
+  
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/notifications', {
+      headers: authHeaders(false)
+    });
+    
+    if (r._error) {
+      list.innerHTML = '<div class="notice">' + r.message + '</div>';
+      return;
+    }
+    
+    const notifications = Array.isArray(r) ? r : (r.notifications || []);
+    
+    if (!notifications.length) {
+      list.innerHTML = '<div class="muted">No notifications yet.</div>';
+      return;
+    }
+    
+    list.innerHTML = '';
+    notifications.forEach(notification => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="row">
+          <div class="col">
+            <div class="${notification.isActive ? 'ok' : 'muted'}">
+              <strong>${notification.title || 'No title'}</strong>
+            </div>
+            <div class="small muted">${notification.message}</div>
+            <div class="small muted">Priority: ${notification.priority || 1}</div>
+            ${notification.link ? `
+              <div class="small muted">
+                Link: <a href="${notification.link}" target="_blank">${notification.linkText || notification.link}</a>
+              </div>
+            ` : ''}
+          </div>
+          <div class="col right">
+            <div class="small muted">${new Date(notification.createdAt).toLocaleDateString()}</div>
+            <div class="row" style="margin-top:8px">
+              <button class="btn small" data-edit-notification="${notification._id}">
+                <i class="fa-solid fa-pen"></i> Edit
+              </button>
+              <button class="btn-danger small" data-delete-notification="${notification._id}">
+                <i class="fa-solid fa-trash"></i> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+    
+    // Add event listeners
+    list.querySelectorAll('[data-delete-notification]').forEach(btn => {
+      btn.addEventListener('click', () => deleteNotification(btn.dataset.deleteNotification));
+    });
+    
+    list.querySelectorAll('[data-edit-notification]').forEach(btn => {
+      btn.addEventListener('click', () => editNotification(btn.dataset.editNotification, notifications));
+    });
+    
+  } catch (error) {
+    list.innerHTML = '<div class="notice">Error loading notifications: ' + error.message + '</div>';
+  }
+}
+
+async function createNotification() {
+  const title = $('#notificationTitle').value.trim();
+  const message = $('#notificationMessage').value.trim();
+  const link = $('#notificationLink').value.trim();
+  const linkText = $('#notificationLinkText').value.trim();
+  const priority = parseInt($('#notificationPriority').value) || 1;
+  const isActive = $('#notificationStatus').value === 'true';
+  
+  if (!title || !message) {
+    $('#notificationCreateMsg').innerHTML = '<span class="danger">Title and message are required</span>';
+    return;
+  }
+  
+  $('#notificationCreateMsg').innerHTML = '<span class="muted">Creating...</span>';
+  
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/notifications', {
+      method: 'POST',
+      headers: authHeaders(true),
+      body: JSON.stringify({ title, message, link, linkText, priority, isActive })
+    });
+    
+    if (r._error) {
+      $('#notificationCreateMsg').innerHTML = '<span class="danger">' + r.message + '</span>';
+    } else {
+      $('#notificationCreateMsg').innerHTML = '<span class="ok">Notification created successfully!</span>';
+      // Clear form
+      $('#notificationTitle').value = '';
+      $('#notificationMessage').value = '';
+      $('#notificationLink').value = '';
+      $('#notificationLinkText').value = '';
+      $('#notificationPriority').value = '1';
+      
+      // Reload list
+      loadNotificationsList();
+      
+      setTimeout(() => {
+        $('#notificationCreateMsg').innerHTML = '';
+      }, 3000);
+    }
+  } catch (error) {
+    $('#notificationCreateMsg').innerHTML = '<span class="danger">Error creating notification</span>';
+  }
+}
+
+async function deleteNotification(id) {
+  if (!confirm('Are you sure you want to delete this notification?')) return;
+  
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/notifications/' + id, {
+      method: 'DELETE',
+      headers: authHeaders(false)
+    });
+    
+    if (r._error) {
+      alert('Delete failed: ' + r.message);
+    } else {
+      alert('Notification deleted successfully!');
+      loadNotificationsList();
+    }
+  } catch (error) {
+    alert('Error deleting notification: ' + error.message);
+  }
+}
+
+function clearDismissedNotifications() {
+  if (confirm('Clear all dismissed notification records? Users will see these notifications again.')) {
+    localStorage.removeItem('dismissedNotifications');
+    alert('Dismissed notifications cleared!');
+  }
+}
+
+// Add event listeners
+$('#btnCreateNotification').addEventListener('click', createNotification);
+$('#btnReloadNotifications').addEventListener('click', loadNotificationsList);
+$('#btnClearDismissed').addEventListener('click', clearDismissedNotifications);
+
+// Load notifications when tab is opened
+document.querySelector('[data-tab="tab-notifications"]').addEventListener('click', () => {
+  if (isSigned()) {
+    loadNotificationsList();
+  }
+});
   
 // ========= NEWS TICKERS MANAGEMENT =========
 async function loadTickers() {
@@ -1739,6 +1957,7 @@ document.querySelector('[data-tab="tab-tickers"]').addEventListener('click', () 
     loadBannerList();
     loadTickers();
     loadInvites();
+    loadNotificationsList()
   }
 
   // If the admin navigates into tabs while not signed, we keep UI friendly
