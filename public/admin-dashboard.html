@@ -1200,45 +1200,53 @@ tb.querySelectorAll('button[data-reject-payment]').forEach(b => {
   updateNewsPreview();
 
   async function loadNewsList(){
-    const list = $('#newsList');
-    list.innerHTML = '<div class="muted">Loading…</div>';
+  const list = $('#newsList');
+  list.innerHTML = '<div class="muted">Loading…</div>';
+  
+  try {
+    // التعديل 1: تغيير نقطة النهاية
+    const r = await safeFetch(API_BASE + '/api/news');
+    console.log('News API response:', r); // للتصحيح
     
-    try {
-      const r = await safeFetch(API_BASE + '/api/admin/news', { headers: authHeaders(false) });
-      
-      if (r._error){
-        list.innerHTML = '';
-        list.appendChild(el('div',{class:'notice'},[r.message]));
-        return;
-      }
-      
-      const items = r.news || [];
-      if (!items.length){
-        list.innerHTML = '<div class="muted">No news yet.</div>';
-        return;
-      }
-      
+    if (r._error){
       list.innerHTML = '';
-      items.forEach(n=>{
-        const card = el('div', {class:'card'}, [
-          el('div', {class:'row'}, [
-            el('div', {class:'col'}, [
-              el('div', {class:'title', style:'font-size:15px'}, [n.title || '(no title)']),
-              el('div', {class:'muted small'}, [n._id || '']),
-              el('div', {style:'margin-top:6px'}, [n.body || ''])
-            ]),
-            el('div', {class:'col'}, [
-              n.imageUrl ? el('img', {src:n.imageUrl, class:'img-preview'}) : el('div', {class:'muted small'}, ['No image']),
-              el('div', {class:'small muted', style:'margin-top:6px'}, ['Button: ', (n.buttonText||'-'), ' → ', (n.buttonLink||'-')])
-            ])
+      list.appendChild(el('div',{class:'notice'},[r.message]));
+      return;
+    }
+    
+    // التعديل 2: معالجة هيكل البيانات المختلف
+    const items = Array.isArray(r) ? r : (r.news || []);
+    
+    if (!items.length){
+      list.innerHTML = '<div class="muted">No news yet.</div>';
+      return;
+    }
+    
+    list.innerHTML = '';
+    items.forEach(n=>{
+      const card = el('div', {class:'card'}, [
+        el('div', {class:'row'}, [
+          el('div', {class:'col'}, [
+            el('div', {class:'title', style:'font-size:15px'}, [n.title || '(no title)']),
+            el('div', {class:'muted small'}, [n._id || '']),
+            // التعديل 3: استخدام الحقل الصحيح للنص
+            el('div', {style:'margin-top:6px'}, [n.text || n.body || n.content || ''])
           ]),
-          el('div', {class:'row', style:'margin-top:8px'}, [
-            el('button', {class:'btn small', 'data-edit-news': n._id}, [el('i',{class:'fa-solid fa-pen'}), document.createTextNode(' Edit')]),
-            el('button', {class:'btn-danger small', 'data-del-news': n._id}, [el('i',{class:'fa-solid fa-trash'}), document.createTextNode(' Delete')])
+          el('div', {class:'col'}, [
+            // التعديل 4: استخدام الحقل الصحيح للصورة
+            n.image ? el('img', {src:n.image, class:'img-preview'}) : 
+            n.imageUrl ? el('img', {src:n.imageUrl, class:'img-preview'}) : 
+            el('div', {class:'muted small'}, ['No image']),
+            el('div', {class:'small muted', style:'margin-top:6px'}, ['Button: ', (n.buttonText||'-'), ' → ', (n.buttonLink||'-')])
           ])
-        ]);
-        list.appendChild(card);
-      });
+        ]),
+        el('div', {class:'row', style:'margin-top:8px'}, [
+          el('button', {class:'btn small', 'data-edit-news': n._id}, [el('i',{class:'fa-solid fa-pen'}), document.createTextNode(' Edit')]),
+          el('button', {class:'btn-danger small', 'data-del-news': n._id}, [el('i',{class:'fa-solid fa-trash'}), document.createTextNode(' Delete')])
+        ])
+      ]);
+      list.appendChild(card);
+    });
 
       // Add event listeners
       list.querySelectorAll('button[data-del-news]').forEach(b=>{
@@ -1317,8 +1325,9 @@ tb.querySelectorAll('button[data-reject-payment]').forEach(b => {
       });
       
     } catch (error) {
-      list.innerHTML = '<div class="notice">Error loading news: ' + error.message + '</div>';
-    }
+    console.error('Error loading news:', error);
+    list.innerHTML = '<div class="notice">Error loading news: ' + error.message + '</div>';
+  }
   }
 
   $('#btnCreateNews').addEventListener('click', async ()=>{
