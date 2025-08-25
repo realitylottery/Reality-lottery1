@@ -643,18 +643,13 @@ async function debugAllUsers() {
       <strong>Users Analysis (${users.length} users):</strong><br>
     `;
     
-    let hasCompletedTasks = 0;
     let hasTaskProgress = 0;
     
     users.forEach(user => {
-      if (user.completedTasks !== undefined) hasCompletedTasks++;
       if (user.taskProgress !== undefined) hasTaskProgress++;
     });
     
     debugInfo += `
-      <span class="${hasCompletedTasks > 0 ? 'ok' : 'danger'}">
-        Users with completedTasks: ${hasCompletedTasks}/${users.length}
-      </span><br>
       <span class="${hasTaskProgress > 0 ? 'info' : 'muted'}">
         Users with taskProgress: ${hasTaskProgress}/${users.length}
       </span><br>
@@ -770,9 +765,7 @@ async function loadUsersWithDebug(){
     tb.innerHTML = '';
     
     filtered.forEach(u => {
-      const completedTasks = Number(u.completedTasks || 0);
-      
-      const tr = document.createElement('tr');
+       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>
           <div><strong>${u.username || '-'}</strong></div>
@@ -789,11 +782,6 @@ async function loadUsersWithDebug(){
             <option value="PRO" ${u.subscriptionType === 'PRO' ? 'selected' : ''}>PRO</option>
             <option value="VIP" ${u.subscriptionType === 'VIP' ? 'selected' : ''}>VIP</option>
           </select>
-        </td>
-        <td>
-          <input type="number" min="0" data-field="completedTasks" data-id="${u._id}" value="${completedTasks}" />
-          <div class="muted small" style="margin-top:4px">Completed Tasks</div>
-          ${u.completedTasks === undefined ? '<div class="danger small">NOT IN DB</div>' : ''}
         </td>
         <td>
           <div class="muted small">Invites: ${u.successfulInvites || 0}/${u.totalInvites || 0}</div>
@@ -814,7 +802,6 @@ async function loadUsersWithDebug(){
         const id = btn.dataset.id;
         const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
         const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
-        const completedTasks = Number(tb.querySelector(`input[data-field="completedTasks"][data-id="${id}"]`).value || 0);
 
         btn.disabled = true; 
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
@@ -825,7 +812,7 @@ async function loadUsersWithDebug(){
           const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
             method: 'PUT',
             headers: authHeaders(true),
-            body: JSON.stringify({ balance, subscriptionType, completedTasks })
+            body: JSON.stringify({ balance, subscriptionType })
           });
           
           console.log('Update response:', r);
@@ -912,7 +899,6 @@ async function loadUsers(){
   tb.innerHTML = '';
   
   filtered.forEach(u => {
-    const completedTasks = Number(u.completedTasks || 0);
     
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -933,10 +919,6 @@ async function loadUsers(){
         </select>
       </td>
       <td>
-        <input type="number" min="0" data-field="completedTasks" data-id="${u._id}" value="${completedTasks}" />
-        <div class="muted small" style="margin-top:4px">Completed Tasks</div>
-      </td>
-      <td>
         <div class="muted small">Invites: ${u.successfulInvites || 0}/${u.totalInvites || 0}</div>
         <div class="muted small">Sub: ${u.subscriptionType || 'None'}</div>
       </td>
@@ -955,7 +937,7 @@ async function loadUsers(){
       const id = btn.dataset.id;
       const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
       const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
-      const completedTasks = Number(tb.querySelector(`input[data-field="completedTasks"][data-id="${id}"]`).value || 0);
+      
 
       btn.disabled = true; 
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
@@ -964,7 +946,7 @@ async function loadUsers(){
         const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
           method: 'PUT',
           headers: authHeaders(true),
-          body: JSON.stringify({ balance, subscriptionType, completedTasks })
+          body: JSON.stringify({ balance, subscriptionType })
         });
         
         if (r._error) {
