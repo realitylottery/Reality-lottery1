@@ -430,7 +430,7 @@ app.post('/api/admin/notifications', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.userId);
     
-    if (!admin) {
+    if (!user) {
       return res.status(401).json({
         success: false,
         message: 'Token is not valid'
@@ -5272,6 +5272,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
