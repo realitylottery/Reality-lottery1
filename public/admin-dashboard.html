@@ -458,46 +458,6 @@
     </div>
   </div>
     </section>
-    
-    <!-- CONTENT -->
-    <section id="tab-content" class="section hidden">
-      <div class="title"><i class="fa-solid fa-pen-ruler"></i> Site Content Controls</div>
-      <div class="grid grid-2">
-        <div class="card">
-          <div class="title" style="font-size:16px"><i class="fa-solid fa-bullhorn"></i> News Ticker</div>
-          <label>Ticker Text</label>
-          <textarea id="tickerText" placeholder="Set the scrolling ticker text shown on the homepage…"></textarea>
-          <div class="row" style="margin-top:8px">
-            <button class="btn" id="btnSaveTicker"><i class="fa-solid fa-floppy-disk"></i> Save</button>
-            <span id="tickerMsg" class="muted"></span>
-          </div>
-        </div>
-        <div class="card">
-          <div class="title" style="font-size:16px"><i class="fa-solid fa-image"></i> Homepage Slides</div>
-          <div class="row">
-            <div class="col">
-              <label>Slide 1 Image URL</label>
-              <input id="slide1Url" placeholder="https://…" />
-              <label style="margin-top:6px">Slide 1 Title</label>
-              <input id="slide1Title" placeholder="…" />
-            </div>
-            <div class="col">
-              <label>Slide 2 Image URL</label>
-              <input id="slide2Url" placeholder="https://…" />
-              <label style="margin-top:6px">Slide 2 Title</label>
-              <input id="slide2Title" placeholder="…" />
-            </div>
-          </div>
-          <div class="row" style="margin-top:8px">
-            <button class="btn" id="btnSaveSlides"><i class="fa-solid fa-floppy-disk"></i> Save</button>
-            <span id="slidesMsg" class="muted"></span>
-          </div>
-          <div class="small muted" style="margin-top:8px">
-            Endpoint expected: <span class="mono">GET/PUT /api/admin/content</span> (and public <span class="mono">GET /api/content</span> for the homepage).
-          </div>
-        </div>
-      </div>
-    </section>
   </main>
 </div>
 
