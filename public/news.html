@@ -360,20 +360,20 @@
 
     // دالة مساعدة لإنشاء عنصر خبر
     function createNewsElement(newsItem) {
-        const card = document.createElement('div');
-        card.className = 'news-card';
-        
-        card.innerHTML = `
-            ${newsItem.image ? `<img src="${newsItem.image}" class="news-image" alt="${newsItem.title || 'News image'}">` : ''}
-            <div class="news-body">
-                <h2 class="news-title">${newsItem.title || 'Untitled'}</h2>
-                <p class="news-text">${newsItem.text || newsItem.content || ''}</p>
-                ${newsItem.buttonText ? `<a href="${newsItem.buttonLink || '#'}" class="news-button">${newsItem.buttonText}</a>` : ''}
-                ${newsItem.createdAt ? `<div class="news-date" style="color: #aaa; font-size: 0.9em; margin-top: 15px;">${formatDate(newsItem.createdAt)}</div>` : ''}
-            </div>
-        `;
-        
-        return card;
+    const card = document.createElement('div');
+    card.className = 'news-card';
+    
+    card.innerHTML = `
+        ${newsItem.imageUrl ? `<img src="${newsItem.imageUrl}" class="news-image" alt="${newsItem.title || 'News image'}">` : ''}
+        <div class="news-content">
+            <h2 class="news-title">${newsItem.title || 'Untitled'}</h2>
+            <p class="news-text">${newsItem.body || ''}</p>
+            ${newsItem.buttonText ? `<a href="${newsItem.buttonLinkUrl || '#'}" class="news-button">${newsItem.buttonText}</a>` : ''}
+            ${newsItem.createdAt ? `<div class="news-date" style="color: #aaa; font-size: 0.9em; margin-top: 15px;">${formatDate(newsItem.createdAt)}</div>` : ''}
+        </div>
+    `;
+    
+    return card;
     }
 
     // Load news when page is ready
