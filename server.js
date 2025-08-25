@@ -28,6 +28,7 @@ const path = require('path');
 
 const User = require('./models/User');
 
+const Notification = require('./models/Notification');
 
 
 const News = require('./models/News');
@@ -5186,6 +5187,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
