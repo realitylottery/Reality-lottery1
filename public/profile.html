@@ -369,9 +369,6 @@
         <div class="field"><label>Username</label><div>${user.username||'-'}</div></div>
         <div class="field"><label>Email</label><div>${user.email||'-'}</div></div>
         <div class="field"><label>Phone</label><div>${user.phone||'-'}</div></div>
-        <div class="field"><label>Roles</label><div>${(user.roles||[]).join(', ')}</div></div>
-        <div class="field"><label>Registered At</label><div>${new Date(user.registeredAt).toLocaleString()}</div></div>
-        <div class="field"><label>Last Login</label><div>${new Date(user.lastLogin).toLocaleString()}</div></div>
         <div class="field"><label>Subscription Type</label><div>${user.subscriptionType||'None'} ${user.subscriptionActive?'<span class="sub-bonus">Active</span>':'<span class="sub-bonus" style="color:red">Inactive</span>'}</div></div>
         <div class="field"><label>Subscription Expires</label><div>${user.subscriptionExpires?new Date(user.subscriptionExpires).toLocaleDateString():'-'}</div></div>
       `;
