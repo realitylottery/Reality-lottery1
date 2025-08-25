@@ -2969,6 +2969,18 @@ app.post("/api/admin/news", authMiddleware, async (req, res) => {
 
 
 
+app.get('/api/admin/news', authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+  
+  try {
+    const news = await News.find().sort({ createdAt: -1 });
+    res.json(news);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 
 
@@ -4968,6 +4980,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
