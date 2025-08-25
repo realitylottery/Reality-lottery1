@@ -372,30 +372,10 @@ app.get('/api/notifications', async (req, res) => {
 });
 
 // GET /api/admin/notifications - Get all notifications (admin only)
-app.get('/api/admin/notifications', async (req, res) => {
+app.get('/api/admin/notifications', authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  
   try {
-    // Check admin authentication
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Access denied. No token provided.'
-      });
-    }
-    
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId);
-    
-    
-    // Check if user is admin
-    if (!user.roles.includes('admin')) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Admin privileges required.'
-      });
-    }
-    
     const notifications = await Notification.find()
       .sort({ createdAt: -1 })
       .select('-__v');
@@ -415,35 +395,10 @@ app.get('/api/admin/notifications', async (req, res) => {
 });
 
 // POST /api/admin/notifications - Create notification (admin only)
-app.post('/api/admin/notifications', async (req, res) => {
+app.post('/api/admin/notifications', authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  
   try {
-    // Check admin authentication
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Access denied. No token provided.'
-      });
-    }
-    
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId);
-    
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Token is not valid'
-      });
-    }
-    // Check if user is admin
-    if (!user.roles.includes('admin')) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Admin privileges required.'
-      });
-    }
-    
     const { title, message, link, linkText, priority, isActive } = req.body;
     
     // Validation
@@ -480,31 +435,10 @@ app.post('/api/admin/notifications', async (req, res) => {
 });
 
 // PUT /api/admin/notifications/:id - Update notification (admin only)
-app.put('/api/admin/notifications/:id', async (req, res) => {
+app.put('/api/admin/notifications/:id', authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  
   try {
-    // Check admin authentication
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Access denied. No token provided.'
-      });
-    }
-    
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId);
-    
-    
-    
-    // Check if user is admin
-    if (!user.roles.includes('admin')) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Admin privileges required.'
-      });
-    }
-    
     const { id } = req.params;
     const updates = req.body;
     
@@ -536,30 +470,10 @@ app.put('/api/admin/notifications/:id', async (req, res) => {
 });
 
 // DELETE /api/admin/notifications/:id - Delete notification (admin only)
-app.delete('/api/admin/notifications/:id', async (req, res) => {
+app.delete('/api/admin/notifications/:id', authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  
   try {
-    // Check admin authentication
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Access denied. No token provided.'
-      });
-    }
-    
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId);
-    
-    
-    // Check if user is admin
-    if (!user.roles.includes('admin')) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Admin privileges required.'
-      });
-    }
-    
     const { id } = req.params;
     
     const notification = await Notification.findByIdAndDelete(id);
@@ -5272,6 +5186,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
