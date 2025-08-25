@@ -387,12 +387,6 @@ app.get('/api/admin/notifications', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.userId);
     
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Token is not valid'
-      });
-    }
     
     // Check if user is admin
     if (!user.roles.includes('admin')) {
@@ -436,12 +430,6 @@ app.post('/api/admin/notifications', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.userId);
     
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Token is not valid'
-      });
-    }
     
     // Check if user is admin
     if (!user.roles.includes('admin')) {
@@ -502,12 +490,7 @@ app.put('/api/admin/notifications/:id', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.userId);
     
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Token is not valid'
-      });
-    }
+    
     
     // Check if user is admin
     if (!user.roles.includes('admin')) {
@@ -563,12 +546,6 @@ app.delete('/api/admin/notifications/:id', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.userId);
     
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Token is not valid'
-      });
-    }
     
     // Check if user is admin
     if (!user.roles.includes('admin')) {
@@ -5290,6 +5267,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
