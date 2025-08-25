@@ -417,6 +417,48 @@
       </div>
     </section>
 
+    <section id="tab-tickers" class="section hidden">
+  <div class="title"><i class="fa-solid fa-scroll"></i> News Tickers Management</div>
+  
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="title" style="font-size:16px"><i class="fa-solid fa-plus"></i> Add New Ticker</div>
+      
+      <label>Ticker Text</label>
+      <textarea id="tickerText" placeholder="Enter ticker text..." rows="3"></textarea>
+      
+      <div class="row" style="margin-top:8px">
+        <div class="col">
+          <label>Priority</label>
+          <input id="tickerPriority" type="number" value="1" min="1" max="10" />
+        </div>
+        <div class="col">
+          <label>Status</label>
+          <select id="tickerStatus">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnCreateTicker"><i class="fa-solid fa-plus"></i> Add Ticker</button>
+        <span id="tickerCreateMsg" class="muted"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title" style="font-size:16px"><i class="fa-solid fa-list"></i> Current Tickers</div>
+      <div id="tickersList" class="grid" style="grid-template-columns:1fr; gap:10px;">
+        <div class="muted">Loading tickers...</div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnReloadTickers"><i class="fa-solid fa-rotate"></i> Reload</button>
+      </div>
+    </div>
+  </div>
+    </section>
+    
     <!-- CONTENT -->
     <section id="tab-content" class="section hidden">
       <div class="title"><i class="fa-solid fa-pen-ruler"></i> Site Content Controls</div>
@@ -1616,39 +1658,131 @@ document.querySelector('#btnCreateBanner').addEventListener('click', createBanne
 document.querySelector('#btnReloadBanners').addEventListener('click', loadBannerList);
 
   
-  async function loadContentAdmin(){
-    const r = await safeFetch(API_BASE + '/api/admin/content', { headers: authHeaders(false) });
-    if (r._error){
-      $('#tickerMsg').textContent = r.message;
-      $('#slidesMsg').textContent = r.message;
+// ========= NEWS TICKERS MANAGEMENT =========
+async function loadTickers() {
+  const list = $('#tickersList');
+  list.innerHTML = '<div class="muted">Loading tickers...</div>';
+  
+  try {
+    const r = await safeFetch(API_BASE + '/api/newstickers');
+    
+    if (r._error) {
+      list.innerHTML = '<div class="notice">' + r.message + '</div>';
       return;
     }
-    $('#tickerText').value = r.tickerText || '';
-    $('#slide1Url').value = r.slide1Url || '';
-    $('#slide1Title').value = r.slide1Title || '';
-    $('#slide2Url').value = r.slide2Url || '';
-    $('#slide2Title').value = r.slide2Title || '';
+    
+    const tickers = Array.isArray(r) ? r : [];
+    
+    if (!tickers.length) {
+      list.innerHTML = '<div class="muted">No tickers yet.</div>';
+      return;
+    }
+    
+    list.innerHTML = '';
+    tickers.forEach(ticker => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="row">
+          <div class="col">
+            <div class="${ticker.isActive ? 'ok' : 'muted'}">${ticker.text}</div>
+            <div class="small muted">Priority: ${ticker.priority || 1}</div>
+          </div>
+          <div class="col right">
+            <div class="small muted">${new Date(ticker.createdAt).toLocaleDateString()}</div>
+            <div class="row" style="margin-top:8px">
+              <button class="btn small" data-edit-ticker="${ticker._id}">
+                <i class="fa-solid fa-pen"></i> Edit
+              </button>
+              <button class="btn-danger small" data-delete-ticker="${ticker._id}">
+                <i class="fa-solid fa-trash"></i> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+    
+    // إضافة معالجات الأحداث
+    list.querySelectorAll('[data-delete-ticker]').forEach(btn => {
+      btn.addEventListener('click', () => deleteTicker(btn.dataset.deleteTicker));
+    });
+    
+    list.querySelectorAll('[data-edit-ticker]').forEach(btn => {
+      btn.addEventListener('click', () => editTicker(btn.dataset.editTicker, tickers));
+    });
+    
+  } catch (error) {
+    list.innerHTML = '<div class="notice">Error loading tickers: ' + error.message + '</div>';
   }
-  $('#btnSaveTicker').addEventListener('click', async ()=>{
-    const r = await safeFetch(API_BASE + '/api/admin/content', {
-      method:'PUT', headers: authHeaders(true),
-      body: JSON.stringify({ tickerText: $('#tickerText').value })
+}
+
+async function createTicker() {
+  const text = $('#tickerText').value.trim();
+  const priority = parseInt($('#tickerPriority').value) || 1;
+  const isActive = $('#tickerStatus').value === 'true';
+  
+  if (!text) {
+    $('#tickerCreateMsg').innerHTML = '<span class="danger">Please enter ticker text</span>';
+    return;
+  }
+  
+  $('#tickerCreateMsg').innerHTML = '<span class="muted">Creating...</span>';
+  
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/newstickers', {
+      method: 'POST',
+      headers: authHeaders(true),
+      body: JSON.stringify({ text, priority, isActive })
     });
-    $('#tickerMsg').textContent = r._error ? r.message : 'Saved';
-  });
-  $('#btnSaveSlides').addEventListener('click', async ()=>{
-    const payload = {
-      slide1Url: $('#slide1Url').value.trim(),
-      slide1Title: $('#slide1Title').value.trim(),
-      slide2Url: $('#slide2Url').value.trim(),
-      slide2Title: $('#slide2Title').value.trim(),
-    };
-    const r = await safeFetch(API_BASE + '/api/admin/content', {
-      method:'PUT', headers: authHeaders(true),
-      body: JSON.stringify(payload)
+    
+    if (r._error) {
+      $('#tickerCreateMsg').innerHTML = '<span class="danger">' + r.message + '</span>';
+    } else {
+      $('#tickerCreateMsg').innerHTML = '<span class="ok">Ticker created successfully!</span>';
+      $('#tickerText').value = '';
+      loadTickers();
+      
+      setTimeout(() => {
+        $('#tickerCreateMsg').innerHTML = '';
+      }, 3000);
+    }
+  } catch (error) {
+    $('#tickerCreateMsg').innerHTML = '<span class="danger">Error creating ticker</span>';
+  }
+}
+
+async function deleteTicker(id) {
+  if (!confirm('Are you sure you want to delete this ticker?')) return;
+  
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/newstickers/' + id, {
+      method: 'DELETE',
+      headers: authHeaders(false)
     });
-    $('#slidesMsg').textContent = r._error ? r.message : 'Saved';
-  });
+    
+    if (r._error) {
+      alert('Delete failed: ' + r.message);
+    } else {
+      alert('Ticker deleted successfully!');
+      loadTickers();
+    }
+  } catch (error) {
+    alert('Error deleting ticker: ' + error.message);
+  }
+}
+
+// إضافة مستمعي الأحداث
+$('#btnCreateTicker').addEventListener('click', createTicker);
+$('#btnReloadTickers').addEventListener('click', loadTickers);
+
+// تحميل التيكرات عند فتح التبويب
+document.querySelector('[data-tab="tab-tickers"]').addEventListener('click', () => {
+  if (isSigned()) {
+    loadTickers();
+  }
+});
 
   // ========= INIT =========
   updateAuthUI();
