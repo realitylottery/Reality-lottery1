@@ -294,101 +294,90 @@
     </footer>
 
     <script>
-        const API_BASE = 'https://realitylottery.koyeb.app';
-        
-        // Sample data for demonstration (will be replaced with API data)
-        const sampleNews = [
-            {
-                title: "New Jackpot Record!",
-                text: "The jackpot has reached an all-time high of $50 million! Don't miss your chance to become a millionaire.",
-                image: "https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-                buttonText: "Play Now",
-                buttonLink: "#"
-            },
-            {
-                title: "Weekly Draw Results",
-                text: "The results for this week's draw are now available. Check if you're one of our lucky winners!",
-                image: "https://images.unsplash.com/photo-1516245834210-c4c142787335?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-                buttonText: "View Results",
-                buttonLink: "#"
-            },
-            {
-                title: "New Game Launch",
-                text: "We're excited to announce the launch of our new scratch card game with instant wins up to $10,000!",
-                image: "https://images.unsplash.com/photo-1617854818583-09e7f077a156?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-                buttonText: "Try Now",
-                buttonLink: "#"
-            }
-        ];
-
-        // دالة لجلب الأخبار من السيرفر
-async function fetchNews() {
-    try {
-        const response = await fetch('/api/news');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const newsData = await response.json();
-        return newsData;
-    } catch (error) {
-        console.error('Error fetching news:', error);
-        throw error;
-    }
-}
-
-// دالة لعرض الأخبار في الصفحة
-async function loadAndDisplayNews() {
-    const newsContainer = document.getElementById('news-container');
+    const API_BASE = 'https://realitylottery.koyeb.app';
     
-    try {
-        // إظهار حالة التحميل
-        newsContainer.innerHTML = '<div class="loading">Loading news...</div>';
-        
-        // جلب البيانات من السيرفر
-        const news = await fetchNews('/api/news');
-        
-        // مسح المحتوى الحالي
-        newsContainer.innerHTML = '';
-        
-        // التحقق من وجود أخبار
-        if (news && news.length > 0) {
-            news.forEach(item => {
-                const newsElement = createNewsElement(item);
-                newsContainer.appendChild(newsElement);
-            });
-        } else {
-            newsContainer.innerHTML = '<div class="no-news">No news available</div>';
+    // دالة لجلب الأخبار من السيرفر
+    async function fetchNews() {
+        try {
+            const response = await fetch(API_BASE + '/api/news');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const newsData = await response.json();
+            return newsData;
+        } catch (error) {
+            console.error('Error fetching news:', error);
+            throw error;
         }
-    } catch (error) {
-        console.error('Failed to load news:', error);
-        newsContainer.innerHTML = `
-            <div class="error">
-                <p>Failed to load news. Please try again later.</p>
-                <button onclick="loadAndDisplayNews()">Retry</button>
+    }
+
+    // دالة مساعدة لتنسيق التاريخ
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
+    // دالة لعرض الأخبار في الصفحة
+    async function loadAndDisplayNews() {
+        const newsContainer = document.getElementById('news-list');
+        
+        try {
+            // إظهار حالة التحميل
+            newsContainer.innerHTML = '<div class="loader"><i class="fas fa-spinner"></i> Loading news...</div>';
+            
+            // جلب البيانات من السيرفر
+            const news = await fetchNews();
+            
+            // مسح المحتوى الحالي
+            newsContainer.innerHTML = '';
+            
+            // التحقق من وجود أخبار
+            if (news && news.length > 0) {
+                news.forEach(item => {
+                    const newsElement = createNewsElement(item);
+                    newsContainer.appendChild(newsElement);
+                });
+            } else {
+                newsContainer.innerHTML = '<div class="no-news">No news available</div>';
+            }
+        } catch (error) {
+            console.error('Failed to load news:', error);
+            newsContainer.innerHTML = `
+                <div class="error-message">
+                    <p>Failed to load news. Please try again later.</p>
+                    <button class="news-button" onclick="loadAndDisplayNews()" style="margin-top: 15px;">Retry</button>
+                </div>
+            `;
+        }
+    }
+
+    // دالة مساعدة لإنشاء عنصر خبر
+    function createNewsElement(newsItem) {
+        const card = document.createElement('div');
+        card.className = 'news-card';
+        
+        card.innerHTML = `
+            ${newsItem.image ? `<img src="${newsItem.image}" class="news-image" alt="${newsItem.title || 'News image'}">` : ''}
+            <div class="news-content">
+                <h2 class="news-title">${newsItem.title || 'Untitled'}</h2>
+                <p class="news-text">${newsItem.text || newsItem.content || ''}</p>
+                ${newsItem.buttonText ? `<a href="${newsItem.buttonLink || '#'}" class="news-button">${newsItem.buttonText}</a>` : ''}
+                ${newsItem.createdAt ? `<div class="news-date" style="color: #aaa; font-size: 0.9em; margin-top: 15px;">${formatDate(newsItem.createdAt)}</div>` : ''}
             </div>
         `;
+        
+        return card;
     }
-}
 
-// دالة مساعدة لإنشاء عنصر خبر
-function createNewsElement(newsItem) {
-    const article = document.createElement('article');
-    article.className = 'news-item';
-    article.innerHTML = `
-        <h2>${newsItem.title || 'Untitled'}</h2>
-        ${newsItem.image ? `<img src="${newsItem.image}" alt="${newsItem.title}">` : ''}
-        <p>${newsItem.content || ''}</p>
-        <div class="news-meta">
-            <span class="date">${formatDate(newsItem.createdAt)}</span>
-        </div>
-    `;
-    return article;
-}
-
-        // Load news when page is ready
-        document.addEventListener('DOMContentLoaded', loadNews);
+    // Load news when page is ready
+    document.addEventListener('DOMContentLoaded', loadAndDisplayNews);
     </script>
 </body>
 </html>
