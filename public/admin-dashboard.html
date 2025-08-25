@@ -1750,14 +1750,23 @@ async function createNotification() {
   $('#notificationCreateMsg').innerHTML = '<span class="muted">Creating...</span>';
   
   try {
+    console.log('Creating notification with data:', { title, message, link, linkText, priority, isActive });
+    
     const r = await safeFetch(API_BASE + '/api/admin/notifications', {
       method: 'POST',
       headers: authHeaders(true),
       body: JSON.stringify({ title, message, link, linkText, priority, isActive })
     });
     
+    console.log('Notification creation response:', r);
+    
     if (r._error) {
       $('#notificationCreateMsg').innerHTML = '<span class="danger">' + r.message + '</span>';
+      
+      // إذا كان الخطأ متعلقًا بالمصادقة، اعرض رسالة توضيحية
+      if (r.message.includes('token') || r.message.includes('auth') || r.message.includes('session')) {
+        $('#notificationCreateMsg').innerHTML += '<br><span class="muted small">Please try logging out and back in.</span>';
+      }
     } else {
       $('#notificationCreateMsg').innerHTML = '<span class="ok">Notification created successfully!</span>';
       // Clear form
@@ -1775,7 +1784,8 @@ async function createNotification() {
       }, 3000);
     }
   } catch (error) {
-    $('#notificationCreateMsg').innerHTML = '<span class="danger">Error creating notification</span>';
+    console.error('Error creating notification:', error);
+    $('#notificationCreateMsg').innerHTML = '<span class="danger">Error creating notification: ' + error.message + '</span>';
   }
 }
 
