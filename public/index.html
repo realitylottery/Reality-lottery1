@@ -714,34 +714,41 @@
       
       // دالة جديدة محسنة لتحميل وعرض الأخبار
       async function loadTicker() {
-        try {
-          const response = await fetch(`${API_BASE}/api/newstickers`);
-          if (!response.ok) throw new Error('Failed to fetch news tickers');
+    try {
+      const response = await fetch(`${API_BASE}/api/newstickers`);
+      if (!response.ok) throw new Error('Failed to fetch news tickers');
+      
+      const tickers = await response.json();
+      console.log('Tickers data:', tickers); // لأغراض debugging
+      
+      const tickerText = document.getElementById('ticker-text');
+      
+      if (tickers && tickers.length > 0) {
+        // تصفية التيكرات النشطة فقط
+        const activeTickers = tickers.filter(t => t.isActive);
+        
+        if (activeTickers.length > 0) {
+          // بناء محتوى التيكر مع الفواصل
+          let tickerContent = '';
+          activeTickers.forEach((ticker, index) => {
+            tickerContent += `<span class="ticker-item">${ticker.text}</span>`;
+            if (index < activeTickers.length - 1) {
+              tickerContent += '<span class="ticker-separator">◆</span>';
+            }
+          });
           
-          const tickers = await response.json();
-          const activeTickers = tickers.filter(t => t.isActive).sort((a, b) => b.priority - a.priority);
-          const tickerText = document.getElementById('ticker-text');
-          
-          if (activeTickers.length > 0) {
-            // بناء محتوى التيكر مع الفواصل
-            let tickerContent = '';
-            activeTickers.forEach((ticker, index) => {
-              tickerContent += `<span class="ticker-item">${ticker.text}</span>`;
-              if (index < activeTickers.length - 1) {
-                tickerContent += '<span class="ticker-separator">◆</span>';
-              }
-            });
-            
-            tickerText.innerHTML = tickerContent;
-          } else {
-            tickerText.textContent = 'No recent updates. Check back later!';
-          }
-        } catch (error) {
-          console.error('Error loading ticker:', error);
-          document.getElementById('ticker-text').textContent = 'Unable to load news updates';
+          tickerText.innerHTML = tickerContent;
+        } else {
+          tickerText.textContent = 'No active updates available';
         }
+      } else {
+        tickerText.textContent = 'No recent updates. Check back later!';
       }
-
+    } catch (error) {
+      console.error('Error loading ticker:', error);
+      document.getElementById('ticker-text').textContent = 'Unable to load news updates';
+    }
+      }
       async function displaySubscriptionStatus() {
         // إخفاء العنصر إذا لم يكن المستخدم مسجلاً
         if (!token || !userData.username) {
