@@ -559,7 +559,58 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+// الحصول على جميع التيكرات
+app.get('/api/newstickers', async (req, res) => {
+  try {
+    const tickers = await NewsTicker.find().sort({ priority: -1, createdAt: -1 });
+    res.json(tickers);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch news tickers' });
+  }
+});
 
+// إضافة تيكر جديد
+app.post('/api/admin/newstickers', authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  
+  try {
+    const { text, isActive = true, priority = 1 } = req.body;
+    const ticker = new NewsTicker({ text, isActive, priority });
+    await ticker.save();
+    res.json({ message: "News ticker added", ticker });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// تحديث تيكر
+app.put('/api/admin/newstickers/:id', authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  
+  try {
+    const { text, isActive, priority } = req.body;
+    const ticker = await NewsTicker.findByIdAndUpdate(
+      req.params.id,
+      { text, isActive, priority, updatedAt: new Date() },
+      { new: true }
+    );
+    res.json({ message: "News ticker updated", ticker });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// حذف تيكر
+app.delete('/api/admin/newstickers/:id', authMiddleware, async (req, res) => {
+  if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+  
+  try {
+    await NewsTicker.findByIdAndDelete(req.params.id);
+    res.json({ message: "News ticker deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 
 // Update user (Admin only)
@@ -4980,6 +5031,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
