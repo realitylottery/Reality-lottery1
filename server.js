@@ -430,7 +430,12 @@ app.post('/api/admin/notifications', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.userId);
     
-    
+    if (!admin) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token is not valid'
+      });
+    }
     // Check if user is admin
     if (!user.roles.includes('admin')) {
       return res.status(403).json({
@@ -5267,6 +5272,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
