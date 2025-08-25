@@ -1,89 +1,387 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RealityLottery - News</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    body{background:#000;color:#fff;font-family:Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column}
-    header,footer{background:#111;padding:15px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #ffd700}
-    .logo{color:#ffd700;font-weight:bold}
-    .news-container{flex:1;max-width:1000px;margin:20px auto;padding:20px}
-    .news-card{background:#222;padding:20px;margin-bottom:20px;border-radius:10px}
-    .news-card img{max-width:100%;border-radius:8px;margin-bottom:10px}
-    .news-card h2{color:#ffd700;margin-bottom:10px}
-    .news-card a{color:#ffa500;text-decoration:none;font-weight:bold}
-    footer{border-top:2px solid #ffd700;gap:20px;flex-wrap:wrap}
-    .footer-link{color:#ffd700;text-decoration:none;display:flex;flex-direction:column;align-items:center}
-    .loader{text-align:center;padding:20px;color:#ffd700}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RealityLottery - News</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background: linear-gradient(to right, #000000, #1a1a1a);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #ffd700;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo i {
+            font-size: 32px;
+        }
+        
+        .back-btn {
+            background: linear-gradient(to bottom, #ffd700, #ffb700);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(255, 215, 0, 0.4);
+        }
+        
+        .news-container {
+            flex: 1;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+            width: 100%;
+        }
+        
+        .page-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ffd700;
+            font-size: 32px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .page-title:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(to right, transparent, #ffd700, transparent);
+        }
+        
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        
+        .news-card {
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.2);
+            border-color: rgba(255, 215, 0, 0.4);
+        }
+        
+        .news-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 2px solid #ffd700;
+        }
+        
+        .news-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        
+        .news-title {
+            color: #ffd700;
+            font-size: 20px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .news-text {
+            color: #ddd;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+        
+        .news-button {
+            background: linear-gradient(to right, #ffd700, #ffaa00);
+            color: #000;
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: block;
+            margin-top: auto;
+        }
+        
+        .news-button:hover {
+            background: linear-gradient(to right, #ffaa00, #ffd700);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
+        }
+        
+        .no-news {
+            text-align: center;
+            padding: 40px;
+            color: #ffd700;
+            font-size: 20px;
+            grid-column: 1 / -1;
+        }
+        
+        .error-message {
+            text-align: center;
+            padding: 40px;
+            color: #ff6b6b;
+            font-size: 20px;
+            grid-column: 1 / -1;
+        }
+        
+        .loader {
+            text-align: center;
+            padding: 40px;
+            color: #ffd700;
+            font-size: 20px;
+            grid-column: 1 / -1;
+        }
+        
+        .loader i {
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        footer {
+            background: linear-gradient(to right, #000000, #1a1a1a);
+            padding: 20px;
+            border-top: 3px solid #ffd700;
+            margin-top: 40px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-around;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #ffd700;
+            text-decoration: none;
+            font-size: 14px;
+            transition: transform 0.3s;
+        }
+        
+        .nav-btn i {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            color: #ffaa00;
+        }
+        
+        .nav-btn.active {
+            color: #fff;
+        }
+        
+        @media (max-width: 768px) {
+            .news-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-buttons {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            
+            .nav-btn {
+                min-width: 70px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <div class="logo">RealityLottery</div>
-    <a href="index.html" style="color:#ffd700;">Back</a>
-  </header>
+    <header>
+        <div class="logo">
+            <i class="fas fa-dice"></i>
+            RealityLottery
+        </div>
+        <button class="back-btn" onclick="window.history.back()">
+            <i class="fas fa-arrow-left"></i> Back
+        </button>
+    </header>
 
-  <main class="news-container" id="news-list">
-    <div class="loader"><i class="fas fa-spinner fa-spin"></i> Loading news...</div>
-  </main>
+    <main class="news-container">
+        <h1 class="page-title">Latest News & Updates</h1>
+        <div class="news-grid" id="news-list">
+            <div class="loader">
+                <i class="fas fa-spinner"></i> Loading news...
+            </div>
+        </div>
+    </main>
 
-  <footer>
-    <a href="index.html" class="footer-link"><i class="fas fa-home"></i>Home</a>
-    <a href="news.html" class="footer-link"><i class="fas fa-newspaper"></i>News</a>
-    <a href="withdrawal.html" class="footer-link"><i class="fas fa-wallet"></i>Withdrawal</a>
-    <a href="profile.html" class="footer-link"><i class="fas fa-user"></i>Profile</a>
-  </footer>
+    <footer>
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-btn">
+                <i class="fas fa-home"></i>
+                Home
+            </a>
+            <a href="news.html" class="nav-btn active">
+                <i class="fas fa-newspaper"></i>
+                News
+            </a>
+            <a href="withdrawal.html" class="nav-btn">
+                <i class="fas fa-wallet"></i>
+                Withdraw
+            </a>
+            <a href="profile.html" class="nav-btn">
+                <i class="fas fa-user"></i>
+                Profile
+            </a>
+        </div>
+    </footer>
 
-  <script>
-    const API_BASE='https://realitylottery.koyeb.app';
-
-    async function loadNews(){
-      const container=document.getElementById('news-list');
-      try{
-        const res=await fetch(`${API_BASE}/api/news`);
-        const data=await res.json();
-        container.innerHTML='';
+    <script>
+        const API_BASE = 'https://realitylottery.koyeb.app';
         
-        if(data.news?.length){
-          data.news.forEach(n=>{
-            const card=document.createElement('div');
-            card.className='news-card';
-
-            if(n.image){
-              const img=document.createElement('img');
-              img.src=n.image;
-              img.alt='news';
-              card.appendChild(img);
+        // Sample data for demonstration (will be replaced with API data)
+        const sampleNews = [
+            {
+                title: "New Jackpot Record!",
+                text: "The jackpot has reached an all-time high of $50 million! Don't miss your chance to become a millionaire.",
+                image: "https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+                buttonText: "Play Now",
+                buttonLink: "#"
+            },
+            {
+                title: "Weekly Draw Results",
+                text: "The results for this week's draw are now available. Check if you're one of our lucky winners!",
+                image: "https://images.unsplash.com/photo-1516245834210-c4c142787335?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+                buttonText: "View Results",
+                buttonLink: "#"
+            },
+            {
+                title: "New Game Launch",
+                text: "We're excited to announce the launch of our new scratch card game with instant wins up to $10,000!",
+                image: "https://images.unsplash.com/photo-1617854818583-09e7f077a156?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+                buttonText: "Try Now",
+                buttonLink: "#"
             }
+        ];
 
-            const title=document.createElement('h2');
-            title.textContent=n.title||'Untitled';
-            card.appendChild(title);
-
-            const text=document.createElement('p');
-            text.textContent=n.text||'';
-            card.appendChild(text);
-
-            if(n.buttonText){
-              const link=document.createElement('a');
-              link.href=n.buttonLink||'#';
-              link.textContent=n.buttonText;
-              card.appendChild(link);
+        async function loadNews() {
+            const container = document.getElementById('news-list');
+            
+            try {
+                // In a real scenario, you would fetch from the API
+                // const res = await fetch(`${API_BASE}/api/news`);
+                // const data = await res.json();
+                
+                // For demonstration, we'll use sample data
+                const data = { news: sampleNews };
+                
+                container.innerHTML = '';
+                
+                if (data.news && data.news.length) {
+                    data.news.forEach(n => {
+                        const card = document.createElement('div');
+                        card.className = 'news-card';
+                        
+                        if (n.image) {
+                            const img = document.createElement('img');
+                            img.src = n.image;
+                            img.alt = 'News image';
+                            img.className = 'news-image';
+                            card.appendChild(img);
+                        }
+                        
+                        const contentDiv = document.createElement('div');
+                        contentDiv.className = 'news-content';
+                        
+                        const title = document.createElement('h2');
+                        title.className = 'news-title';
+                        title.textContent = n.title || 'Untitled';
+                        contentDiv.appendChild(title);
+                        
+                        const text = document.createElement('p');
+                        text.className = 'news-text';
+                        text.textContent = n.text || '';
+                        contentDiv.appendChild(text);
+                        
+                        if (n.buttonText) {
+                            const link = document.createElement('a');
+                            link.href = n.buttonLink || '#';
+                            link.textContent = n.buttonText;
+                            link.className = 'news-button';
+                            contentDiv.appendChild(link);
+                        }
+                        
+                        card.appendChild(contentDiv);
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = '<div class="no-news">No news available at the moment.</div>';
+                }
+            } catch(e) {
+                console.error('Error loading news:', e);
+                container.innerHTML = '<div class="error-message">⚠️ Error loading news. Please try again later.</div>';
             }
-
-            container.appendChild(card);
-          });
-        }else{
-          container.innerHTML='<p>No news available.</p>';
         }
-      }catch(e){
-        container.innerHTML='<p style="color:red;">⚠️ Error loading news</p>';
-      }
-    }
 
-    loadNews();
-  </script>
+        // Load news when page is ready
+        document.addEventListener('DOMContentLoaded', loadNews);
+    </script>
 </body>
 </html>
