@@ -680,27 +680,30 @@
         }
       }
 
-      // Function to load and display notifications
-async function loadNotifications() {
-  try {
-    const response = await fetch('https://realitylottery.koyeb.app/api/notifications?active=true');
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch notifications');
-    }
-    
-    const data = await response.json();
-    const notificationContainer = document.getElementById('notification-system');
-    notificationContainer.innerHTML = '';
-    
-    if (data.notifications && data.notifications.length > 0) {
-      data.notifications.forEach(notification => {
-        // Check if this notification was already dismissed
-        const dismissedNotifications = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
-        if (dismissedNotifications.includes(notification._id)) {
-          return; // Skip if already dismissed
-        }
-        
+<script>
+  // دالة لإظهار الإشعارات
+  async function loadNotifications() {
+    try {
+      const response = await fetch('https://realitylottery.koyeb.app/api/notifications?active=true');
+      if (!response.ok) throw new Error('Failed to fetch notifications');
+
+      const data = await response.json();
+      const container = document.getElementById('notification-system');
+      container.innerHTML = '';
+
+      let notificationsArray = [];
+      if (Array.isArray(data)) {
+        notificationsArray = data;
+      } else if (data.notifications && Array.isArray(data.notifications)) {
+        notificationsArray = data.notifications;
+      }
+
+      if (notificationsArray.length === 0) {
+        container.innerHTML = '<p style="color:var(--primary-color);">No notifications available</p>';
+        return;
+      }
+
+      notificationsArray.forEach(notification => {
         const notificationEl = document.createElement('div');
         notificationEl.className = 'notification';
         notificationEl.style.cssText = `
@@ -714,37 +717,39 @@ async function loadNotifications() {
           animation: slideIn 0.3s ease;
           color: #fff;
         `;
-        
+
         notificationEl.innerHTML = `
           <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div style="flex: 1;">
               <h4 style="margin: 0 0 8px 0; color: var(--primary-color); font-size: 16px;">
-                ${notification.title || 'Important Notice'}
+                ${notification.title || 'Notice'}
               </h4>
               <p style="margin: 0; font-size: 14px; line-height: 1.4;">
-                ${notification.message}
+                ${notification.message || 'No message provided'}
               </p>
             </div>
-            <button onclick="dismissNotification('${notification._id}', this.parentElement.parentElement)" 
+            <button onclick="this.parentElement.parentElement.remove()" 
                     style="background: none; border: none; color: #ff6b6b; cursor: pointer; font-size: 18px; margin-left: 10px; padding: 0;">
               &times;
             </button>
           </div>
-          ${notification.link ? `
-            <a href="${notification.link}" 
-               style="display: inline-block; margin-top: 10px; color: var(--primary-color); text-decoration: none; font-size: 13px;">
-               ${notification.linkText || 'Learn more'}
-            </a>
-          ` : ''}
+          ${notification.link ? `<a href="${notification.link}" 
+             style="display: inline-block; margin-top: 10px; color: var(--primary-color); text-decoration: none; font-size: 13px;">
+             ${notification.linkText || 'Learn more'}
+          </a>` : ''}
         `;
-        
-        notificationContainer.appendChild(notificationEl);
+
+        container.appendChild(notificationEl);
       });
+
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      document.getElementById('notification-system').innerHTML = 
+        '<p style="color: #ff6b6b;">Failed to load notifications</p>';
     }
-  } catch (error) {
-    console.error('Error loading notifications:', error);
   }
-}
+
+
 
 // Function to dismiss a notification
 function dismissNotification(notificationId, element) {
@@ -1031,6 +1036,7 @@ document.head.appendChild(style);
       loadBanners();
       loadTicker();
       displaySubscriptionStatus();
+      loadNotifications();
       
       // إضافة event listener لتحديث حالة الاشتراك عند النقر
       subscriptionStatus.addEventListener('click', displaySubscriptionStatus);
