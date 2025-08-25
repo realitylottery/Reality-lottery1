@@ -321,64 +321,71 @@
             }
         ];
 
-        async function loadNews() {
-            const container = document.getElementById('news-list');
-            
-            try {
-                // In a real scenario, you would fetch from the API
-                // const res = await fetch(`${API_BASE}/api/news`);
-                // const data = await res.json();
-                
-                // For demonstration, we'll use sample data
-                const data = { news: sampleNews };
-                
-                container.innerHTML = '';
-                
-                if (data.news && data.news.length) {
-                    data.news.forEach(n => {
-                        const card = document.createElement('div');
-                        card.className = 'news-card';
-                        
-                        if (n.image) {
-                            const img = document.createElement('img');
-                            img.src = n.image;
-                            img.alt = 'News image';
-                            img.className = 'news-image';
-                            card.appendChild(img);
-                        }
-                        
-                        const contentDiv = document.createElement('div');
-                        contentDiv.className = 'news-content';
-                        
-                        const title = document.createElement('h2');
-                        title.className = 'news-title';
-                        title.textContent = n.title || 'Untitled';
-                        contentDiv.appendChild(title);
-                        
-                        const text = document.createElement('p');
-                        text.className = 'news-text';
-                        text.textContent = n.text || '';
-                        contentDiv.appendChild(text);
-                        
-                        if (n.buttonText) {
-                            const link = document.createElement('a');
-                            link.href = n.buttonLink || '#';
-                            link.textContent = n.buttonText;
-                            link.className = 'news-button';
-                            contentDiv.appendChild(link);
-                        }
-                        
-                        card.appendChild(contentDiv);
-                        container.appendChild(card);
-                    });
-                } else {
-                    container.innerHTML = '<div class="no-news">No news available at the moment.</div>';
-                }
-            } catch(e) {
-                console.error('Error loading news:', e);
-                container.innerHTML = '<div class="error-message">⚠️ Error loading news. Please try again later.</div>';
-            }
+        // دالة لجلب الأخبار من السيرفر
+async function fetchNews() {
+    try {
+        const response = await fetch('/api/news');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
+        const newsData = await response.json();
+        return newsData;
+    } catch (error) {
+        console.error('Error fetching news:', error);
+        throw error;
+    }
+}
+
+// دالة لعرض الأخبار في الصفحة
+async function loadAndDisplayNews() {
+    const newsContainer = document.getElementById('news-container');
+    
+    try {
+        // إظهار حالة التحميل
+        newsContainer.innerHTML = '<div class="loading">Loading news...</div>';
+        
+        // جلب البيانات من السيرفر
+        const news = await fetchNews();
+        
+        // مسح المحتوى الحالي
+        newsContainer.innerHTML = '';
+        
+        // التحقق من وجود أخبار
+        if (news && news.length > 0) {
+            news.forEach(item => {
+                const newsElement = createNewsElement(item);
+                newsContainer.appendChild(newsElement);
+            });
+        } else {
+            newsContainer.innerHTML = '<div class="no-news">No news available</div>';
+        }
+    } catch (error) {
+        console.error('Failed to load news:', error);
+        newsContainer.innerHTML = `
+            <div class="error">
+                <p>Failed to load news. Please try again later.</p>
+                <button onclick="loadAndDisplayNews()">Retry</button>
+            </div>
+        `;
+    }
+}
+
+// دالة مساعدة لإنشاء عنصر خبر
+function createNewsElement(newsItem) {
+    const article = document.createElement('article');
+    article.className = 'news-item';
+    article.innerHTML = `
+        <h2>${newsItem.title || 'Untitled'}</h2>
+        ${newsItem.image ? `<img src="${newsItem.image}" alt="${newsItem.title}">` : ''}
+        <p>${newsItem.content || ''}</p>
+        <div class="news-meta">
+            <span class="date">${formatDate(newsItem.createdAt)}</span>
+        </div>
+    `;
+    return article;
+}
 
         // Load news when page is ready
         document.addEventListener('DOMContentLoaded', loadNews);
