@@ -566,10 +566,11 @@ if (spinResult.hasSpunWheel) {
   result.textContent = "You earned an extra spin! 🎉";
   statusMessage.textContent = "Ready to spin again!";
 } else {
-  // تحديث واجهة المستخدم للدوران العادي
-  checkEligibility();
-}
-  }, 5000); // ⬅ هنا كان ناقص الـ delay لتشغيل setTimeout
+  
+      // إعادة التحقق من الحالة بعد الخطأ
+      setTimeout(checkEligibility, 2000);
+    }
+  }, 5000);
 });
 
 // عند تحميل الصفحة
