@@ -543,10 +543,10 @@ spinBtn.addEventListener("click", async () => {
   
   // عرض رسالة النتيجة من السيرفر
   result.innerHTML = `<span class="success">${spinResult.message}</span>`;
-  
+
   // تحديث حالة الزر بناءً على الاستجابة من السيرفر
-  canSpin = !spinResult.hasSpunWheel;
-  spinBtn.disabled = !canSpin;
+canSpin = !updatedUser.hasSpunWheel;
+spinBtn.disabled = !canSpin;
 
 } catch (err) {
   console.error("Error processing spin:", err);
