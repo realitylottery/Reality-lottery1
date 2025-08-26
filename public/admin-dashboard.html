@@ -83,6 +83,7 @@
   <aside>
     <button class="navbtn active" data-tab="tab-login"><i class="fa-solid fa-lock"></i> Admin Sign-in</button>
     <button class="navbtn" data-tab="tab-stats"><i class="fa-solid fa-chart-line"></i> Stats</button>
+    <button class="navbtn" data-tab="tab-lottery"><i class="fa-solid fa-ticket"></i> Lottery Entries</button>
     <button class="navbtn" data-tab="tab-users"><i class="fa-solid fa-users"></i> Users</button>
     <button class="navbtn" data-tab="tab-payments"><i class="fa-solid fa-credit-card"></i> Payments</button>
     <button class="navbtn" data-tab="tab-withdrawals"><i class="fa-solid fa-wallet"></i> Withdrawals</button>
@@ -239,6 +240,36 @@
         Endpoint results will appear here...
       </div>
     </div>
+  </div>
+</section>
+    <!-- LOTTERY ENTRIES -->
+<section id="tab-lottery" class="section hidden">
+  <div class="title"><i class="fa-solid fa-ticket"></i> Lottery Entries</div>
+  
+  <div class="filter-bar">
+    <input id="lotterySearch" placeholder="Search by username..." />
+    <button class="btn" id="btnReloadLottery"><i class="fa-solid fa-rotate"></i> Reload</button>
+  </div>
+  
+  <div class="row" style="overflow:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Lottery Entries</th>
+        </tr>
+      </thead>
+      <tbody id="lotteryTbody">
+        <tr><td colspan="2" class="muted">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="notice" style="margin-top:12px">
+    <strong>Calculation Formula:</strong><br>
+    • Basic: Invites × 1<br>
+    • Pro: Invites × 3<br>
+    • VIP: Invites × 5
   </div>
 </section>
     
@@ -617,6 +648,21 @@
     });
     return n;
   }
+  // ========= LOTTERY ENTRIES CALCULATION =========
+function calculateLotteryEntries(user) {
+  const successfulInvites = user.successfulInvites || 0;
+  const subscriptionType = user.subscriptionType || '';
+  
+  let multiplier = 0;
+  switch(subscriptionType) {
+    case 'BASIC': multiplier = 1; break;
+    case 'PRO': multiplier = 3; break;
+    case 'VIP': multiplier = 5; break;
+    default: multiplier = 0;
+  }
+  
+  return successfulInvites * multiplier;
+}
 
   // ========= LOGIN =========
   $('#btnLoginAdmin').addEventListener('click', async ()=>{
@@ -931,6 +977,67 @@ $('#userSearch').addEventListener('input', loadUsersWithDebug);
   }
   $('#btnRefreshStats').addEventListener('click', loadStats);
 
+  // ========= LOTTERY ENTRIES =========
+async function loadLotteryEntries() {
+  const tb = $('#lotteryTbody');
+  tb.innerHTML = '<tr><td colspan="2" class="muted">Loading…</td></tr>';
+  
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/users', { 
+      headers: authHeaders(false) 
+    });
+    
+    if (r._error) {
+      tb.innerHTML = '<tr><td colspan="2"><div class="notice">'+ r.message +'</div></td></tr>';
+      return;
+    }
+    
+    const users = (r.users || []);
+    if (!users.length) {
+      tb.innerHTML = '<tr><td colspan="2" class="muted">No users yet.</td></tr>';
+      return;
+    }
+    
+    const searchQuery = $('#lotterySearch').value.trim().toLowerCase();
+    
+    const filtered = users.filter(u => {
+      return !searchQuery || 
+        (u.username || '').toLowerCase().includes(searchQuery);
+    });
+    
+    if (!filtered.length) {
+      tb.innerHTML = '<tr><td colspan="2" class="muted">No matching users found.</td></tr>';
+      return;
+    }
+    
+    tb.innerHTML = '';
+    filtered.forEach(u => {
+      const lotteryEntries = calculateLotteryEntries(u);
+      
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${u.username || '-'}</strong></td>
+        <td class="mono" style="text-align:center; font-weight:bold; color:var(--gold); font-size:16px">
+          ${lotteryEntries}
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+    
+  } catch (error) {
+    console.error('Error loading lottery entries:', error);
+    tb.innerHTML = '<tr><td colspan="2"><div class="notice">Error loading data: ' + error.message + '</div></td></tr>';
+  }
+}
+  $('#btnReloadLottery').addEventListener('click', loadLotteryEntries);
+  $('#lotterySearch').addEventListener('input', loadLotteryEntries);
+
+  document.querySelector('[data-tab="tab-lottery"]').addEventListener('click', () => {
+  if (isSigned()) {
+    loadLotteryEntries();
+  }
+});
+  
  // ========= USERS =========
 async function loadUsers(){
   const tb = $('#usersTbody');
@@ -1959,6 +2066,7 @@ document.querySelector('[data-tab="tab-tickers"]').addEventListener('click', () 
     loadNewsList();
     loadBannerList();
     loadTickers();
+    loadLotteryEntries();
     loadInvites();
     loadNotificationsList()
   }
@@ -1966,7 +2074,7 @@ document.querySelector('[data-tab="tab-tickers"]').addEventListener('click', () 
   // If the admin navigates into tabs while not signed, we keep UI friendly
   document.addEventListener('click', (e)=>{
     const tab = e.target.closest('.navbtn')?.dataset?.tab || '';
-    const needAuthTabs = ['tab-stats','tab-users','tab-payments','tab-withdrawals','tab-news','tab-banners','tab-tickers'];
+    const needAuthTabs = ['tab-stats','tab-users','tab-payments','tab-withdrawals','tab-news','tab-banners','tab-tickers', 'tab-lottery'];
     if (tab && needAuthTabs.includes(tab) && !isSigned()){
       setTimeout(()=>{ alert('Please sign in as admin first.'); }, 0);
     }
