@@ -258,7 +258,6 @@
               <th>Email</th>
               <th>Balance</th>
               <th>Subscription</th>
-              <th>Completed Tasks</th>
               <th class="nowrap">Save</th>
             </tr>
           </thead>
@@ -668,12 +667,6 @@ async function debugUserData(userId) {
       <strong>Field Analysis:</strong><br>
     `;
     
-    // Check for completedTasks field
-    if (user.completedTasks !== undefined) {
-      debugInfo += `<span class="ok">✓ completedTasks: ${user.completedTasks}</span><br>`;
-    } else {
-      debugInfo += `<span class="danger">✗ completedTasks: UNDEFINED</span><br>`;
-    }
     
     // Check for taskProgress field
     if (user.taskProgress !== undefined) {
@@ -872,7 +865,7 @@ async function loadUsersWithDebug(){
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
         
         try {
-          console.log('Sending update:', { balance, subscriptionType, completedTasks });
+          console.log('Sending update:', { balance, subscriptionType });
           
           const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
             method: 'PUT',
