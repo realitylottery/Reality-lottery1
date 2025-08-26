@@ -160,6 +160,10 @@
             </div>
           </div>
         </div>
+        <div class="field">
+  <label>Number of Getting into the Lottery</label>
+  <div id="lotteryEntries">0</div>
+        </div>
 
         <div class="row" style="margin-top:8px">
           <a href="withdrawal.html" class="btn btn-small"><i class="fa-solid fa-arrow-up-right-from-square"></i> Withdrawal</a>
@@ -381,7 +385,8 @@
       // إحصائيات الدعوات - استخدام الحقول الصحيحة من الخادم
       document.getElementById('totalInvited').textContent = user.totalInvites || 0; // جميع المدعوين
       document.getElementById('subscribedInvited').textContent = user.successfulInvites || 0; // فقط المشتركين
-
+      document.getElementById('lotteryEntries').textContent = user.lotteryEntries || 0;
+      
       // Task progress - يعتمد فقط على عدد المدعوين المشتركين (كل مشترك = +1 تقدم)
       const progress = Math.min(6, user.currentTaskProgress || 0);
       const progressFill = document.getElementById('progressFill');
