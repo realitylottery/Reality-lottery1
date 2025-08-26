@@ -4738,7 +4738,7 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       currentProgress: currentProgress,
 
       expectedReward,
-
+      hasSpunWheel: user.hasSpunWheel || false,
       canReset: currentProgress >= 2
 
     });
@@ -5172,6 +5172,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
