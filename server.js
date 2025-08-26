@@ -1012,7 +1012,19 @@ app.get('/api/profile', authMiddleware, async (req, res) => {
 
 });
 
+// Admin middleware assumed: authMiddleware + admin check
+app.get('/api/admin/users', authMiddleware, async (req, res) => {
+  try {
+    // افحص هل المستخدم ادمن
+    if (!req.user.isAdmin) return res.status(403).json({ message: 'Forbidden' });
 
+    const users = await User.find().select('username lotteryEntries').lean();
+    return res.json(users);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // Get invites and subscriptions statistics (admin only)
 
@@ -5146,6 +5158,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
