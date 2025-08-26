@@ -973,7 +973,6 @@ async function loadUsers(){
     tr.innerHTML = `
       <td><strong>${u.username || '-'}</strong></td>
       <td>${u.email || '-'}</td>
-      <td>${u.fullName || '-'}</td>
       <td><input type="number" data-field="balance" data-id="${u._id || u.id}" value="${u.balance || 0}" style="width: 70px;" /></td>
       <td>
         <select data-field="subscriptionType" data-id="${u._id || u.id}">
