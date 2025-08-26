@@ -9471,6 +9471,7 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
 
       currentProgress: currentProgress,
 
+      hasSpunWheel: user.hasSpunWheel,
 
 
       expectedReward,
@@ -10342,6 +10343,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
