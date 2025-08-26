@@ -531,6 +531,7 @@ app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
       message = "Better luck next time!";
 
     } else if (prize === "extra") {
+      user.hasSpunWheel = false;
 
       message = "You earned an extra spin!";
 
@@ -5171,6 +5172,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
