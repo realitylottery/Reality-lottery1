@@ -4684,73 +4684,47 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
-
   try {
-
     const user = await User.findById(req.user.id).select('-password');
-
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-
-
     // التقدم الحقيقي: الدعوات الناجحة + نقطة البونس لو عنده اشتراك
-
     const currentProgress = Math.min(6, (user.successfulInvites || 0) + (user.subscriptionActive ? 1 : 0));
-
-
 
     const expectedReward = calculateTaskReward(user.subscriptionType, currentProgress);
 
-
+    // حساب lotteryEntries بناءً على الاشتراك + كل دعوة ناجحة
+    const subscriptionPointsMap = { basic: 1, pro: 3, vip: 5 };
+    const subPoints = subscriptionPointsMap[user.subscriptionType?.toLowerCase()] || 0;
+    const invitePoints = user.successfulInvites || 0;
+    const lotteryEntries = subPoints + invitePoints;
 
     return res.json({
-
       id: user._id,
-
       username: user.username,
-
       fullName: user.fullName,
-
       email: user.email,
-
       phone: user.phone,
-
       balance: user.balance,
-
       subscriptionType: user.subscriptionType,
-
       subscriptionActive: user.subscriptionActive,
-
       subscriptionExpires: user.subscriptionExpires,
-
       referralCode: user.referralCode,
-
       referredBy: user.referredBy,
-
       totalInvites: user.totalInvites,
-
       successfulInvites: user.successfulInvites,
-
       currentTaskProgress: user.currentTaskProgress || 0,
-
       completedTasks: user.completedTasks,
-
       currentProgress: currentProgress,
-
       expectedReward,
+      lotteryEntries,           // ✅ أضفنا هنا
       hasSpunWheel: user.hasSpunWheel || false,
       canReset: currentProgress >= 2
-
     });
-
   } catch (err) {
-
     console.error('Me error:', err);
-
     return res.status(500).json({ message: 'Server error' });
-
   }
-
 });
 
 
@@ -5172,6 +5146,7 @@ app.listen(PORT, () => {
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
 });
+
 
 
 
