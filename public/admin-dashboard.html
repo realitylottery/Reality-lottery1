@@ -1054,7 +1054,7 @@ $('#userSearch').addEventListener('input', loadUsersWithDebug);
 async function loadUsers(){
   const tb = $('#usersTbody');
   tb.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
-  const r = await safeFetch(API_BASE + '/api/admin/users', { headers: authHeaders(false) });
+  const r = await safeFetch(API_BASE + '/api/admin/users', { headers: authHeaders(true) });
   
   if (r._error){
     tb.innerHTML = '<tr><td colspan="7"><div class="notice">'+ r.message +'</div></td></tr>';
