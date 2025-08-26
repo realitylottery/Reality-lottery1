@@ -777,14 +777,15 @@ async function loadLotteryList() {
     console.error(err);
     listEl.textContent = "Failed to load data.";
   }
-}
+} // <-- هنا يجب أن تنتهي الدالة فقط
 
+// الدوال الأخرى يجب أن تكون خارج دالة loadLotteryList
 // استدعاء الدالة بعد تحميل الصفحة
 window.onload = () => {
   loadAdminDashboard(); // لو عندك دالة موجودة مسبقًا
   loadLotteryList();
-};
-  
+}
+
 
 async function testEndpoint() {
   const endpoint = $('#debugEndpoint').value;
