@@ -667,7 +667,7 @@
       $('#loginMsg').innerHTML = '<span class="ok">Success</span>';
       // Auto-load data after successful login
       loadStats();
-      loadUsersWithDebug();
+      loadUsers();
       loadPayments();
       loadWithdrawals();
       loadNewsList();
@@ -909,124 +909,7 @@ $('#btnDebugUser').addEventListener('click', () => {
 $('#btnDebugAllUsers').addEventListener('click', debugAllUsers);
 $('#btnTestEndpoint').addEventListener('click', testEndpoint);
 
-// ========= ENHANCED USER LOADING WITH DEBUG INFO =========
-async function loadUsersWithDebug(){
-  console.log('🔄 Loading users...');
-  const tb = $('#usersTbody');
-  tb.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
-  
-  try {
-    const r = await safeFetch(API_BASE + '/api/admin/users', { 
-      headers: authHeaders(true) 
-    });
-    
-    console.log('📦 Users API response:', r); // ← إضافة للتصحيح
-    
-    if (r._error){
-      console.error('❌ Users API error:', r.message);
-      tb.innerHTML = '<tr><td colspan="7"><div class="notice">'+ r.message +'</div></td></tr>';
-      return;
-    }
-    
-    const users = (r.users || []);
-    console.log('👥 Users found:', users.length); // ← إضافة للتصحيح
-    
-    if (!users.length){
-      console.log('ℹ️ No users in database');
-      tb.innerHTML = '<tr><td colspan="7" class="muted">No users yet.</td></tr>';
-      return;
-    }
-    
-    // Debug: log what fields we're receiving
-    console.log('Users API Response:', users[0]);
-    
-    const q = $('#userSearch').value.trim().toLowerCase();
-    const filtered = q ? users.filter(u => {
-      const searchText = (u.username || '') + ' ' + (u.email || '') + ' ' + (u.fullName || '');
-      return searchText.toLowerCase().includes(q);
-    }) : users;
-
-    tb.innerHTML = '';
-    
-    filtered.forEach(u => {
-       const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>
-          <div><strong>${u.username || '-'}</strong></div>
-          <div class="small muted mono">${u._id || ''}</div>
-        </td>
-        <td>${u.email || '-'}</td>
-        <td>
-          <input type="number" data-field="balance" data-id="${u._id}" value="${Number(u.balance || 0)}" />
-        </td>
-        <td>
-          <select data-field="subscriptionType" data-id="${u._id}">
-            <option value="">None</option>
-            <option value="BASIC" ${u.subscriptionType === 'BASIC' ? 'selected' : ''}>BASIC</option>
-            <option value="PRO" ${u.subscriptionType === 'PRO' ? 'selected' : ''}>PRO</option>
-            <option value="VIP" ${u.subscriptionType === 'VIP' ? 'selected' : ''}>VIP</option>
-          </select>
-        </td>
-        <td>
-          <div class="muted small">Invites: ${u.successfulInvites || 0}/${u.totalInvites || 0}</div>
-          <div class="muted small">Sub: ${u.subscriptionType || 'None'}</div>
-        </td>
-        <td class="nowrap">
-          <button class="btn small" data-action="save" data-id="${u._id}">
-            <i class="fa-solid fa-floppy-disk"></i> Save
-          </button>
-        </td>
-      `;
-      tb.appendChild(tr);
-    });
-
-    // إضافة event listeners لأزرار الحفظ
-    tb.querySelectorAll('button[data-action="save"]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.dataset.id;
-        const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
-        const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
-
-        btn.disabled = true; 
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
         
-        try {
-          console.log('Sending update:', { balance, subscriptionType });
-          
-          const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
-            method: 'PUT',
-            headers: authHeaders(true),
-            body: JSON.stringify({ balance, subscriptionType })
-          });
-          
-          console.log('Update response:', r);
-          
-          if (r._error) {
-            alert('Update failed: ' + r.message);
-          } else {
-            alert('Saved successfully!');
-            loadUsersWithDebug(); // إعادة تحميل البيانات
-          }
-        } catch (error) {
-          console.error('Update error:', error);
-          alert('Error: ' + error.message);
-        } finally {
-          btn.disabled = false; 
-          btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save';
-        }
-      });
-    });
-    
-  } catch (error) {
-    console.error('Error loading users:', error);
-    tb.innerHTML = '<tr><td colspan="7"><div class="notice">Error loading users: ' + error.message + '</div></td></tr>';
-      }
-}
-
-// استبدال دالة loadUsers الأصلية بالدالة المحسنة
-$('#btnReloadUsers').addEventListener('click', loadUsersWithDebug);
-$('#userSearch').addEventListener('input', loadUsersWithDebug);
-
   
   // ========= STATS =========
   async function loadStats(){
