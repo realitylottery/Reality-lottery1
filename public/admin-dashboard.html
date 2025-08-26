@@ -267,9 +267,9 @@
   
   <div class="notice" style="margin-top:12px">
     <strong>Calculation Formula:</strong><br>
-    • Basic: Invites × 1<br>
-    • Pro: Invites × 3<br>
-    • VIP: Invites × 5
+    • Basic: Invites + 1<br>
+    • Pro: Invites + 3<br>
+    • VIP: Invites + 5
   </div>
 </section>
     
@@ -648,20 +648,20 @@
     });
     return n;
   }
-  // ========= LOTTERY ENTRIES CALCULATION =========
+// ========= LOTTERY ENTRIES CALCULATION =========
 function calculateLotteryEntries(user) {
   const successfulInvites = user.successfulInvites || 0;
   const subscriptionType = user.subscriptionType || '';
   
-  let multiplier = 0;
+  let baseEntries = 0;
   switch(subscriptionType) {
-    case 'BASIC': multiplier = 1; break;
-    case 'PRO': multiplier = 3; break;
-    case 'VIP': multiplier = 5; break;
-    default: multiplier = 0;
+    case 'BASIC': baseEntries = 1; break;
+    case 'PRO': baseEntries = 3; break;
+    case 'VIP': baseEntries = 5; break;
+    default: baseEntries = 0;
   }
   
-  return successfulInvites * multiplier;
+  return baseEntries + successfulInvites;
 }
 
   // ========= LOGIN =========
