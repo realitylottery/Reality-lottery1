@@ -83,7 +83,6 @@
   <aside>
     <button class="navbtn active" data-tab="tab-login"><i class="fa-solid fa-lock"></i> Admin Sign-in</button>
     <button class="navbtn" data-tab="tab-stats"><i class="fa-solid fa-chart-line"></i> Stats</button>
-    <button class="navbtn" data-tab="tab-lottery"><i class="fa-solid fa-ticket"></i> Lottery</button>
     <button class="navbtn" data-tab="tab-users"><i class="fa-solid fa-users"></i> Users</button>
     <button class="navbtn" data-tab="tab-payments"><i class="fa-solid fa-credit-card"></i> Payments</button>
     <button class="navbtn" data-tab="tab-withdrawals"><i class="fa-solid fa-wallet"></i> Withdrawals</button>
@@ -134,7 +133,7 @@
         <span class="muted">If endpoint is not ready, you'll see a gentle message instead of an error.</span>
       </div>
     </section>
-    
+
     <section id="tab-notifications" class="section hidden">
   <div class="title"><i class="fa-solid fa-bell"></i> Notification Management</div>
   
@@ -242,37 +241,6 @@
     </div>
   </div>
 </section>
-      <section id="tab-lottery" class="section hidden">
-  <div class="title"><i class="fa-solid fa-ticket"></i> Lottery Management</div>
-  
-  <div class="filter-bar">
-    <select id="lotteryFilter" class="filter-select">
-      <option value="all">All Entries</option>
-      <option value="active">Active Only</option>
-      <option value="winners">Winners</option>
-    </select>
-    <input id="lotterySearch" placeholder="Search by username..." />
-    <button class="btn" id="btnReloadLottery"><i class="fa-solid fa-rotate"></i> Reload</button>
-  </div>
-
-  <div class="row" style="overflow:auto">
-    <table>
-      <thead>
-        <tr>
-          <th>Username</th>
-          <th>Entries</th>
-          <th>Prize</th>
-          <th>Status</th>
-          <th>Draw Date</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="lotteryTbody">
-        <tr><td colspan="6" class="muted">Loading…</td></tr>
-      </tbody>
-    </table>
-  </div>
-      </section>
     
     <!-- USERS -->
     <section id="tab-users" class="section hidden">
@@ -290,6 +258,7 @@
               <th>Email</th>
               <th>Balance</th>
               <th>Subscription</th>
+              <th>Completed Tasks</th>
               <th class="nowrap">Save</th>
             </tr>
           </thead>
@@ -512,7 +481,7 @@
         </div>
       </div>
     </section>
-     
+
     <section id="tab-tickers" class="section hidden">
   <div class="title"><i class="fa-solid fa-scroll"></i> News Tickers Management</div>
   
@@ -672,6 +641,7 @@
       loadWithdrawals();
       loadNewsList();
       loadBannerList();
+      loadContentAdmin();
     }
   });
 
@@ -698,6 +668,12 @@ async function debugUserData(userId) {
       <strong>Field Analysis:</strong><br>
     `;
     
+    // Check for completedTasks field
+    if (user.completedTasks !== undefined) {
+      debugInfo += `<span class="ok">✓ completedTasks: ${user.completedTasks}</span><br>`;
+    } else {
+      debugInfo += `<span class="danger">✗ completedTasks: UNDEFINED</span><br>`;
+    }
     
     // Check for taskProgress field
     if (user.taskProgress !== undefined) {
@@ -762,94 +738,6 @@ async function debugAllUsers() {
   }
 }
 
-  // ========= LOTTERY =========
-async function loadLottery() {
-  const tb = $('#lotteryTbody');
-  tb.innerHTML = '<tr><td colspan="6" class="muted">Loading…</td></tr>';
-  
-  try {
-    const r = await safeFetch(API_BASE + '/api/admin/lottery', {
-      headers: authHeaders(false)
-    });
-    
-    if (r._error) {
-      tb.innerHTML = '<tr><td colspan="6"><div class="notice">' + r.message + '</div></td></tr>';
-      return;
-    }
-    
-    const entries = r.entries || [];
-    if (!entries.length) {
-      tb.innerHTML = '<tr><td colspan="6" class="muted">No lottery entries yet.</td></tr>';
-      return;
-    }
-    
-    tb.innerHTML = '';
-    entries.forEach(entry => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><strong>${entry.username || '-'}</strong></td>
-        <td>${entry.entriesCount || 0}</td>
-        <td>${entry.prize || 'N/A'}</td>
-        <td>${entry.status || 'Active'}</td>
-        <td>${entry.drawDate ? new Date(entry.drawDate).toLocaleDateString() : 'N/A'}</td>
-        <td class="nowrap">
-          <button class="btn small" data-action="view" data-id="${entry._id}">
-            <i class="fa-solid fa-eye"></i> View
-          </button>
-        </td>
-      `;
-      tb.appendChild(tr);
-    });
-  } catch (error) {
-    console.error('Error loading lottery:', error);
-    tb.innerHTML = '<tr><td colspan="6"><div class="notice">Error loading lottery data</div></td></tr>';
-  }
-}
-
-// إضافة مستمع الحدث لزر إعادة التحميل
-$('#btnReloadLottery').addEventListener('click', loadLottery);
-
-  
-async function loadLotteryList() {
-  try {
-    const users = await safeFetch(API_BASE + '/api/admin/users'); // تأكد أن هذه الـ API ترجع كل المستخدمين
-    const listEl = document.getElementById('lotteryList');
-    if (!users || users.length === 0) {
-      listEl.textContent = "No users found.";
-      return;
-    }
-
-    // بناء جدول أو قائمة
-    const table = document.createElement('table');
-    table.style.width = "100%";
-    table.style.borderCollapse = "collapse";
-    table.innerHTML = `
-      <thead>
-        <tr>
-          <th style="text-align:left; padding:6px; border-bottom:1px solid rgba(255,215,0,.25)">Username</th>
-          <th style="text-align:right; padding:6px; border-bottom:1px solid rgba(255,215,0,.25)">Lottery Entries</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${users.map(u => `
-          <tr>
-            <td style="padding:6px; border-bottom:1px solid rgba(255,215,0,.1)">${u.username}</td>
-            <td style="padding:6px; text-align:right; border-bottom:1px solid rgba(255,215,0,.1)">${u.lotteryEntries || 0}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    `;
-    listEl.innerHTML = "";
-    listEl.appendChild(table);
-
-  } catch(err) {
-    console.error(err);
-    document.getElementById('lotteryList').textContent = "Failed to load data.";
-  }
-}
-
-
-
 async function testEndpoint() {
   const endpoint = $('#debugEndpoint').value;
   const data = $('#debugData').value;
@@ -909,7 +797,117 @@ $('#btnDebugUser').addEventListener('click', () => {
 $('#btnDebugAllUsers').addEventListener('click', debugAllUsers);
 $('#btnTestEndpoint').addEventListener('click', testEndpoint);
 
+// ========= ENHANCED USER LOADING WITH DEBUG INFO =========
+async function loadUsersWithDebug(){
+  const tb = $('#usersTbody');
+  tb.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
+  
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/users', { 
+      headers: authHeaders(false) 
+    });
+    
+    if (r._error){
+      tb.innerHTML = '<tr><td colspan="7"><div class="notice">'+ r.message +'</div></td></tr>';
+      return;
+    }
+    
+    const users = (r.users || []);
+    if (!users.length){
+      tb.innerHTML = '<tr><td colspan="7" class="muted">No users yet.</td></tr>';
+      return;
+    }
+    
+    // Debug: log what fields we're receiving
+    console.log('Users API Response:', users[0]);
+    
+    const q = $('#userSearch').value.trim().toLowerCase();
+    const filtered = q ? users.filter(u => {
+      const searchText = (u.username || '') + ' ' + (u.email || '') + ' ' + (u.fullName || '');
+      return searchText.toLowerCase().includes(q);
+    }) : users;
+
+    tb.innerHTML = '';
+    
+    filtered.forEach(u => {
+       const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <div><strong>${u.username || '-'}</strong></div>
+          <div class="small muted mono">${u._id || ''}</div>
+        </td>
+        <td>${u.email || '-'}</td>
+        <td>
+          <input type="number" data-field="balance" data-id="${u._id}" value="${Number(u.balance || 0)}" />
+        </td>
+        <td>
+          <select data-field="subscriptionType" data-id="${u._id}">
+            <option value="">None</option>
+            <option value="BASIC" ${u.subscriptionType === 'BASIC' ? 'selected' : ''}>BASIC</option>
+            <option value="PRO" ${u.subscriptionType === 'PRO' ? 'selected' : ''}>PRO</option>
+            <option value="VIP" ${u.subscriptionType === 'VIP' ? 'selected' : ''}>VIP</option>
+          </select>
+        </td>
+        <td>
+          <div class="muted small">Invites: ${u.successfulInvites || 0}/${u.totalInvites || 0}</div>
+          <div class="muted small">Sub: ${u.subscriptionType || 'None'}</div>
+        </td>
+        <td class="nowrap">
+          <button class="btn small" data-action="save" data-id="${u._id}">
+            <i class="fa-solid fa-floppy-disk"></i> Save
+          </button>
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    // إضافة event listeners لأزرار الحفظ
+    tb.querySelectorAll('button[data-action="save"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
+        const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
+
+        btn.disabled = true; 
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
         
+        try {
+          console.log('Sending update:', { balance, subscriptionType, completedTasks });
+          
+          const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
+            method: 'PUT',
+            headers: authHeaders(true),
+            body: JSON.stringify({ balance, subscriptionType })
+          });
+          
+          console.log('Update response:', r);
+          
+          if (r._error) {
+            alert('Update failed: ' + r.message);
+          } else {
+            alert('Saved successfully!');
+            loadUsersWithDebug(); // إعادة تحميل البيانات
+          }
+        } catch (error) {
+          console.error('Update error:', error);
+          alert('Error: ' + error.message);
+        } finally {
+          btn.disabled = false; 
+          btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save';
+        }
+      });
+    });
+    
+  } catch (error) {
+    console.error('Error loading users:', error);
+    tb.innerHTML = '<tr><td colspan="7"><div class="notice">Error loading users: ' + error.message + '</div></td></tr>';
+      }
+}
+
+// استبدال دالة loadUsers الأصلية بالدالة المحسنة
+$('#btnReloadUsers').addEventListener('click', loadUsersWithDebug);
+$('#userSearch').addEventListener('input', loadUsersWithDebug);
+
   
   // ========= STATS =========
   async function loadStats(){
@@ -940,26 +938,23 @@ $('#btnTestEndpoint').addEventListener('click', testEndpoint);
   }
   $('#btnRefreshStats').addEventListener('click', loadStats);
 
-// ========= USERS =========
+ // ========= USERS =========
 async function loadUsers(){
   const tb = $('#usersTbody');
   tb.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
+  const r = await safeFetch(API_BASE + '/api/admin/users', { headers: authHeaders(false) });
   
-  const r = await safeFetch(API_BASE + '/api/admin/users', {
-    headers: authHeaders(true)
-  });
-
   if (r._error){
     tb.innerHTML = '<tr><td colspan="7"><div class="notice">'+ r.message +'</div></td></tr>';
     return;
   }
-
-  const users = (r.users || r || []);
+  
+  const users = (r.users || []);
   if (!users.length){
     tb.innerHTML = '<tr><td colspan="7" class="muted">No users yet.</td></tr>';
     return;
   }
-
+  
   const q = $('#userSearch').value.trim().toLowerCase();
   const filtered = q ? users.filter(u => {
     const searchText = (u.username || '') + ' ' + (u.email || '') + ' ' + (u.fullName || '');
@@ -967,24 +962,34 @@ async function loadUsers(){
   }) : users;
 
   tb.innerHTML = '';
-
+  
   filtered.forEach(u => {
+    
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><strong>${u.username || '-'}</strong></td>
-      <td>${u.email || '-'}</td>
-      <td><input type="number" data-field="balance" data-id="${u._id || u.id}" value="${u.balance || 0}" style="width: 70px;" /></td>
       <td>
-        <select data-field="subscriptionType" data-id="${u._id || u.id}">
-          <option value="none" ${(u.subscriptionType || 'none') === 'none' ? 'selected' : ''}>None</option>
-          <option value="basic" ${(u.subscriptionType || 'none') === 'basic' ? 'selected' : ''}>Basic</option>
-          <option value="premium" ${(u.subscriptionType || 'none') === 'premium' ? 'selected' : ''}>Premium</option>
+        <div><strong>${u.username || '-'}</strong></div>
+        <div class="small muted mono">${u._id || ''}</div>
+      </td>
+      <td>${u.email || '-'}</td>
+      <td>
+        <input type="number" data-field="balance" data-id="${u._id}" value="${Number(u.balance || 0)}" />
+      </td>
+      <td>
+        <select data-field="subscriptionType" data-id="${u._id}">
+          <option value="">None</option>
+          <option value="BASIC" ${u.subscriptionType === 'BASIC' ? 'selected' : ''}>BASIC</option>
+          <option value="PRO" ${u.subscriptionType === 'PRO' ? 'selected' : ''}>PRO</option>
+          <option value="VIP" ${u.subscriptionType === 'VIP' ? 'selected' : ''}>VIP</option>
         </select>
       </td>
-      <td>${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-'}</td>
+      <td>
+        <div class="muted small">Invites: ${u.successfulInvites || 0}/${u.totalInvites || 0}</div>
+        <div class="muted small">Sub: ${u.subscriptionType || 'None'}</div>
+      </td>
       <td class="nowrap">
-        <button class="btn small" data-action="save" data-id="${u._id || u.id}">
-          <i class="fa-solid fa-save"></i> Save
+        <button class="btn small" data-action="save" data-id="${u._id}">
+          <i class="fa-solid fa-floppy-disk"></i> Save
         </button>
       </td>
     `;
@@ -998,17 +1003,27 @@ async function loadUsers(){
       const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
       const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
       
-      const updateResult = await safeFetch(API_BASE + '/api/admin/users/' + id, {
-        method: 'PUT',
-        headers: authHeaders(true),
-        body: JSON.stringify({ balance, subscriptionType })
-      });
+
+      btn.disabled = true; 
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
       
-      if (updateResult._error) {
-        alert('Error updating user: ' + updateResult.message);
-      } else {
-        alert('User updated successfully!');
-        loadUsers(); // إعادة تحميل البيانات
+      try {
+        const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
+          method: 'PUT',
+          headers: authHeaders(true),
+          body: JSON.stringify({ balance, subscriptionType })
+        });
+        
+        if (r._error) {
+          alert('Update failed: ' + r.message);
+        } else {
+          alert('Saved successfully!');
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      } finally {
+        btn.disabled = false; 
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save';
       }
     });
   });
@@ -1945,15 +1960,12 @@ document.querySelector('[data-tab="tab-tickers"]').addEventListener('click', () 
   // Auto-load after login if token exists
   if (isSigned()){
     loadStats();
-    loadUsers();
+    loadUsersWithDebug();
     loadPayments();
     loadWithdrawals();
     loadNewsList();
     loadBannerList();
-    loadAdminDashboard(); 
-    loadLotteryList();
     loadTickers();
-    loadLottery();
     loadInvites();
     loadNotificationsList()
   }
