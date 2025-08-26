@@ -443,6 +443,7 @@ resetBtn.onclick = async () => {
       document.getElementById('completedTasks').textContent = user.completedTasks;
       document.getElementById('progressText').textContent = '0/6';
       document.getElementById('progressFill').style.width = '0%';
+      document.getElementById('lotteryEntries').textContent = user.lotteryEntries || 0;
       
       // إعادة تعيين الخطوات
       const stepElements = document.querySelectorAll('#stepsWrap .step');
