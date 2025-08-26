@@ -916,7 +916,7 @@ async function loadUsersWithDebug(){
   
   try {
     const r = await safeFetch(API_BASE + '/api/admin/users', { 
-      headers: authHeaders(false) 
+      headers: authHeaders(true) 
     });
     
     if (r._error){
