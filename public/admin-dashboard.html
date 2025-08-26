@@ -132,6 +132,14 @@
         <button class="btn" id="btnRefreshStats"><i class="fa-solid fa-rotate"></i> Refresh</button>
         <span class="muted">If endpoint is not ready, you'll see a gentle message instead of an error.</span>
       </div>
+       <section class="card" style="margin-top:12px">
+  <div class="title"><i class="fa-solid fa-ticket"></i> Lottery</div>
+  <div class="muted">
+    List of users and their Lottery Entries.
+  </div>
+  <div id="lotteryList" style="margin-top:10px">
+    Loading...
+  </div>
     </section>
     
     <section id="tab-notifications" class="section hidden">
@@ -522,15 +530,6 @@
     </div>
   </div>
     </section>
-    <section class="card" style="margin-top:12px">
-  <div class="title"><i class="fa-solid fa-ticket"></i> Lottery</div>
-  <div class="muted">
-    List of users and their Lottery Entries.
-  </div>
-  <div id="lotteryList" style="margin-top:10px">
-    Loading...
-  </div>
-    </section>
   </main>
 </div>
 
@@ -741,15 +740,17 @@ async function debugAllUsers() {
 }
 
 async function loadLotteryList() {
+  const listEl = document.getElementById('lotteryList');
   try {
-    const users = await safeFetch(API_BASE + '/api/admin/users'); // تأكد أن هذه الـ API ترجع كل المستخدمين
-    const listEl = document.getElementById('lotteryList');
+    const users = await safeFetch(API_BASE + '/api/admin/users', {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+
     if (!users || users.length === 0) {
       listEl.textContent = "No users found.";
       return;
     }
 
-    // بناء جدول أو قائمة
     const table = document.createElement('table');
     table.style.width = "100%";
     table.style.borderCollapse = "collapse";
@@ -774,7 +775,7 @@ async function loadLotteryList() {
 
   } catch(err) {
     console.error(err);
-    document.getElementById('lotteryList').textContent = "Failed to load data.";
+    listEl.textContent = "Failed to load data.";
   }
 }
 
