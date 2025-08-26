@@ -531,21 +531,21 @@ spinBtn.addEventListener("click", async () => {
   }
 
   const spinResult = await response.json();
-  
-  // تحديث بيانات المستخدم من الاستجابة
-  const updatedUser = { 
-    ...JSON.parse(localStorage.getItem("rl_user") || "{}"),
-    balance: spinResult.balance,
-    hasSpunWheel: spinResult.hasSpunWheel
-  };
-  
-  localStorage.setItem("rl_user", JSON.stringify(updatedUser));
 
-  // تحديث واجهة المستخدم
-  userBalance.textContent = `Balance: $${spinResult.balance || 0}`;
-  
-  // عرض رسالة النتيجة من السيرفر
-  result.innerHTML = `<span class="success">${spinResult.message}</span>`;
+// تحديث بيانات المستخدم من الاستجابة
+const updatedUser = { 
+  ...JSON.parse(localStorage.getItem("rl_user") || "{}"),
+  balance: spinResult.balance,
+  hasSpunWheel: spinResult.hasSpunWheel
+};
+
+localStorage.setItem("rl_user", JSON.stringify(updatedUser));
+
+// تحديث واجهة المستخدم
+userBalance.textContent = `Balance: $${spinResult.balance || 0}`;
+
+// عرض رسالة النتيجة من السيرفر
+result.innerHTML = `<span class="success">${spinResult.message}</span>`;
 
 // تحديث حالة الزر بناءً على الاستجابة من السيرفر
 canSpin = !spinResult.hasSpunWheel;
@@ -555,21 +555,20 @@ spinBtn.disabled = !canSpin;
 if (spinResult.hasSpunWheel) {
   canSpin = false;
   spinBtn.disabled = true;
+  
+  // تحديث واجهة المستخدم فوراً
+  result.textContent = "You already used your spin this subscription ❌";
+  statusMessage.textContent = "Wait for your next subscription period to spin again";
+  userStatus.textContent = "Active subscription - Already spun";
+  userStatus.style.color = "var(--error-color)";
+} else if (prize.type === "extra") {
+  // إذا كان الجائزة دورة إضافية
+  result.textContent = "You earned an extra spin! 🎉";
+  statusMessage.textContent = "Ready to spin again!";
+} else {
+  // تحديث واجهة المستخدم للدوران العادي
+  checkEligibility();
 }
-
-} catch (err) {
-  console.error("Error processing spin:", err);
-  result.innerHTML = `<span class="error">${err.message || "Error processing spin"}</span>`;
-  statusMessage.textContent = "Please try again later";
-  wheel.style.transform = 'rotate(0deg)';
-  
-  // إعادة تعيين حالة الزر والتحقق من الأهلية
-  canSpin = false;
-  spinBtn.disabled = true;
-  
-  // إعادة التحقق من الحالة بعد الخطأ
-  setTimeout(checkEligibility, 2000);
-    }
   }, 5000); // ⬅ هنا كان ناقص الـ delay لتشغيل setTimeout
 });
 
