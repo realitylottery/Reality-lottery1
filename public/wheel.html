@@ -465,25 +465,28 @@ async function checkEligibility() {
     userBalance.textContent = `Balance: $${data.balance || 0}`;
 
     if (data.subscriptionActive && !data.hasSpunWheel) {
-      canSpin = true;
-      spinBtn.disabled = false;
-      result.textContent = "You have 1 spin available 🎉";
-      statusMessage.textContent = "Ready to spin!";
-      userStatus.textContent = "Active subscription - Spin available";
-      userStatus.style.color = "var(--success-color)";
-    } else if (data.subscriptionActive && data.hasSpunWheel) {
-      spinBtn.disabled = true;
-      result.textContent = "You already used your spin this subscription ❌";
-      statusMessage.textContent = "Wait for your next subscription period to spin again";
-      userStatus.textContent = "Active subscription - Already spun";
-      userStatus.style.color = "var(--error-color)";
-    } else {
-      spinBtn.disabled = true;
-      result.textContent = "Subscribe to unlock your spin!";
-      statusMessage.textContent = "Active subscription required";
-      userStatus.textContent = "No active subscription";
-      userStatus.style.color = "var(--error-color)";
+  canSpin = true;
+  spinBtn.disabled = false;
+  result.textContent = "You have 1 spin available 🎉";
+  statusMessage.textContent = "Ready to spin!";
+  userStatus.textContent = "Active subscription - Spin available";
+  userStatus.style.color = "var(--success-color)";
+} else if (data.subscriptionActive && data.hasSpunWheel) {
+  canSpin = false; // ⬅ أضف هذا السطر
+  spinBtn.disabled = true; // ⬅ تأكد من وجود هذا
+  result.textContent = "You already used your spin this subscription ❌";
+  statusMessage.textContent = "Wait for your next subscription period to spin again";
+  userStatus.textContent = "Active subscription - Already spun";
+  userStatus.style.color = "var(--error-color)";
+} else {
+  canSpin = false; // ⬅ أضف هذا السطر
+  spinBtn.disabled = true;
+  result.textContent = "Subscribe to unlock your spin!";
+  statusMessage.textContent = "Active subscription required";
+  userStatus.textContent = "No active subscription";
+  userStatus.style.color = "var(--error-color)";
     }
+    
   } catch (err) {
     console.error("Eligibility check error:", err);
     spinBtn.disabled = true;
@@ -544,15 +547,25 @@ spinBtn.addEventListener("click", async () => {
   // عرض رسالة النتيجة من السيرفر
   result.innerHTML = `<span class="success">${spinResult.message}</span>`;
 
-  // تحديث حالة الزر بناءً على الاستجابة من السيرفر
-canSpin = !updatedUser.hasSpunWheel;
+// تحديث حالة الزر بناءً على الاستجابة من السيرفر
+canSpin = !spinResult.hasSpunWheel;
 spinBtn.disabled = !canSpin;
+
+// إذا كانت الدوران قد استخدمت، عطل الزر فوراً
+if (spinResult.hasSpunWheel) {
+  canSpin = false;
+  spinBtn.disabled = true;
+}
 
 } catch (err) {
   console.error("Error processing spin:", err);
   result.innerHTML = `<span class="error">${err.message || "Error processing spin"}</span>`;
   statusMessage.textContent = "Please try again later";
   wheel.style.transform = 'rotate(0deg)';
+  
+  // إعادة تعيين حالة الزر والتحقق من الأهلية
+  canSpin = false;
+  spinBtn.disabled = true;
   
   // إعادة التحقق من الحالة بعد الخطأ
   setTimeout(checkEligibility, 2000);
