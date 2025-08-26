@@ -83,6 +83,7 @@
   <aside>
     <button class="navbtn active" data-tab="tab-login"><i class="fa-solid fa-lock"></i> Admin Sign-in</button>
     <button class="navbtn" data-tab="tab-stats"><i class="fa-solid fa-chart-line"></i> Stats</button>
+    <button class="navbtn" data-tab="tab-lottery"><i class="fa-solid fa-ticket"></i> Lottery</button>
     <button class="navbtn" data-tab="tab-users"><i class="fa-solid fa-users"></i> Users</button>
     <button class="navbtn" data-tab="tab-payments"><i class="fa-solid fa-credit-card"></i> Payments</button>
     <button class="navbtn" data-tab="tab-withdrawals"><i class="fa-solid fa-wallet"></i> Withdrawals</button>
@@ -132,14 +133,6 @@
         <button class="btn" id="btnRefreshStats"><i class="fa-solid fa-rotate"></i> Refresh</button>
         <span class="muted">If endpoint is not ready, you'll see a gentle message instead of an error.</span>
       </div>
-       <section class="card" style="margin-top:12px">
-  <div class="title"><i class="fa-solid fa-ticket"></i> Lottery</div>
-  <div class="muted">
-    List of users and their Lottery Entries.
-  </div>
-  <div id="lotteryList" style="margin-top:10px">
-    Loading...
-  </div>
     </section>
     
     <section id="tab-notifications" class="section hidden">
@@ -249,6 +242,37 @@
     </div>
   </div>
 </section>
+      <section id="tab-lottery" class="section hidden">
+  <div class="title"><i class="fa-solid fa-ticket"></i> Lottery Management</div>
+  
+  <div class="filter-bar">
+    <select id="lotteryFilter" class="filter-select">
+      <option value="all">All Entries</option>
+      <option value="active">Active Only</option>
+      <option value="winners">Winners</option>
+    </select>
+    <input id="lotterySearch" placeholder="Search by username..." />
+    <button class="btn" id="btnReloadLottery"><i class="fa-solid fa-rotate"></i> Reload</button>
+  </div>
+
+  <div class="row" style="overflow:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Entries</th>
+          <th>Prize</th>
+          <th>Status</th>
+          <th>Draw Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="lotteryTbody">
+        <tr><td colspan="6" class="muted">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+      </section>
     
     <!-- USERS -->
     <section id="tab-users" class="section hidden">
@@ -648,7 +672,6 @@
       loadWithdrawals();
       loadNewsList();
       loadBannerList();
-      loadContentAdmin();
     }
   });
 
@@ -739,18 +762,64 @@ async function debugAllUsers() {
   }
 }
 
-async function loadLotteryList() {
-  const listEl = document.getElementById('lotteryList');
+  // ========= LOTTERY =========
+async function loadLottery() {
+  const tb = $('#lotteryTbody');
+  tb.innerHTML = '<tr><td colspan="6" class="muted">Loading…</td></tr>';
+  
   try {
-    const users = await safeFetch(API_BASE + '/api/admin/users', {
-      headers: { 'Authorization': 'Bearer ' + getToken() }
+    const r = await safeFetch(API_BASE + '/api/admin/lottery', {
+      headers: authHeaders(false)
     });
+    
+    if (r._error) {
+      tb.innerHTML = '<tr><td colspan="6"><div class="notice">' + r.message + '</div></td></tr>';
+      return;
+    }
+    
+    const entries = r.entries || [];
+    if (!entries.length) {
+      tb.innerHTML = '<tr><td colspan="6" class="muted">No lottery entries yet.</td></tr>';
+      return;
+    }
+    
+    tb.innerHTML = '';
+    entries.forEach(entry => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${entry.username || '-'}</strong></td>
+        <td>${entry.entriesCount || 0}</td>
+        <td>${entry.prize || 'N/A'}</td>
+        <td>${entry.status || 'Active'}</td>
+        <td>${entry.drawDate ? new Date(entry.drawDate).toLocaleDateString() : 'N/A'}</td>
+        <td class="nowrap">
+          <button class="btn small" data-action="view" data-id="${entry._id}">
+            <i class="fa-solid fa-eye"></i> View
+          </button>
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+  } catch (error) {
+    console.error('Error loading lottery:', error);
+    tb.innerHTML = '<tr><td colspan="6"><div class="notice">Error loading lottery data</div></td></tr>';
+  }
+}
 
+// إضافة مستمع الحدث لزر إعادة التحميل
+$('#btnReloadLottery').addEventListener('click', loadLottery);
+
+  
+async function loadLotteryList() {
+  try {
+    const users = await safeFetch(API_BASE + '/api/admin/users'); // تأكد أن هذه الـ API ترجع كل المستخدمين
+    const listEl = document.getElementById('lotteryList');
     if (!users || users.length === 0) {
       listEl.textContent = "No users found.";
       return;
     }
 
+    // بناء جدول أو قائمة
     const table = document.createElement('table');
     table.style.width = "100%";
     table.style.borderCollapse = "collapse";
@@ -775,9 +844,9 @@ async function loadLotteryList() {
 
   } catch(err) {
     console.error(err);
-    listEl.textContent = "Failed to load data.";
+    document.getElementById('lotteryList').textContent = "Failed to load data.";
   }
-} // <-- هنا يجب أن تنتهي الدالة فقط
+}
 
 
 
@@ -2011,6 +2080,7 @@ document.querySelector('[data-tab="tab-tickers"]').addEventListener('click', () 
     loadAdminDashboard(); 
     loadLotteryList();
     loadTickers();
+    loadLottery();
     loadInvites();
     loadNotificationsList()
   }
