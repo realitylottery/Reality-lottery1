@@ -2,7 +2,15 @@ require('dotenv').config();
 
 
 
+
+
+
+
 const express = require('express');
+
+
+
+
 
 
 
@@ -10,7 +18,15 @@ const mongoose = require('mongoose');
 
 
 
+
+
+
+
 const bcrypt = require('bcryptjs');
+
+
+
+
 
 
 
@@ -18,7 +34,15 @@ const jwt = require('jsonwebtoken');
 
 
 
+
+
+
+
 const cors = require('cors');
+
+
+
+
 
 
 
@@ -26,12 +50,25 @@ const path = require('path');
 
 
 
+
+
+
+
 const User = require('./models/User');
+
+
 
 const Notification = require('./models/Notification');
 
 
+
+
+
 const News = require('./models/News');
+
+
+
+
 
 
 
@@ -39,11 +76,23 @@ const Withdrawal = require('./models/Withdrawal');
 
 
 
+
+
+
+
 const NewsTicker = require('./models/NewsTicker');
 
 
 
+
+
+
+
 const Banner = require('./models/Banner');
+
+
+
+
 
 
 
@@ -55,7 +104,19 @@ const Payment = require('./models/Payment'); // Added Payment model
 
 
 
+
+
+
+
+
+
+
+
 const app = express();
+
+
+
+
 
 
 
@@ -67,7 +128,19 @@ app.use(express.json());
 
 
 
+
+
+
+
+
+
+
+
 // ================= CORS =================
+
+
+
+
 
 
 
@@ -75,7 +148,15 @@ const ALLOWED_ORIGINS = [
 
 
 
+
+
+
+
   process.env.FRONTEND_ORIGIN || 'https://realitylottery.koyeb.app',
+
+
+
+
 
 
 
@@ -83,7 +164,15 @@ const ALLOWED_ORIGINS = [
 
 
 
+
+
+
+
   'http://localhost:5000',
+
+
+
+
 
 
 
@@ -91,7 +180,15 @@ const ALLOWED_ORIGINS = [
 
 
 
+
+
+
+
   'http://localhost:5500'
+
+
+
+
 
 
 
@@ -103,7 +200,19 @@ const ALLOWED_ORIGINS = [
 
 
 
+
+
+
+
+
+
+
+
 app.use(cors({
+
+
+
+
 
 
 
@@ -111,7 +220,15 @@ app.use(cors({
 
 
 
+
+
+
+
     if (!origin) return callback(null, true);
+
+
+
+
 
 
 
@@ -119,7 +236,15 @@ app.use(cors({
 
 
 
+
+
+
+
       const msg = 'CORS policy does not allow access from this origin.';
+
+
+
+
 
 
 
@@ -127,7 +252,15 @@ app.use(cors({
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -135,7 +268,15 @@ app.use(cors({
 
 
 
+
+
+
+
   }
+
+
+
+
 
 
 
@@ -147,7 +288,19 @@ app.use(cors({
 
 
 
+
+
+
+
+
+
+
+
 // ================= CONFIG =================
+
+
+
+
 
 
 
@@ -155,7 +308,15 @@ const PORT = process.env.PORT || 8000;
 
 
 
+
+
+
+
 const MONGO_URI = process.env.MONGO_URI;
+
+
+
+
 
 
 
@@ -167,7 +328,19 @@ const JWT_SECRET = process.env.JWT_SECRET || 'devsecret';
 
 
 
+
+
+
+
+
+
+
+
 // ================= DATABASE =================
+
+
+
+
 
 
 
@@ -175,7 +348,15 @@ mongoose.connect(MONGO_URI, {
 
 
 
+
+
+
+
   useNewUrlParser: true,
+
+
+
+
 
 
 
@@ -183,7 +364,15 @@ mongoose.connect(MONGO_URI, {
 
 
 
+
+
+
+
 }).then(() => {
+
+
+
+
 
 
 
@@ -191,7 +380,15 @@ mongoose.connect(MONGO_URI, {
 
 
 
+
+
+
+
 }).catch(err => {
+
+
+
+
 
 
 
@@ -199,7 +396,19 @@ mongoose.connect(MONGO_URI, {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -211,7 +420,15 @@ mongoose.connect(MONGO_URI, {
 
 
 
+
+
+
+
 function generateToken(user) {
+
+
+
+
 
 
 
@@ -219,7 +436,15 @@ function generateToken(user) {
 
 
 
+
+
+
+
     { id: user._id, username: user.username, roles: user.roles },
+
+
+
+
 
 
 
@@ -227,7 +452,15 @@ function generateToken(user) {
 
 
 
+
+
+
+
     { expiresIn: '7d' }
+
+
+
+
 
 
 
@@ -235,39 +468,83 @@ function generateToken(user) {
 
 
 
+
+
+
+
 }
+
+
+
+
 
 
 
 function calculateTaskReward(subscriptionType, progress) {
 
+
+
   const rewards = {
+
+
 
     'BASIC': { 2: 5, 3: 8, 6: 12 },
 
+
+
     'PRO': { 2: 8, 3: 12, 6: 15 },
+
+
 
     'VIP': { 2: 12, 3: 15, 6: 20 },
 
+
+
     'NONE': { 2: 2, 3: 3, 6: 6 },      // غير إلى 'NONE' (كبيرة)
+
+
 
     '': { 2: 2, 3: 3, 6: 6 }           // أضف هذا للقيم الفارغة
 
+
+
   };
 
+
+
   
+
+
 
   // تحويل إلى uppercase للتأكد من المطابقة
 
+
+
   const subscription = (subscriptionType || 'NONE').toUpperCase();
+
+
 
   const rewardTable = rewards[subscription] || rewards['NONE'];
 
+
+
   
+
+
 
   return rewardTable[progress] || 0;
 
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -279,7 +556,15 @@ async function authMiddleware(req, res, next) {
 
 
 
+
+
+
+
   const authHeader = req.headers['authorization'];
+
+
+
+
 
 
 
@@ -291,7 +576,19 @@ async function authMiddleware(req, res, next) {
 
 
 
+
+
+
+
+
+
+
+
   const token = authHeader.split(' ')[1];
+
+
+
+
 
 
 
@@ -303,7 +600,19 @@ async function authMiddleware(req, res, next) {
 
 
 
+
+
+
+
+
+
+
+
   try {
+
+
+
+
 
 
 
@@ -311,7 +620,15 @@ async function authMiddleware(req, res, next) {
 
 
 
+
+
+
+
     req.user = decoded;
+
+
+
+
 
 
 
@@ -319,7 +636,15 @@ async function authMiddleware(req, res, next) {
 
 
 
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -327,7 +652,15 @@ async function authMiddleware(req, res, next) {
 
 
 
+
+
+
+
   }
+
+
+
+
 
 
 
@@ -339,184 +672,373 @@ async function authMiddleware(req, res, next) {
 
 
 
+
+
+
+
+
+
+
+
 // ================= ROUTES =================
+
+
+
 
 
 // ========= NOTIFICATION ROUTES =========
 
+
+
 // GET /api/notifications - Get active notifications (public)
+
 app.get('/api/notifications', async (req, res) => {
+
   try {
+
     const { active } = req.query;
+
     let query = {};
+
     
+
     if (active === 'true') {
+
       query.isActive = true;
+
     }
+
     
+
     const notifications = await Notification.find(query)
+
       .sort({ priority: -1, createdAt: -1 })
+
       .select('-__v');
+
     
+
     res.json({
+
       success: true,
+
       notifications,
+
       count: notifications.length
+
     });
+
   } catch (error) {
+
     console.error('Error fetching notifications:', error);
+
     res.status(500).json({
+
       success: false,
+
       message: 'Server error fetching notifications'
+
     });
+
   }
+
 });
+
+
 
 // GET /api/admin/notifications - Get all notifications (admin only)
+
 app.get('/api/admin/notifications', authMiddleware, async (req, res) => {
+
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+
   
+
   try {
+
     const notifications = await Notification.find()
+
       .sort({ createdAt: -1 })
+
       .select('-__v');
+
     
+
     res.json({
+
       success: true,
+
       notifications,
+
       count: notifications.length
+
     });
+
   } catch (error) {
+
     console.error('Error fetching notifications:', error);
+
     res.status(500).json({
+
       success: false,
+
       message: 'Server error fetching notifications'
+
     });
+
   }
+
 });
+
+
 
 // POST /api/admin/notifications - Create notification (admin only)
+
 app.post('/api/admin/notifications', authMiddleware, async (req, res) => {
+
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+
   
+
   try {
+
     const { title, message, link, linkText, priority, isActive } = req.body;
+
     
+
     // Validation
+
     if (!title || !message) {
+
       return res.status(400).json({
+
         success: false,
+
         message: 'Title and message are required'
+
       });
+
     }
+
     
+
     const notification = new Notification({
+
       title,
+
       message,
+
       link: link || '',
+
       linkText: linkText || 'Learn more',
+
       priority: priority || 1,
+
       isActive: isActive !== undefined ? isActive : true
+
     });
+
     
+
     await notification.save();
+
     
+
     res.status(201).json({
+
       success: true,
+
       message: 'Notification created successfully',
+
       notification
+
     });
+
   } catch (error) {
+
     console.error('Error creating notification:', error);
+
     res.status(500).json({
+
       success: false,
+
       message: 'Server error creating notification'
+
     });
+
   }
+
 });
+
+
 
 // PUT /api/admin/notifications/:id - Update notification (admin only)
+
 app.put('/api/admin/notifications/:id', authMiddleware, async (req, res) => {
+
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+
   
+
   try {
+
     const { id } = req.params;
+
     const updates = req.body;
+
     
+
     const notification = await Notification.findByIdAndUpdate(
+
       id,
+
       { ...updates, updatedAt: Date.now() },
+
       { new: true, runValidators: true }
+
     ).select('-__v');
+
     
+
     if (!notification) {
+
       return res.status(404).json({
+
         success: false,
+
         message: 'Notification not found'
+
       });
+
     }
+
     
+
     res.json({
+
       success: true,
+
       message: 'Notification updated successfully',
+
       notification
+
     });
+
   } catch (error) {
+
     console.error('Error updating notification:', error);
+
     res.status(500).json({
+
       success: false,
+
       message: 'Server error updating notification'
+
     });
+
   }
+
 });
 
+
+
 // DELETE /api/admin/notifications/:id - Delete notification (admin only)
+
 app.delete('/api/admin/notifications/:id', authMiddleware, async (req, res) => {
+
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+
   
+
   try {
+
     const { id } = req.params;
+
     
+
     const notification = await Notification.findByIdAndDelete(id);
+
     
+
     if (!notification) {
+
       return res.status(404).json({
+
         success: false,
+
         message: 'Notification not found'
+
       });
+
     }
+
     
+
     res.json({
+
       success: true,
+
       message: 'Notification deleted successfully'
+
     });
+
   } catch (error) {
+
     console.error('Error deleting notification:', error);
+
     res.status(500).json({
+
       success: false,
+
       message: 'Server error deleting notification'
+
     });
+
   }
+
 });
+
+
+
 
 
 /* ==== API spin العجلة ==== */
 
+
+
 app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
+
+
 
   try {
 
+
+
     const { prize, amount } = req.body;
 
+
+
     const user = await User.findById(req.user.id);
+
+
 
     if (!user) return res.status(404).json({ msg: "User not found" });
 
 
 
+
+
+
+
     if (!user.subscriptionActive) return res.status(400).json({ msg: "No active subscription" });
 
+
+
     if (user.hasSpunWheel) return res.status(400).json({ msg: "You already used your spin" });
+
+
+
+
 
 
 
@@ -524,26 +1046,51 @@ app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (prize === "lose") {
 
+
+
       user.hasSpunWheel = true;
+
+
 
       message = "Better luck next time!";
 
+
+
     } else if (prize === "extra") {
-      user.hasSpunWheel = false;
+
+
 
       message = "You earned an extra spin!";
 
+
+
     } else if (prize.startsWith("$") && amount > 0) {
+
+
 
       user.balance += amount;
 
+
+
       user.hasSpunWheel = true;
+
+
 
       message = `You won ${prize}! Balance updated.`;
 
+
+
     }
+
+
+
+
 
 
 
@@ -551,31 +1098,63 @@ app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.json({
+
+
 
       success: true,
 
+
+
       prize,
+
+
 
       amount: amount || 0,
 
+
+
       balance: user.balance,
+
+
 
       hasSpunWheel: user.hasSpunWheel,
 
+
+
       message
+
+
 
     });
 
+
+
   } catch (err) {
+
+
 
     console.error("Wheel Spin Error:", err);
 
+
+
     res.status(500).json({ msg: "Server error" });
+
+
 
   }
 
+
+
 });
+
+
+
+
 
 
 
@@ -583,11 +1162,23 @@ app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   try {
+
+
+
+
 
 
 
@@ -599,7 +1190,19 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     if (!amount || !wallet) {
+
+
+
+
 
 
 
@@ -607,7 +1210,19 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -619,7 +1234,19 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (!user) return res.status(404).json({ message: "User not found" });
+
+
+
+
+
+
+
+
 
 
 
@@ -631,7 +1258,15 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       return res.status(400).json({ message: "Insufficient balance" });
+
+
+
+
 
 
 
@@ -643,7 +1278,19 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     const withdrawal = new Withdrawal({
+
+
+
+
 
 
 
@@ -651,7 +1298,15 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       amount,
+
+
+
+
 
 
 
@@ -659,7 +1314,19 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -675,11 +1342,31 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     user.balance -= amount; // Temporary balance deduction
 
 
 
+
+
+
+
     await user.save();
+
+
+
+
+
+
+
+
 
 
 
@@ -695,7 +1382,19 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -703,7 +1402,15 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: err.message || "Error submitting withdrawal" });
+
+
+
+
 
 
 
@@ -711,66 +1418,133 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
 
 
 
 
 // الحصول على جميع التيكرات
+
 app.get('/api/newstickers', async (req, res) => {
+
   try {
+
     const tickers = await NewsTicker.find().sort({ priority: -1, createdAt: -1 });
+
     res.json(tickers);
+
   } catch (err) {
+
     res.status(500).json({ error: 'Failed to fetch news tickers' });
+
   }
+
 });
+
+
 
 // إضافة تيكر جديد
+
 app.post('/api/admin/newstickers', authMiddleware, async (req, res) => {
+
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+
   
+
   try {
+
     const { text, isActive = true, priority = 1 } = req.body;
+
     const ticker = new NewsTicker({ text, isActive, priority });
+
     await ticker.save();
+
     res.json({ message: "News ticker added", ticker });
+
   } catch (err) {
+
     res.status(500).json({ message: "Server error" });
+
   }
+
 });
+
+
 
 // تحديث تيكر
+
 app.put('/api/admin/newstickers/:id', authMiddleware, async (req, res) => {
+
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+
   
+
   try {
+
     const { text, isActive, priority } = req.body;
+
     const ticker = await NewsTicker.findByIdAndUpdate(
+
       req.params.id,
+
       { text, isActive, priority, updatedAt: new Date() },
+
       { new: true }
+
     );
+
     res.json({ message: "News ticker updated", ticker });
+
   } catch (err) {
+
     res.status(500).json({ message: "Server error" });
+
   }
+
 });
 
+
+
 // حذف تيكر
+
 app.delete('/api/admin/newstickers/:id', authMiddleware, async (req, res) => {
+
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+
   
+
   try {
+
     await NewsTicker.findByIdAndDelete(req.params.id);
+
     res.json({ message: "News ticker deleted" });
+
   } catch (err) {
+
     res.status(500).json({ message: "Server error" });
+
   }
+
 });
+
+
+
 
 
 // Update user (Admin only)
+
+
+
+
 
 
 
@@ -778,11 +1552,23 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   if (!req.user.roles?.includes("admin")) {
 
 
 
+
+
+
+
     return res.status(403).json({ message: "Forbidden" });
+
+
+
+
 
 
 
@@ -794,11 +1580,27 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
   try {
 
 
 
+
+
+
+
     const { id } = req.params;
+
+
+
+
 
 
 
@@ -810,7 +1612,19 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     // Validate subscription type
+
+
+
+
 
 
 
@@ -818,11 +1632,27 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       return res.status(400).json({ message: "Invalid subscription type" });
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -834,11 +1664,23 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (subscriptionType !== undefined) updateFields.subscriptionType = subscriptionType;
 
 
 
+
+
+
+
     if (balance !== undefined) updateFields.balance = balance;
+
+
+
+
 
 
 
@@ -850,7 +1692,19 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     // If subscription is being set, activate it
+
+
+
+
 
 
 
@@ -858,7 +1712,15 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       updateFields.subscriptionActive = true;
+
+
+
+
 
 
 
@@ -866,7 +1728,15 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     } else if (subscriptionType === '') {
+
+
+
+
 
 
 
@@ -874,11 +1744,27 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       updateFields.subscriptionExpires = null;
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -890,7 +1776,15 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       id,
+
+
+
+
 
 
 
@@ -898,7 +1792,15 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       { new: true }
+
+
+
+
 
 
 
@@ -910,7 +1812,19 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     if (!user) {
+
+
+
+
 
 
 
@@ -918,7 +1832,19 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -930,7 +1856,15 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -938,7 +1872,15 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: "Server error" });
+
+
+
+
 
 
 
@@ -946,17 +1888,35 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
 
 
 
 app.get('/api/profile', authMiddleware, async (req, res) => {
 
+
+
   try {
+
+
 
     const user = await User.findById(req.user.id).select('-password');
 
+
+
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+
+
+
 
 
 
@@ -964,71 +1924,115 @@ app.get('/api/profile', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.json({
+
+
 
       user: {
 
+
+
         id: user._id,
+
+
 
         username: user.username,
 
+
+
         fullName: user.fullName,
+
+
 
         email: user.email,
 
+
+
         phone: user.phone,
+
+
 
         balance: user.balance,
 
+
+
         subscriptionType: user.subscriptionType,
+
+
 
         subscriptionActive: user.subscriptionActive,
 
+
+
         subscriptionExpires: user.subscriptionExpires,
+
+
 
         completedTasks: user.completedTasks,
 
+
+
         currentTaskProgress: user.currentTaskProgress,
+
+
 
         referralCode: user.referralCode,
 
+
+
         referralLink,
+
+
 
         totalInvites: user.totalInvites,
 
+
+
         successfulInvites: user.successfulInvites
+
+
 
       }
 
+
+
     });
 
+
+
   } catch (err) {
+
+
 
     console.error('Profile error:', err);
 
+
+
     res.status(500).json({ message: 'Error fetching profile' });
 
+
+
   }
+
+
 
 });
 
-// Admin middleware assumed: authMiddleware + admin check
-app.get('/api/admin/users', authMiddleware, async (req, res) => {
-  try {
-    // التحقق من صلاحية الأدمن
-    if (!req.user.roles?.includes("admin")) {
-      return res.status(403).json({ message: "Forbidden" });
-    }
 
-    const users = await User.find().select('username lotteryEntries').lean();
-    return res.json(users);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: 'Server error' });
-  }
-});
+
+
+
+
 
 // Get invites and subscriptions statistics (admin only)
+
+
+
+
 
 
 
@@ -1036,7 +2040,15 @@ app.get("/api/admin/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   try {
+
+
+
+
 
 
 
@@ -1044,11 +2056,27 @@ app.get("/api/admin/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       return res.status(403).json({ message: "Forbidden" });
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -1060,11 +2088,23 @@ app.get("/api/admin/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const users = await User.find()
 
 
 
+
+
+
+
       .select("username email totalInvites successfulInvites subscriptionType subscriptionActive subscriptionExpires createdAt")
+
+
+
+
 
 
 
@@ -1076,7 +2116,19 @@ app.get("/api/admin/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     res.json({ 
+
+
+
+
 
 
 
@@ -1084,7 +2136,15 @@ app.get("/api/admin/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         _id: user._id,
+
+
+
+
 
 
 
@@ -1092,7 +2152,15 @@ app.get("/api/admin/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         email: user.email,
+
+
+
+
 
 
 
@@ -1100,7 +2168,15 @@ app.get("/api/admin/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         successfulInvites: user.successfulInvites || 0,
+
+
+
+
 
 
 
@@ -1108,7 +2184,15 @@ app.get("/api/admin/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         subscriptionStatus: user.subscriptionActive && user.subscriptionExpires > new Date() ? 'Active' : 'Inactive',
+
+
+
+
 
 
 
@@ -1116,7 +2200,15 @@ app.get("/api/admin/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       }))
+
+
+
+
 
 
 
@@ -1128,7 +2220,19 @@ app.get("/api/admin/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -1136,7 +2240,15 @@ app.get("/api/admin/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: "Error fetching invites statistics" });
+
+
+
+
 
 
 
@@ -1144,7 +2256,19 @@ app.get("/api/admin/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -1156,7 +2280,15 @@ app.get("/api/admin/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -1164,7 +2296,15 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (!req.user.roles?.includes("admin")) {
+
+
+
+
 
 
 
@@ -1172,7 +2312,19 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -1184,7 +2336,19 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       .select("-password");
+
+
+
+
+
+
+
+
 
 
 
@@ -1196,11 +2360,27 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       return res.status(404).json({ message: "User not found" });
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -1212,7 +2392,15 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const userPayments = await Payment.find({ userId: user._id })
+
+
+
+
 
 
 
@@ -1220,7 +2408,19 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       .limit(5);
+
+
+
+
+
+
+
+
 
 
 
@@ -1232,7 +2432,15 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       .sort({ createdAt: -1 })
+
+
+
+
 
 
 
@@ -1244,7 +2452,19 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     res.json({
+
+
+
+
 
 
 
@@ -1252,7 +2472,15 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         _id: user._id,
+
+
+
+
 
 
 
@@ -1260,7 +2488,15 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         email: user.email,
+
+
+
+
 
 
 
@@ -1268,7 +2504,15 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         phone: user.phone,
+
+
+
+
 
 
 
@@ -1276,7 +2520,15 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         totalInvites: user.totalInvites || 0,
+
+
+
+
 
 
 
@@ -1284,7 +2536,15 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         subscriptionType: user.subscriptionType,
+
+
+
+
 
 
 
@@ -1292,7 +2552,15 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         subscriptionExpires: user.subscriptionExpires,
+
+
+
+
 
 
 
@@ -1300,7 +2568,15 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         createdAt: user.createdAt,
+
+
+
+
 
 
 
@@ -1308,7 +2584,15 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         payments: userPayments,
+
+
+
+
 
 
 
@@ -1316,7 +2600,15 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -1328,7 +2620,19 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -1336,11 +2640,23 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: "Error fetching user details" });
 
 
 
+
+
+
+
   }
+
+
+
+
 
 
 
@@ -1352,7 +2668,19 @@ app.get("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
 // Update user invites (admin only)
+
+
+
+
 
 
 
@@ -1360,7 +2688,15 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   try {
+
+
+
+
 
 
 
@@ -1368,11 +2704,27 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       return res.status(403).json({ message: "Forbidden" });
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -1388,11 +2740,27 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     const updateFields = {};
 
 
 
+
+
+
+
     if (totalInvites !== undefined) updateFields.totalInvites = totalInvites;
+
+
+
+
 
 
 
@@ -1404,7 +2772,19 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     const user = await User.findByIdAndUpdate(
+
+
+
+
 
 
 
@@ -1412,11 +2792,23 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       updateFields,
 
 
 
+
+
+
+
       { new: true }
+
+
+
+
 
 
 
@@ -1428,11 +2820,27 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     if (!user) {
 
 
 
+
+
+
+
       return res.status(404).json({ message: "User not found" });
+
+
+
+
 
 
 
@@ -1444,7 +2852,19 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     res.json({ 
+
+
+
+
 
 
 
@@ -1452,7 +2872,15 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       user: {
+
+
+
+
 
 
 
@@ -1460,7 +2888,15 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         username: user.username,
+
+
+
+
 
 
 
@@ -1468,11 +2904,23 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         successfulInvites: user.successfulInvites
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -1484,7 +2932,19 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -1492,7 +2952,15 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: "Error updating user invites" });
+
+
+
+
 
 
 
@@ -1500,7 +2968,19 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -1512,7 +2992,15 @@ app.put("/api/admin/users/:id/invites", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.get("/api/ticker", async (req, res) => {
+
+
+
+
 
 
 
@@ -1520,11 +3008,27 @@ app.get("/api/ticker", async (req, res) => {
 
 
 
+
+
+
+
   res.json({ tickers });
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -1536,7 +3040,15 @@ app.post("/api/admin/ticker", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+
+
+
+
 
 
 
@@ -1544,7 +3056,15 @@ app.post("/api/admin/ticker", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   await ticker.save();
+
+
+
+
 
 
 
@@ -1552,7 +3072,19 @@ app.post("/api/admin/ticker", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -1564,7 +3096,15 @@ app.delete("/api/admin/ticker/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+
+
+
+
 
 
 
@@ -1572,11 +3112,27 @@ app.delete("/api/admin/ticker/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   res.json({ message: "Ticker deleted" });
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -1586,51 +3142,102 @@ app.delete("/api/admin/ticker/:id", authMiddleware, async (req, res) => {
 
 // Banners
 
+
+
 app.get('/api/banners', async (req, res) => {
+
   try {
+
     const banners = await Banner.find().sort({ createdAt: -1 });
+
     res.json({ success: true, banners });
+
   } catch (err) {
+
     console.error("Public banners error:", err);
+
     res.status(500).json({ success: false, message: "Error fetching banners" });
+
   }
+
 });
+
+
 
 app.get('/api/admin/banners', authMiddleware, async (req, res) => {
+
 try {
+
 // التحقق من وجود المستخدم أولاً
+
 if (!req.user) {
+
 return res.status(401).json({
+
 success: false,
+
 message: "Unauthorized: User not authenticated"
+
 });
+
 }
+
+
 
 // التحقق من صلاحية الأدمن - مع معالجة حالات عدم وجود roles  
+
 const userRoles = req.user.roles || [];  
+
 if (!userRoles.includes("admin")) {  
+
   return res.status(403).json({   
+
     success: false,  
+
     message: "Forbidden: Admin access required"   
+
   });  
+
 }  
+
   
+
 // جلب البانرات من قاعدة البيانات  
+
 const banners = await Banner.find().sort({ createdAt: -1 });  
+
   
+
 res.json({   
+
   success: true,  
+
   banners: banners   
+
 });
 
+
+
 } catch (err) { // <-- هذا القوس كان ناقصاً
+
 console.error("Banners error:", err);
+
 res.status(500).json({
+
 success: false,
+
 message: "Error fetching banners"
+
 });
+
 }
+
 }); // <-- وهذا القوس أيضاً كان ناقصاً
+
+
+
+
+
 
 
 
@@ -1639,7 +3246,15 @@ app.post("/api/admin/banners", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+
+
+
+
 
 
 
@@ -1647,7 +3262,15 @@ app.post("/api/admin/banners", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   await banner.save();
+
+
+
+
 
 
 
@@ -1655,7 +3278,19 @@ app.post("/api/admin/banners", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -1667,7 +3302,15 @@ app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+
+
+
+
 
 
 
@@ -1675,11 +3318,27 @@ app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   res.json({ message: "Banner deleted" });
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -1695,7 +3354,19 @@ app.delete("/api/admin/banners/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
 // Create new payment request
+
+
+
+
 
 
 
@@ -1703,7 +3374,15 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   try {
+
+
+
+
 
 
 
@@ -1715,7 +3394,19 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     if (!plan || !amount || !transactionId || !phone) {
+
+
+
+
 
 
 
@@ -1723,7 +3414,19 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -1735,7 +3438,15 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (!['BASIC', 'PRO', 'VIP'].includes(plan)) {
+
+
+
+
 
 
 
@@ -1743,7 +3454,19 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -1755,7 +3478,19 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (!user) return res.status(404).json({ message: "User not found" });
+
+
+
+
+
+
+
+
 
 
 
@@ -1767,7 +3502,15 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const existingPayment = await Payment.findOne({ transactionId });
+
+
+
+
 
 
 
@@ -1775,7 +3518,15 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       return res.status(400).json({ message: "Transaction ID already used" });
+
+
+
+
 
 
 
@@ -1787,7 +3538,19 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     const payment = new Payment({
+
+
+
+
 
 
 
@@ -1795,7 +3558,15 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       plan,
+
+
+
+
 
 
 
@@ -1803,7 +3574,15 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       transactionId,
+
+
+
+
 
 
 
@@ -1811,11 +3590,27 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       status: 'pending'
 
 
 
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -1831,7 +3626,19 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     res.json({ 
+
+
+
+
 
 
 
@@ -1839,7 +3646,15 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       payment 
+
+
+
+
 
 
 
@@ -1851,7 +3666,19 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -1859,7 +3686,15 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: err.message || "Error creating payment request" });
+
+
+
+
 
 
 
@@ -1867,7 +3702,19 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -1879,7 +3726,15 @@ app.post("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.get("/api/payments", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -1887,7 +3742,15 @@ app.get("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const payments = await Payment.find({ userId: req.user.id })
+
+
+
+
 
 
 
@@ -1895,7 +3758,15 @@ app.get("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.json({ payments });
+
+
+
+
 
 
 
@@ -1903,7 +3774,15 @@ app.get("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     console.error("Get payments error:", err);
+
+
+
+
 
 
 
@@ -1911,11 +3790,27 @@ app.get("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   }
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -1931,7 +3826,19 @@ app.get("/api/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
 // Get all payments (admin only)
+
+
+
+
 
 
 
@@ -1939,7 +3846,15 @@ app.get("/api/admin/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   try {
+
+
+
+
 
 
 
@@ -1947,7 +3862,15 @@ app.get("/api/admin/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       return res.status(403).json({ message: "Forbidden" });
+
+
+
+
 
 
 
@@ -1959,11 +3882,27 @@ app.get("/api/admin/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     const payments = await Payment.find()
 
 
 
+
+
+
+
       .populate("userId", "username email")
+
+
+
+
 
 
 
@@ -1975,7 +3914,19 @@ app.get("/api/admin/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     res.json({ payments });
+
+
+
+
 
 
 
@@ -1983,7 +3934,15 @@ app.get("/api/admin/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     console.error("Error fetching payments:", err);
+
+
+
+
 
 
 
@@ -1991,11 +3950,31 @@ app.get("/api/admin/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   }
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2011,7 +3990,15 @@ app.post("/api/debug/update", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   try {
+
+
+
+
 
 
 
@@ -2019,7 +4006,15 @@ app.post("/api/debug/update", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       return res.status(403).json({ message: "Forbidden" });
+
+
+
+
 
 
 
@@ -2031,7 +4026,19 @@ app.post("/api/debug/update", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     console.log("Received update request:", req.body);
+
+
+
+
 
 
 
@@ -2039,7 +4046,15 @@ app.post("/api/debug/update", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       message: "Debug received", 
+
+
+
+
 
 
 
@@ -2047,7 +4062,15 @@ app.post("/api/debug/update", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     });
+
+
+
+
 
 
 
@@ -2055,7 +4078,15 @@ app.post("/api/debug/update", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     console.error("Debug error:", err);
+
+
+
+
 
 
 
@@ -2063,11 +4094,31 @@ app.post("/api/debug/update", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   }
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2083,7 +4134,15 @@ app.post("/api/debug/update", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -2093,7 +4152,17 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
     if (!req.user.roles?.includes("admin")) {
+
+
+
+
 
 
 
@@ -2101,7 +4170,19 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -2113,7 +4194,19 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+
+
+
+
+
+
+
 
 
 
@@ -2125,11 +4218,27 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       return res.status(400).json({ message: "Payment already processed" });
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -2141,15 +4250,31 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (!user) return res.status(404).json({ message: "User not found" });
+
+
+
+
 
 
 
      // Give user a spin when they subscribe
 
+
+
     user.spinsUsed = false; // Reset spins
 
+
+
     await user.save();
+
+
+
+
 
 
 
@@ -2157,7 +4282,15 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     payment.status = 'verified';
+
+
+
+
 
 
 
@@ -2165,11 +4298,27 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     payment.verifiedBy = req.user.id;
 
 
 
+
+
+
+
     await payment.save();
+
+
+
+
+
+
+
+
 
 
 
@@ -2181,7 +4330,15 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     user.subscriptionType = payment.plan;
+
+
+
+
 
 
 
@@ -2189,7 +4346,15 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -2197,7 +4362,15 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const expirationDays = {
+
+
+
+
 
 
 
@@ -2205,7 +4378,15 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       'PRO': 30,
+
+
+
+
 
 
 
@@ -2213,11 +4394,23 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     };
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -2225,7 +4418,15 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     await user.save();
+
+
+
+
 
 
 
@@ -2233,59 +4434,123 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       // 🔥 زيادة successfulInvites للمدعِي إذا كان هذا المستخدم لديه مدعٍ
+
+
 
     if (user.referredBy) {
 
+
+
   try {
+
+
 
     // البحث عن المدعِي باستخدام كود الدعوة
 
+
+
     const referrer = await User.findOne({ referralCode: user.referredBy });
+
+
 
     if (referrer) {
 
+
+
       referrer.successfulInvites += 1;
+
+
 
       referrer.currentTaskProgress += 1;
 
+
+
       await referrer.save();
+
+
 
       console.log(`✅ Increased successfulInvites for referrer: ${referrer.username}`);
 
+
+
     }
+
+
 
   } catch (referralError) {
 
+
+
     console.error("Error updating referrer successfulInvites:", referralError);
+
+
 
     // لا نوقف العملية إذا حدث خطأ في تحديث الإحصائيات
 
+
+
   }
 
+
+
     }
+
+
+
+
 
 
 
     res.json({ 
 
+
+
       message: "Payment verified and subscription activated successfully",
 
+
+
       payment 
+
+
 
     });
 
 
 
+
+
+
+
   } catch (err) {
+
+
 
     console.error("Verify payment error:", err);
 
+
+
     res.status(500).json({ message: "Error verifying payment" });
+
+
 
   }
 
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -2297,7 +4562,15 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -2305,7 +4578,15 @@ app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (!req.user.roles?.includes("admin")) {
+
+
+
+
 
 
 
@@ -2313,7 +4594,19 @@ app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -2325,7 +4618,19 @@ app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+
+
+
+
+
+
+
 
 
 
@@ -2337,11 +4642,27 @@ app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       return res.status(400).json({ message: "Payment already processed" });
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -2353,7 +4674,15 @@ app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     payment.rejectedAt = new Date();
+
+
+
+
 
 
 
@@ -2361,7 +4690,15 @@ app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     payment.rejectionReason = req.body.reason || "No reason provided";
+
+
+
+
 
 
 
@@ -2373,7 +4710,19 @@ app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     res.json({ 
+
+
+
+
 
 
 
@@ -2381,7 +4730,15 @@ app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       payment 
+
+
+
+
 
 
 
@@ -2393,7 +4750,19 @@ app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -2401,7 +4770,15 @@ app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: "Error rejecting payment" });
+
+
+
+
 
 
 
@@ -2409,7 +4786,19 @@ app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -2421,7 +4810,15 @@ app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -2429,11 +4826,23 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (!req.user.roles?.includes("admin")) {
 
 
 
+
+
+
+
       return res.status(403).json({ message: "Forbidden" });
+
+
+
+
 
 
 
@@ -2445,7 +4854,19 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     const totalPayments = await Payment.countDocuments();
+
+
+
+
 
 
 
@@ -2453,7 +4874,15 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const verifiedPayments = await Payment.countDocuments({ status: 'verified' });
+
+
+
+
 
 
 
@@ -2461,7 +4890,15 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const totalRevenue = await Payment.aggregate([
+
+
+
+
 
 
 
@@ -2469,7 +4906,15 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       { $group: { _id: null, total: { $sum: '$amount' } } }
+
+
+
+
 
 
 
@@ -2481,7 +4926,19 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     res.json({
+
+
+
+
 
 
 
@@ -2489,7 +4946,15 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       pendingPayments,
+
+
+
+
 
 
 
@@ -2497,7 +4962,15 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       rejectedPayments,
+
+
+
+
 
 
 
@@ -2505,6 +4978,10 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     });
 
 
@@ -2513,7 +4990,19 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -2521,7 +5010,15 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: "Error fetching payment statistics" });
+
+
+
+
 
 
 
@@ -2529,133 +5026,267 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
 
 
 
 // Get user spins
 
+
+
 app.get("/api/user/spins", authMiddleware, async (req, res) => {
+
+
 
   try {
 
+
+
     const user = await User.findById(req.user.id);
 
+
+
     if (!user) return res.status(404).json({ message: "User not found" });
+
+
+
+
 
 
 
     // User gets 1 spin when they subscribe
 
+
+
     const hasSubscription = user.subscriptionActive && user.subscriptionExpires > new Date();
+
+
 
     const spinsAvailable = hasSubscription ? 1 : 0;
 
 
 
+
+
+
+
     res.json({ 
+
+
 
       spinsAvailable,
 
+
+
       hasSubscription 
+
+
 
     });
 
+
+
   } catch (err) {
+
+
 
     console.error("Spins error:", err);
 
+
+
     res.status(500).json({ message: "Error checking spins" });
+
+
 
   }
 
+
+
 });
+
+
+
+
 
 
 
 // Add to user balance
 
+
+
 app.post("/api/user/add-balance", authMiddleware, async (req, res) => {
+
+
 
   try {
 
+
+
     const { amount } = req.body;
+
+
 
     if (!amount) return res.status(400).json({ message: "Amount is required" });
 
 
 
+
+
+
+
     const user = await User.findById(req.user.id);
 
+
+
     if (!user) return res.status(404).json({ message: "User not found" });
+
+
+
+
 
 
 
     user.balance = (user.balance || 0) + amount;
 
+
+
     await user.save();
+
+
+
+
 
 
 
     res.json({ 
 
+
+
       success: true,
+
+
 
       message: `$${amount} added to your balance`,
 
+
+
       newBalance: user.balance
+
+
 
     });
 
+
+
   } catch (err) {
+
+
 
     console.error("Add balance error:", err);
 
+
+
     res.status(500).json({ message: "Error adding balance" });
+
+
 
   }
 
+
+
 });
+
+
+
+
 
 
 
 // Reset spins when user subscribes (call this when payment is verified)
 
+
+
 app.post("/api/user/reset-spins", authMiddleware, async (req, res) => {
+
+
 
   try {
 
+
+
     const user = await User.findById(req.user.id);
+
+
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
 
 
+
+
+
+
     // Reset spins used flag when user subscribes
 
+
+
     user.spinsUsed = false;
+
+
 
     await user.save();
 
 
 
+
+
+
+
     res.json({ 
+
+
 
       success: true,
 
+
+
       message: "Spins reset for new subscription"
+
+
 
     });
 
+
+
   } catch (err) {
+
+
 
     console.error("Reset spins error:", err);
 
+
+
     res.status(500).json({ message: "Error resetting spins" });
+
+
 
   }
 
+
+
 });
+
+
+
+
 
 
 
@@ -2663,7 +5294,15 @@ app.post("/api/user/reset-spins", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.get("/api/subscription/status", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -2671,11 +5310,27 @@ app.get("/api/subscription/status", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const user = await User.findById(req.user.id);
 
 
 
+
+
+
+
     if (!user) return res.status(404).json({ message: "User not found" });
+
+
+
+
+
+
+
+
 
 
 
@@ -2687,7 +5342,19 @@ app.get("/api/subscription/status", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const isActive = user.subscriptionActive && user.subscriptionExpires > now;
+
+
+
+
+
+
+
+
 
 
 
@@ -2699,7 +5366,15 @@ app.get("/api/subscription/status", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       subscriptionType: user.subscriptionType,
+
+
+
+
 
 
 
@@ -2707,7 +5382,15 @@ app.get("/api/subscription/status", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       subscriptionExpires: user.subscriptionExpires,
+
+
+
+
 
 
 
@@ -2715,7 +5398,15 @@ app.get("/api/subscription/status", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         Math.ceil((user.subscriptionExpires - now) / (1000 * 60 * 60 * 24)) : 0
+
+
+
+
 
 
 
@@ -2723,7 +5414,15 @@ app.get("/api/subscription/status", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -2731,7 +5430,15 @@ app.get("/api/subscription/status", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: "Error checking subscription status" });
+
+
+
+
 
 
 
@@ -2739,7 +5446,19 @@ app.get("/api/subscription/status", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -2755,7 +5474,19 @@ app.get("/api/subscription/status", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
 // Get all withdrawals (admin only)
+
+
+
+
 
 
 
@@ -2763,7 +5494,15 @@ app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   try {
+
+
+
+
 
 
 
@@ -2771,11 +5510,27 @@ app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       return res.status(403).json({ message: "Forbidden" });
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -2787,7 +5542,15 @@ app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       .populate("userId", "username")
+
+
+
+
 
 
 
@@ -2799,7 +5562,19 @@ app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     res.json({ withdrawals });
+
+
+
+
 
 
 
@@ -2807,7 +5582,15 @@ app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     console.error("Error fetching withdrawals:", err);
+
+
+
+
 
 
 
@@ -2815,11 +5598,27 @@ app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   }
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -2831,7 +5630,15 @@ app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.post("/api/admin/withdrawals/:id/approve", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -2839,7 +5646,15 @@ app.post("/api/admin/withdrawals/:id/approve", authMiddleware, async (req, res) 
 
 
 
+
+
+
+
     if (!req.user.roles?.includes("admin")) {
+
+
+
+
 
 
 
@@ -2847,7 +5662,19 @@ app.post("/api/admin/withdrawals/:id/approve", authMiddleware, async (req, res) 
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -2859,7 +5686,19 @@ app.post("/api/admin/withdrawals/:id/approve", authMiddleware, async (req, res) 
 
 
 
+
+
+
+
     if (!withdrawal) return res.status(404).json({ message: "Not found" });
+
+
+
+
+
+
+
+
 
 
 
@@ -2871,7 +5710,19 @@ app.post("/api/admin/withdrawals/:id/approve", authMiddleware, async (req, res) 
 
 
 
+
+
+
+
     await withdrawal.save();
+
+
+
+
+
+
+
+
 
 
 
@@ -2883,7 +5734,15 @@ app.post("/api/admin/withdrawals/:id/approve", authMiddleware, async (req, res) 
 
 
 
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -2891,7 +5750,15 @@ app.post("/api/admin/withdrawals/:id/approve", authMiddleware, async (req, res) 
 
 
 
+
+
+
+
     res.status(500).json({ message: "Error approving withdrawal" });
+
+
+
+
 
 
 
@@ -2899,7 +5766,19 @@ app.post("/api/admin/withdrawals/:id/approve", authMiddleware, async (req, res) 
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -2911,7 +5790,15 @@ app.post("/api/admin/withdrawals/:id/approve", authMiddleware, async (req, res) 
 
 
 
+
+
+
+
 app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -2919,7 +5806,15 @@ app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) =
 
 
 
+
+
+
+
     if (!req.user.roles?.includes("admin")) {
+
+
+
+
 
 
 
@@ -2927,7 +5822,19 @@ app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) =
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -2939,7 +5846,19 @@ app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) =
 
 
 
+
+
+
+
     if (!withdrawal) return res.status(404).json({ message: "Not found" });
+
+
+
+
+
+
+
+
 
 
 
@@ -2951,7 +5870,15 @@ app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) =
 
 
 
+
+
+
+
     if (user) {
+
+
+
+
 
 
 
@@ -2959,11 +5886,27 @@ app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) =
 
 
 
+
+
+
+
       await user.save();
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -2975,7 +5918,19 @@ app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) =
 
 
 
+
+
+
+
     await withdrawal.save();
+
+
+
+
+
+
+
+
 
 
 
@@ -2987,7 +5942,15 @@ app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) =
 
 
 
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -2995,7 +5958,15 @@ app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) =
 
 
 
+
+
+
+
     res.status(500).json({ message: "Error rejecting withdrawal" });
+
+
+
+
 
 
 
@@ -3003,7 +5974,19 @@ app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) =
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -3015,7 +5998,15 @@ app.post("/api/admin/withdrawals/:id/reject", authMiddleware, async (req, res) =
 
 
 
+
+
+
+
 app.get("/api/withdrawals", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -3023,7 +6014,15 @@ app.get("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const withdrawals = await Withdrawal.find({ userId: req.user.id })
+
+
+
+
 
 
 
@@ -3031,7 +6030,15 @@ app.get("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.json({ withdrawals });
+
+
+
+
 
 
 
@@ -3039,7 +6046,15 @@ app.get("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     console.error("User withdrawals error:", err);
+
+
+
+
 
 
 
@@ -3047,11 +6062,27 @@ app.get("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   }
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -3063,7 +6094,15 @@ app.get("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.get("/api/user/balance", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -3071,7 +6110,15 @@ app.get("/api/user/balance", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const user = await User.findById(req.user.id);
+
+
+
+
 
 
 
@@ -3079,7 +6126,15 @@ app.get("/api/user/balance", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.json({ balance: user.balance || 0 });
+
+
+
+
 
 
 
@@ -3087,7 +6142,15 @@ app.get("/api/user/balance", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     console.error("Balance error:", err);
+
+
+
+
 
 
 
@@ -3095,11 +6158,27 @@ app.get("/api/user/balance", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   }
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -3111,7 +6190,15 @@ app.get("/api/user/balance", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.get('/api/news', async (req, res) => {
+
+
+
+
 
 
 
@@ -3119,7 +6206,15 @@ app.get('/api/news', async (req, res) => {
 
 
 
+
+
+
+
     const news = await News.find().sort({ createdAt: -1 });
+
+
+
+
 
 
 
@@ -3127,7 +6222,15 @@ app.get('/api/news', async (req, res) => {
 
 
 
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -3135,7 +6238,15 @@ app.get('/api/news', async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ error: 'Failed to fetch news' });
+
+
+
+
 
 
 
@@ -3143,7 +6254,19 @@ app.get('/api/news', async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -3152,41 +6275,81 @@ app.get('/api/news', async (req, res) => {
 
 
 app.post('/api/admin/news', async (req, res) => {
+
   try {
+
     const { title, body, imageUrl, buttonText, buttonLinkUrl } = req.body;
+
+
 
     if (!title) return res.status(400).json({ success: false, message: 'Title is required' });
 
+
+
     const news = new News({
+
       title,
+
       body,
+
       imageUrl,
+
       buttonText,
+
       buttonLinkUrl
+
     });
 
+
+
     await news.save();
+
     res.json({ success: true, message: 'News added successfully', news });
+
   } catch (err) {
+
     console.error(err);
+
     res.status(500).json({ success: false, message: 'Server error' });
+
   }
+
 });
+
+
+
+
 
 
 
 app.get('/api/admin/news', authMiddleware, async (req, res) => {
+
   if (!req.user.roles?.includes("admin")) {
+
     return res.status(403).json({ message: "Forbidden" });
+
   }
+
   
+
   try {
+
     const news = await News.find().sort({ createdAt: -1 });
+
     res.json(news);
+
   } catch (err) {
+
     res.status(500).json({ message: "Server error" });
+
   }
+
 });
+
+
+
+
+
 
 
 
@@ -3195,7 +6358,15 @@ app.delete("/api/admin/news/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   if (!req.user.roles?.includes("admin")) return res.status(403).json({ message: "Forbidden" });
+
+
+
+
 
 
 
@@ -3203,7 +6374,15 @@ app.delete("/api/admin/news/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     await News.findByIdAndDelete(req.params.id);
+
+
+
+
 
 
 
@@ -3211,7 +6390,15 @@ app.delete("/api/admin/news/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -3219,11 +6406,27 @@ app.delete("/api/admin/news/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   }
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -3235,11 +6438,23 @@ app.delete("/api/admin/news/:id", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.get('/api/health', (req, res) =>
 
 
 
+
+
+
+
   res.json({ status: 'ok', time: new Date() })
+
+
+
+
 
 
 
@@ -3251,163 +6466,331 @@ app.get('/api/health', (req, res) =>
 
 
 
+
+
+
+
+
+
+
+
 // Auth
+
+
+
+
 
 
 
 app.post('/api/auth/register', async (req, res) => {
 
+
+
   try {
+
+
 
     const { fullName, email, phone, username, password, referralCode } = req.body;
 
 
 
+
+
+
+
     if (!fullName || !email || !username || !password) {
+
+
 
       return res.status(400).json({ message: 'Missing required fields' });
 
+
+
     }
+
+
+
+
 
 
 
     const existing = await User.findOne({
 
+
+
       $or: [{ email: email.toLowerCase() }, { username }]
+
+
 
     });
 
+
+
     
+
+
 
     if (existing) {
 
+
+
       return res.status(409).json({ message: 'Email or username already used' });
 
+
+
     }
+
+
+
+
 
 
 
     let referredBy = null;
 
+
+
     let referrer = null;
+
+
+
+
 
 
 
     // البحث عن المستخدم باستخدام كود الدعوة (ref)
 
+
+
     if (referralCode) {
+
+
 
       console.log('🔍 Searching for referrer with code:', referralCode);
 
+
+
       
+
+
 
       referrer = await User.findOne({ 
 
+
+
         $or: [
+
+
 
           { referralCode: referralCode },  // البحث بكود الدعوة أولاً
 
+
+
           { username: referralCode }       // ثم البحث باسم المستخدم
 
+
+
         ]
+
+
 
       });
 
 
 
+
+
+
+
       if (referrer) {
+
+
 
         console.log('✅ Found referrer:', referrer.username);
 
+
+
         referredBy = referrer.referralCode;
+
+
 
         
 
+
+
         // إذا كان البحث باسم مستخدم ولم يكن لديه كود دعوة، ننشئ له واحد
+
+
 
         if (!referrer.referralCode) {
 
+
+
           referrer.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+
+
 
           await referrer.save();
 
+
+
           referredBy = referrer.referralCode;
+
+
 
         }
 
+
+
       } else {
+
+
 
         console.log('❌ No referrer found with code:', ref);
 
+
+
       }
 
+
+
     }
+
+
+
+
 
 
 
     const salt = await bcrypt.genSalt(10);
 
+
+
     const hash = await bcrypt.hash(password, salt);
+
+
+
+
 
 
 
     const user = new User({
 
+
+
       fullName,
+
+
 
       email: email.toLowerCase(),
 
+
+
       phone,
+
+
 
       username,
 
+
+
       password: hash,
 
+
+
       referredBy: referredBy // ⚠️ هذا هو الحقل المهم
+
+
 
     });
 
 
 
+
+
+
+
     await user.save();
+
+
 
     console.log('✅ User saved with referredBy:', user.referredBy);
 
 
 
+
+
+
+
     // إذا كان هناك مدعٍ، تحديث إحصائياته
+
+
 
     if (referrer) {
 
+
+
       try {
+
+
 
         await User.findByIdAndUpdate(referrer._id, {
 
+
+
           $inc: { totalInvites: 1 }
+
+
 
         });
 
+
+
         console.log(`✅ Updated totalInvites for referrer: ${referrer.username}`);
+
+
 
       } catch (updateError) {
 
+
+
         console.error('Error updating referrer stats:', updateError);
+
+
 
       }
 
+
+
     }
+
+
+
+
 
 
 
     // إنشاء كود دعوة للمستخدم الجديد إذا لم يكن لديه
 
+
+
     if (!user.referralCode) {
+
+
 
       user.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
 
+
+
       await user.save();
 
+
+
     }
+
+
+
+
 
 
 
@@ -3415,41 +6798,87 @@ app.post('/api/auth/register', async (req, res) => {
 
 
 
+
+
+
+
     return res.status(201).json({
+
+
 
       message: 'User registered',
 
+
+
       user: {
+
+
 
         id: user._id,
 
+
+
         username: user.username,
+
+
 
         fullName: user.fullName,
 
+
+
         email: user.email,
+
+
 
         referralCode: user.referralCode,
 
+
+
         referredBy: user.referredBy // للتأكد من القيمة
+
+
 
       },
 
+
+
       token
+
+
 
     });
 
 
 
+
+
+
+
   } catch (err) {
+
+
 
     console.error('Registration error:', err);
 
+
+
     return res.status(500).json({ message: 'Server error', error: err.message });
+
+
 
   }
 
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -3459,73 +6888,145 @@ app.post('/api/auth/register', async (req, res) => {
 
 // إضافة route جديد عند اشتراك مدعو
 
+
+
 app.post("/api/referrals/subscribed", authMiddleware, async (req, res) => {
+
+
 
   try {
 
+
+
     const { referredUserId } = req.body;
+
+
 
     
 
+
+
     // البحث عن المستخدم المدعو
+
+
 
     const referredUser = await User.findById(referredUserId);
 
+
+
     if (!referredUser || !referredUser.referredBy) {
+
+
 
       return res.status(404).json({ message: "Referred user not found or no referrer" });
 
+
+
     }
+
+
+
+
 
 
 
     // البحث عن المدعِي باستخدام كود الدعوة
 
+
+
     const referrer = await User.findOne({ referralCode: referredUser.referredBy });
+
+
 
     if (!referrer) {
 
+
+
       return res.status(404).json({ message: "Referrer not found" });
+
+
 
     }
 
 
 
+
+
+
+
     // زيادة successfulInvites فقط
 
+
+
     referrer.successfulInvites += 1;
+
+
 
     await referrer.save();
 
 
 
+
+
+
+
     res.json({ 
+
+
 
       success: true, 
 
+
+
       message: "Successful invite counted",
+
+
 
       referrer: {
 
+
+
         username: referrer.username,
+
+
 
         successfulInvites: referrer.successfulInvites
 
+
+
       }
+
+
 
     });
 
 
 
+
+
+
+
   } catch (err) {
+
+
 
     console.error("Subscribed referral error:", err);
 
+
+
     res.status(500).json({ message: "Error counting successful referral" });
+
+
 
   }
 
+
+
 });
+
+
+
+
 
 
 
@@ -3533,7 +7034,15 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
   try {
+
+
+
+
 
 
 
@@ -3541,7 +7050,15 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
     if (!usernameOrEmail || !password) {
+
+
+
+
 
 
 
@@ -3549,7 +7066,19 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -3561,7 +7090,15 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
       ? { email: usernameOrEmail.toLowerCase() }
+
+
+
+
 
 
 
@@ -3573,7 +7110,19 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     const user = await User.findOne(query);
+
+
+
+
 
 
 
@@ -3585,11 +7134,31 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     const match = await bcrypt.compare(password, user.password);
 
 
 
+
+
+
+
     if (!match) return res.status(401).json({ message: 'Invalid credentials' });
+
+
+
+
+
+
+
+
 
 
 
@@ -3605,7 +7174,19 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     return res.json({
+
+
+
+
 
 
 
@@ -3613,7 +7194,15 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
       token,
+
+
+
+
 
 
 
@@ -3621,7 +7210,15 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
         id: user._id,
+
+
+
+
 
 
 
@@ -3629,7 +7226,15 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
         fullName: user.fullName,
+
+
+
+
 
 
 
@@ -3637,7 +7242,15 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -3645,7 +7258,15 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -3653,7 +7274,15 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
     return res.status(500).json({ message: 'Server error' });
+
+
+
+
 
 
 
@@ -3661,7 +7290,19 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -3673,7 +7314,15 @@ app.post('/api/auth/login', async (req, res) => {
 
 
 
+
+
+
+
 app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -3681,7 +7330,15 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const user = await User.findById(req.user.id);
+
+
+
+
 
 
 
@@ -3693,11 +7350,27 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     // إنشاء الرابط باستخدام كود الدعوة فقط
 
 
 
+
+
+
+
     const baseUrl = process.env.FRONTEND_ORIGIN || 'https://realitylottery.koyeb.app';
+
+
+
+
 
 
 
@@ -3709,7 +7382,19 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     res.json({ 
+
+
+
+
 
 
 
@@ -3717,7 +7402,15 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       referralCode: user.referralCode
+
+
+
+
 
 
 
@@ -3725,7 +7418,15 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -3733,7 +7434,15 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: 'Error generating referral link' });
+
+
+
+
 
 
 
@@ -3741,7 +7450,19 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -3753,81 +7474,163 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
+
+
 
   try {
 
+
+
     const { userId, isReset } = req.body;
+
+
 
     if (!userId) return res.status(400).json({ message: "userId is required" });
 
 
 
+
+
+
+
     const user = await User.findById(userId);
+
+
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
 
 
+
+
+
+
     // حساب التقدم الصحيح
+
+
 
     const progress = Math.min(6, user.currentTaskProgress || 0);
 
+
+
     
 
+
+
     // مكافأة حسب التقدم
+
+
 
     const rewardAmount = calculateTaskReward(user.subscriptionType, progress);
 
 
 
+
+
+
+
     // 🔥 التصفير التلقائي عندما تصل المهمة إلى 6/6 (حتى بدون isReset)
+
+
 
     const shouldAutoReset = progress === 6;
 
 
 
+
+
+
+
     if (!isReset && !shouldAutoReset) {
+
+
 
       return res.json({ 
 
+
+
         success: true, 
+
+
 
         message: "Nothing to do without reset", 
 
+
+
         progress, 
+
+
 
         reward: rewardAmount 
 
+
+
       });
 
+
+
     }
+
+
+
+
 
 
 
     // يُسمح بالريست فقط لو التقدم >= 2
 
+
+
     if (progress < 2) {
+
+
 
       return res.status(400).json({ 
 
+
+
         message: "Progress too low to reset/claim", 
+
+
 
         progress 
 
+
+
       });
+
+
 
     }
 
 
 
+
+
+
+
     // إضافة المكافأة + زيادة المهام المنجزة + تصفير تقدم الدورة
+
+
 
     user.balance = (user.balance || 0) + rewardAmount;
 
+
+
     user.completedTasks = (user.completedTasks || 0) + 1;
 
+
+
     user.currentTaskProgress = 0;
+
+
+
+
 
 
 
@@ -3835,37 +7638,75 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     return res.json({
+
+
 
       success: true,
 
+
+
       message: shouldAutoReset ? "Task auto-completed & reward claimed" : "Task reset & reward claimed",
+
+
 
       reward: rewardAmount,
 
+
+
       newBalance: user.balance,
+
+
 
       completedTasks: user.completedTasks,
 
+
+
       currentTaskProgress: user.currentTaskProgress,
+
+
 
       successfulInvites: user.successfulInvites,
 
+
+
       autoReset: shouldAutoReset // إضافة هذا الحقل للتمييز بين التلقائي واليدوي
+
+
 
     });
 
 
 
+
+
+
+
   } catch (err) {
+
+
 
     console.error("Complete task error:", err);
 
+
+
     res.status(500).json({ message: "Error completing task" });
+
+
 
   }
 
+
+
 });
+
+
+
+
 
 
 
@@ -3873,7 +7714,15 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.post("/api/tasks/update-progress", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -3881,7 +7730,15 @@ app.post("/api/tasks/update-progress", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const { referrerId } = req.body;
+
+
+
+
 
 
 
@@ -3889,7 +7746,15 @@ app.post("/api/tasks/update-progress", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const referrer = await User.findById(referrerId);
+
+
+
+
 
 
 
@@ -3901,7 +7766,19 @@ app.post("/api/tasks/update-progress", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     // زيادة تقدم المهمة الحالية بمقدار 1
+
+
+
+
 
 
 
@@ -3909,31 +7786,67 @@ app.post("/api/tasks/update-progress", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     
+
+
 
 if (referrer.currentTaskProgress >= 6) {
 
+
+
       const rewardAmount = calculateTaskReward(referrer.subscriptionType, 6);
+
+
 
       referrer.balance = (referrer.balance || 0) + rewardAmount;
 
+
+
       referrer.completedTasks = (referrer.completedTasks || 0) + 1;
+
+
 
       referrer.currentTaskProgress = 0;
 
+
+
       
+
+
 
       console.log(`🎉 Auto-completed task for ${referrer.username}! Reward: $${rewardAmount}`);
 
+
+
 }
 
+
+
     
+
+
 
     // زيادة عدد الدعوات الناجحة
 
 
 
+
+
+
+
     referrer.successfulInvites += 1;
+
+
+
+
+
+
+
+
 
 
 
@@ -3949,7 +7862,19 @@ if (referrer.currentTaskProgress >= 6) {
 
 
 
+
+
+
+
+
+
+
+
     res.json({ 
+
+
+
+
 
 
 
@@ -3957,7 +7882,15 @@ if (referrer.currentTaskProgress >= 6) {
 
 
 
+
+
+
+
       message: "Progress updated successfully",
+
+
+
+
 
 
 
@@ -3965,7 +7898,15 @@ if (referrer.currentTaskProgress >= 6) {
 
 
 
+
+
+
+
       successfulInvites: referrer.successfulInvites
+
+
+
+
 
 
 
@@ -3977,7 +7918,19 @@ if (referrer.currentTaskProgress >= 6) {
 
 
 
+
+
+
+
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -3985,7 +7938,15 @@ if (referrer.currentTaskProgress >= 6) {
 
 
 
+
+
+
+
     res.status(500).json({ message: "Error updating progress" });
+
+
+
+
 
 
 
@@ -3993,7 +7954,19 @@ if (referrer.currentTaskProgress >= 6) {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -4005,7 +7978,15 @@ if (referrer.currentTaskProgress >= 6) {
 
 
 
+
+
+
+
 app.get("/api/user/task-info", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -4013,7 +7994,15 @@ app.get("/api/user/task-info", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const user = await User.findById(req.user.id);
+
+
+
+
 
 
 
@@ -4025,7 +8014,19 @@ app.get("/api/user/task-info", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     // حساب المكافأة المتوقعة
+
+
+
+
 
 
 
@@ -4033,7 +8034,15 @@ app.get("/api/user/task-info", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -4041,7 +8050,15 @@ app.get("/api/user/task-info", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       completedTasks: user.completedTasks,
+
+
+
+
 
 
 
@@ -4049,7 +8066,15 @@ app.get("/api/user/task-info", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       successfulInvites: user.successfulInvites,
+
+
+
+
 
 
 
@@ -4057,7 +8082,15 @@ app.get("/api/user/task-info", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       canReset: user.currentTaskProgress >= 2 // يمكن إعادة المهمة عند التقدم 2 أو أكثر
+
+
+
+
 
 
 
@@ -4069,7 +8102,19 @@ app.get("/api/user/task-info", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -4077,7 +8122,15 @@ app.get("/api/user/task-info", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: "Error fetching task info" });
+
+
+
+
 
 
 
@@ -4085,7 +8138,23 @@ app.get("/api/user/task-info", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4101,7 +8170,15 @@ app.get("/api/user/task-info", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -4109,11 +8186,27 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const user = await User.findById(req.user.id);
 
 
 
+
+
+
+
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+
+
+
+
+
+
+
 
 
 
@@ -4125,7 +8218,15 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const invitedUsers = await User.find({ referredBy: user.referralCode })
+
+
+
+
 
 
 
@@ -4137,7 +8238,19 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     // العدد الإجمالي لكل من سجل
+
+
+
+
 
 
 
@@ -4149,7 +8262,19 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     // العدد الذين اشتركوا في أي خطة
+
+
+
+
 
 
 
@@ -4157,7 +8282,15 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       u.subscriptionActive && u.subscriptionExpires > new Date()
+
+
+
+
 
 
 
@@ -4169,7 +8302,19 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     // حساب تقدم المهمة الحالي
+
+
+
+
 
 
 
@@ -4181,7 +8326,19 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     res.json({
+
+
+
+
 
 
 
@@ -4189,7 +8346,15 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       successfulInvites,
+
+
+
+
 
 
 
@@ -4197,7 +8362,15 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     });
+
+
+
+
 
 
 
@@ -4205,7 +8378,15 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     console.error('Referral stats error:', err);
+
+
+
+
 
 
 
@@ -4213,11 +8394,27 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   }
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -4229,7 +8426,15 @@ app.get('/api/user/referral-stats', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -4237,11 +8442,27 @@ app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const user = await User.findById(req.user.id);
 
 
 
+
+
+
+
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+
+
+
+
+
+
+
 
 
 
@@ -4253,11 +8474,23 @@ app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const invitedUsers = await User.find({ referredBy: user.referralCode })
 
 
 
+
+
+
+
       .select('username email createdAt subscriptionType subscriptionActive subscriptionExpires')
+
+
+
+
 
 
 
@@ -4269,7 +8502,19 @@ app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     res.json({
+
+
+
+
 
 
 
@@ -4277,7 +8522,15 @@ app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         username: u.username,
+
+
+
+
 
 
 
@@ -4285,7 +8538,15 @@ app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         createdAt: u.createdAt,
+
+
+
+
 
 
 
@@ -4293,7 +8554,15 @@ app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         subscriptionActive: u.subscriptionActive && u.subscriptionExpires > new Date(),
+
+
+
+
 
 
 
@@ -4301,7 +8570,15 @@ app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       }))
+
+
+
+
 
 
 
@@ -4309,7 +8586,15 @@ app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -4317,7 +8602,15 @@ app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: 'Error fetching invited users' });
+
+
+
+
 
 
 
@@ -4325,7 +8618,19 @@ app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -4337,7 +8642,15 @@ app.get('/api/user/invited-users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -4345,7 +8658,15 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (!req.user.roles || !req.user.roles.includes('admin')) {
+
+
+
+
 
 
 
@@ -4353,7 +8674,19 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -4365,7 +8698,15 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const totalReferrals = await User.countDocuments({ referredBy: { $ne: null } });
+
+
+
+
 
 
 
@@ -4373,7 +8714,15 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     // المستخدمون الأكثر دعوة
+
+
+
+
 
 
 
@@ -4381,7 +8730,15 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       { $match: { totalInvites: { $gt: 0 } } },
+
+
+
+
 
 
 
@@ -4389,7 +8746,15 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       { $limit: 10 },
+
+
+
+
 
 
 
@@ -4397,7 +8762,15 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         username: 1, 
+
+
+
+
 
 
 
@@ -4405,7 +8778,15 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         totalInvites: 1, 
+
+
+
+
 
 
 
@@ -4413,7 +8794,15 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         referralCode: 1 
+
+
+
+
 
 
 
@@ -4421,7 +8810,19 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     ]);
+
+
+
+
+
+
+
+
 
 
 
@@ -4433,7 +8834,15 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const totalSuccessful = await User.aggregate([
+
+
+
+
 
 
 
@@ -4441,7 +8850,15 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     ]);
+
+
+
+
 
 
 
@@ -4449,11 +8866,23 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const conversionRate = totalReferrals > 0 
 
 
 
+
+
+
+
       ? (totalSuccessful[0]?.total || 0) / totalReferrals * 100 
+
+
+
+
 
 
 
@@ -4465,7 +8894,19 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     res.json({
+
+
+
+
 
 
 
@@ -4473,11 +8914,23 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       topReferrers,
 
 
 
+
+
+
+
       conversionRate: conversionRate.toFixed(2)
+
+
+
+
 
 
 
@@ -4489,7 +8942,19 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -4497,7 +8962,15 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: "Error fetching referral statistics" });
+
+
+
+
 
 
 
@@ -4505,7 +8978,19 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -4517,7 +9002,15 @@ app.get("/api/admin/referral-stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+
+
+
+
 
 
 
@@ -4529,7 +9022,19 @@ const ADMIN_PASS = process.env.ADMIN_PASS || 'RealityLottery@2023';
 
 
 
+
+
+
+
+
+
+
+
 app.post('/api/admin/login', (req, res) => {
+
+
+
+
 
 
 
@@ -4537,7 +9042,15 @@ app.post('/api/admin/login', (req, res) => {
 
 
 
+
+
+
+
   if (username === ADMIN_USER && password === ADMIN_PASS) {
+
+
+
+
 
 
 
@@ -4545,7 +9058,15 @@ app.post('/api/admin/login', (req, res) => {
 
 
 
+
+
+
+
       { id: username, roles: ['admin'] },
+
+
+
+
 
 
 
@@ -4553,7 +9074,15 @@ app.post('/api/admin/login', (req, res) => {
 
 
 
+
+
+
+
       { expiresIn: '7d' }
+
+
+
+
 
 
 
@@ -4561,7 +9090,15 @@ app.post('/api/admin/login', (req, res) => {
 
 
 
+
+
+
+
     return res.json({ message: 'Admin login successful', token });
+
+
+
+
 
 
 
@@ -4569,7 +9106,15 @@ app.post('/api/admin/login', (req, res) => {
 
 
 
+
+
+
+
     return res.status(401).json({ message: 'Invalid admin credentials' });
+
+
+
+
 
 
 
@@ -4577,7 +9122,19 @@ app.post('/api/admin/login', (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -4589,7 +9146,15 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   try {
+
+
+
+
 
 
 
@@ -4597,7 +9162,15 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       return res.status(403).json({ message: 'Forbidden' });
+
+
+
+
 
 
 
@@ -4605,7 +9178,15 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const users = await User.find().select('-password').sort({ registeredAt: -1 });
+
+
+
+
 
 
 
@@ -4613,7 +9194,15 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       users: users.map(u => ({
+
+
+
+
 
 
 
@@ -4621,7 +9210,15 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         username: u.username,
+
+
+
+
 
 
 
@@ -4629,7 +9226,15 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         fullName: u.fullName,
+
+
+
+
 
 
 
@@ -4637,7 +9242,15 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         totalInvites: u.totalInvites,        // تأكد من وجود هذا
+
+
+
+
 
 
 
@@ -4645,7 +9258,15 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         referredBy: u.referredBy,            // تأكد من وجود هذا
+
+
+
+
 
 
 
@@ -4653,7 +9274,15 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         subscriptionType: u.subscriptionType,
+
+
+
+
 
 
 
@@ -4661,7 +9290,15 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         registeredAt: u.registeredAt
+
+
+
+
 
 
 
@@ -4669,7 +9306,15 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     });
+
+
+
+
 
 
 
@@ -4677,7 +9322,15 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     console.error(err);
+
+
+
+
 
 
 
@@ -4685,11 +9338,27 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   }
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -4698,48 +9367,150 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
+
+
+
   try {
+
+
+
     const user = await User.findById(req.user.id).select('-password');
+
+
+
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+
+
+
+
+
+
     // التقدم الحقيقي: الدعوات الناجحة + نقطة البونس لو عنده اشتراك
+
+
+
     const currentProgress = Math.min(6, (user.successfulInvites || 0) + (user.subscriptionActive ? 1 : 0));
+
+
+
+
+
+
 
     const expectedReward = calculateTaskReward(user.subscriptionType, currentProgress);
 
-    // حساب lotteryEntries بناءً على الاشتراك + كل دعوة ناجحة
-    const subscriptionPointsMap = { basic: 1, pro: 3, vip: 5 };
-    const subPoints = subscriptionPointsMap[user.subscriptionType?.toLowerCase()] || 0;
-    const invitePoints = user.successfulInvites || 0;
-    const lotteryEntries = subPoints + invitePoints;
+
+
+
+
+
 
     return res.json({
+
+
+
       id: user._id,
+
+
+
       username: user.username,
+
+
+
       fullName: user.fullName,
+
+
+
       email: user.email,
+
+
+
       phone: user.phone,
+
+
+
       balance: user.balance,
+
+
+
       subscriptionType: user.subscriptionType,
+
+
+
       subscriptionActive: user.subscriptionActive,
+
+
+
       subscriptionExpires: user.subscriptionExpires,
+
+
+
       referralCode: user.referralCode,
+
+
+
       referredBy: user.referredBy,
+
+
+
       totalInvites: user.totalInvites,
+
+
+
       successfulInvites: user.successfulInvites,
+
+
+
       currentTaskProgress: user.currentTaskProgress || 0,
+
+
+
       completedTasks: user.completedTasks,
+
+
+
       currentProgress: currentProgress,
+
+
+
       expectedReward,
-      lotteryEntries,           // ✅ أضفنا هنا
-      hasSpunWheel: user.hasSpunWheel || false,
+
+
+
       canReset: currentProgress >= 2
+
+
+
     });
+
+
+
   } catch (err) {
+
+
+
     console.error('Me error:', err);
+
+
+
     return res.status(500).json({ message: 'Server error' });
+
+
+
   }
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -4751,7 +9522,15 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.get('/api/debug/fields', authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -4759,7 +9538,15 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (!req.user.roles?.includes("admin")) {
+
+
+
+
 
 
 
@@ -4767,7 +9554,19 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -4779,11 +9578,23 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const users = await User.find().limit(5).select('username completedTasks taskProgress');
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -4791,7 +9602,15 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const userSchema = User.schema.obj;
+
+
+
+
 
 
 
@@ -4799,7 +9618,15 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const hasTaskProgress = userSchema.taskProgress !== undefined;
+
+
+
+
 
 
 
@@ -4807,7 +9634,15 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.json({
+
+
+
+
 
 
 
@@ -4815,7 +9650,15 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         completedTasks: hasCompletedTasks,
+
+
+
+
 
 
 
@@ -4823,7 +9666,15 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       },
+
+
+
+
 
 
 
@@ -4831,7 +9682,15 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         username: u.username,
+
+
+
+
 
 
 
@@ -4839,7 +9698,15 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         taskProgress: u.taskProgress
+
+
+
+
 
 
 
@@ -4847,7 +9714,15 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       message: hasCompletedTasks ? 
+
+
+
+
 
 
 
@@ -4855,7 +9730,15 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
         "WARNING: completedTasks field missing from schema"
+
+
+
+
 
 
 
@@ -4863,7 +9746,15 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -4871,7 +9762,15 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: "Debug error", error: err.message });
+
+
+
+
 
 
 
@@ -4879,7 +9778,19 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -4891,7 +9802,15 @@ app.get('/api/debug/fields', authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 app.get("/api/admin/stats", authMiddleware, async (req, res) => {
+
+
+
+
 
 
 
@@ -4899,11 +9818,23 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     if (!req.user.roles?.includes("admin")) {
 
 
 
+
+
+
+
       return res.status(403).json({ message: "Forbidden" });
+
+
+
+
 
 
 
@@ -4915,7 +9846,19 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     const totalUsers = await User.countDocuments();
+
+
+
+
 
 
 
@@ -4923,11 +9866,23 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const spins = 0;
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -4935,7 +9890,15 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const totalInvites = await User.aggregate([
+
+
+
+
 
 
 
@@ -4943,7 +9906,15 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     ]);
+
+
+
+
 
 
 
@@ -4951,7 +9922,15 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       { $group: { _id: null, total: { $sum: "$successfulInvites" } } }
+
+
+
+
 
 
 
@@ -4959,7 +9938,15 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -4967,7 +9954,15 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const pendingWithdrawals = await Withdrawal.countDocuments({ status: 'pending' });
+
+
+
+
 
 
 
@@ -4975,7 +9970,15 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     const totalPayments = await Payment.countDocuments();
+
+
+
+
 
 
 
@@ -4987,7 +9990,19 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
     res.json({
+
+
+
+
 
 
 
@@ -4995,7 +10010,15 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       paidUsers,
+
+
+
+
 
 
 
@@ -5003,7 +10026,15 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       totalInvites: totalInvites[0]?.total || 0,
+
+
+
+
 
 
 
@@ -5011,7 +10042,15 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       totalWithdrawals,
+
+
+
+
 
 
 
@@ -5019,11 +10058,23 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
       totalPayments,
 
 
 
+
+
+
+
       pendingPayments
+
+
+
+
 
 
 
@@ -5035,7 +10086,19 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
   } catch (err) {
+
+
+
+
 
 
 
@@ -5043,7 +10106,15 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
     res.status(500).json({ message: "Error fetching stats" });
+
+
+
+
 
 
 
@@ -5051,7 +10122,19 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -5063,7 +10146,15 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
 
 
 
+
+
+
+
 const FRONTEND_PATH = process.env.FRONTEND_PATH || path.join(__dirname, 'public');
+
+
+
+
 
 
 
@@ -5075,7 +10166,19 @@ app.use(express.static(FRONTEND_PATH));
 
 
 
+
+
+
+
+
+
+
+
 app.get('/', (req, res) => {
+
+
+
+
 
 
 
@@ -5083,7 +10186,19 @@ app.get('/', (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -5095,7 +10210,19 @@ const MEDIA_PATH = process.env.MEDIA_PATH || path.join(__dirname, 'media');
 
 
 
+
+
+
+
 app.use('/media', express.static(MEDIA_PATH));
+
+
+
+
+
+
+
+
 
 
 
@@ -5107,7 +10234,19 @@ const UPLOADS_PATH = process.env.UPLOADS_PATH || path.join(__dirname, 'uploads')
 
 
 
+
+
+
+
 app.use('/uploads', express.static(UPLOADS_PATH));
+
+
+
+
+
+
+
+
 
 
 
@@ -5119,7 +10258,19 @@ const DOCS_PATH = process.env.DOCS_PATH || path.join(__dirname, 'docs');
 
 
 
+
+
+
+
 app.use('/docs', express.static(DOCS_PATH));
+
+
+
+
+
+
+
+
 
 
 
@@ -5131,7 +10282,15 @@ app.use('/docs', express.static(DOCS_PATH));
 
 
 
+
+
+
+
 app.get('*', (req, res) => {
+
+
+
+
 
 
 
@@ -5139,7 +10298,19 @@ app.get('*', (req, res) => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -5151,57 +10322,27 @@ app.get('*', (req, res) => {
 
 
 
+
+
+
+
 app.listen(PORT, () => {
+
+
 
   console.log(`🚀 Server running on port ${PORT}`);
 
+
+
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
+
+
 
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 
+
+
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
