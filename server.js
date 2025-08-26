@@ -1065,7 +1065,7 @@ app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
     } else if (prize === "extra") {
   user.hasSpunWheel = false; // هذا السطر الناقص!
   message = "You earned an extra spin!";
-    }
+    
 
 
 
@@ -10342,6 +10342,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
