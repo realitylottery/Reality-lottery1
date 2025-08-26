@@ -510,51 +510,52 @@ spinBtn.addEventListener("click", async () => {
     const prize = prizes[sector];
 
     try {
-      const response = await fetch(`${API_BASE}/api/wheel/spin`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token
-        },
-        body: JSON.stringify({
-          prize: prize.prize,
-          amount: prize.amount
-        })
-      });
+  const response = await fetch(`${API_BASE}/api/wheel/spin`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({
+      prize: prize.prize,
+      amount: prize.amount
+    })
+  });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.msg || "Server error");
-      }
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.msg || "Server error");
+  }
 
-      const spinResult = await response.json();
+  const spinResult = await response.json();
+  
+  // تحديث بيانات المستخدم من الاستجابة
+  const updatedUser = { 
+    ...JSON.parse(localStorage.getItem("rl_user") || "{}"),
+    balance: spinResult.balance,
+    hasSpunWheel: spinResult.hasSpunWheel
+  };
+  
+  localStorage.setItem("rl_user", JSON.stringify(updatedUser));
 
-      // تحديث بيانات المستخدم من الاستجابة
-      const updatedUser = { 
-        ...JSON.parse(localStorage.getItem("rl_user") || "{}"),
-        balance: spinResult.balance,
-        hasSpunWheel: spinResult.hasSpunWheel
-      };
-      localStorage.setItem("rl_user", JSON.stringify(updatedUser));
+  // تحديث واجهة المستخدم
+  userBalance.textContent = `Balance: $${spinResult.balance || 0}`;
+  
+  // عرض رسالة النتيجة من السيرفر
+  result.innerHTML = `<span class="success">${spinResult.message}</span>`;
+  
+  // تحديث حالة الزر بناءً على الاستجابة من السيرفر
+  canSpin = !spinResult.hasSpunWheel;
+  spinBtn.disabled = !canSpin;
 
-      // تحديث واجهة المستخدم
-      userBalance.textContent = `Balance: $${spinResult.balance || 0}`;
-
-      // عرض رسالة النتيجة
-      result.innerHTML = `<span class="success">${spinResult.message}</span>`;
-
-      // تعطيل أو تفعيل الزر حسب الحالة
-      canSpin = !spinResult.hasSpunWheel;
-      spinBtn.disabled = !canSpin;
-
-    } catch (err) {
-      console.error("Error processing spin:", err);
-      result.innerHTML = `<span class="error">${err.message || "Error processing spin"}</span>`;
-      statusMessage.textContent = "Please try again later";
-      wheel.style.transform = 'rotate(0deg)';
-
-      // إعادة التحقق من الحالة بعد الخطأ
-      setTimeout(checkEligibility, 2000);
+} catch (err) {
+  console.error("Error processing spin:", err);
+  result.innerHTML = `<span class="error">${err.message || "Error processing spin"}</span>`;
+  statusMessage.textContent = "Please try again later";
+  wheel.style.transform = 'rotate(0deg)';
+  
+  // إعادة التحقق من الحالة بعد الخطأ
+  setTimeout(checkEligibility, 2000);
     }
   }, 5000); // ⬅ هنا كان ناقص الـ delay لتشغيل setTimeout
 });
