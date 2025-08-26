@@ -9472,7 +9472,7 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       currentProgress: currentProgress,
 
       hasSpunWheel: user.hasSpunWheel,
-
+      lotteryEntries: user.lotteryEntries || 0,
 
       expectedReward,
 
@@ -10343,6 +10343,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
