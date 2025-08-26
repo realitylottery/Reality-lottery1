@@ -527,70 +527,83 @@ spinBtn.addEventListener("click", async () => {
     const prize = prizes[sector];
 
     try {
-  const response = await fetch(`${API_BASE}/api/wheel/spin`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + token
-    },
-    body: JSON.stringify({
-      prize: prize.prize,
-      amount: prize.amount
-    })
-  });
+      const response = await fetch(`${API_BASE}/api/wheel/spin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify({
+          prize: prize.prize,
+          amount: prize.amount
+        })
+      });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.msg || "Server error");
-  }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.msg || "Server error");
+      }
 
-  const spinResult = await response.json();
-  console.log("Spin result from server:", spinResult); // لأغراض التصحيح
+      const spinResult = await response.json();
+      console.log("Spin result from server:", spinResult);
 
-// تحديث بيانات المستخدم من الاستجابة مع القيم الافتراضية
-const currentUser = JSON.parse(localStorage.getItem("rl_user") || "{}");
-const updatedUser = {
-  balance: currentUser.balance || 0,
-  subscriptionActive: currentUser.subscriptionActive || false,
-  hasSpunWheel: currentUser.hasSpunWheel || false,
-  subscriptionType: currentUser.subscriptionType || "none",
-  ...currentUser,
-  balance: spinResult.balance !== undefined ? spinResult.balance : currentUser.balance,
-  hasSpunWheel: spinResult.hasSpunWheel !== undefined ? spinResult.hasSpunWheel : currentUser.hasSpunWheel
-};
+      // تحديث بيانات المستخدم من الاستجابة مع القيم الافتراضية
+      const currentUser = JSON.parse(localStorage.getItem("rl_user") || "{}");
+      const updatedUser = {
+        balance: currentUser.balance || 0,
+        subscriptionActive: currentUser.subscriptionActive || false,
+        hasSpunWheel: currentUser.hasSpunWheel || false,
+        subscriptionType: currentUser.subscriptionType || "none",
+        ...currentUser,
+        balance: spinResult.balance !== undefined ? spinResult.balance : currentUser.balance,
+        hasSpunWheel: spinResult.hasSpunWheel !== undefined ? spinResult.hasSpunWheel : currentUser.hasSpunWheel
+      };
 
-localStorage.setItem("rl_user", JSON.stringify(updatedUser));
+      localStorage.setItem("rl_user", JSON.stringify(updatedUser));
 
-// تحديث واجهة المستخدم
-userBalance.textContent = `Balance: $${spinResult.balance || 0}`;
+      // تحديث واجهة المستخدم
+      userBalance.textContent = `Balance: $${spinResult.balance || 0}`;
 
-// عرض رسالة النتيجة من السيرفر
-result.innerHTML = `<span class="success">${spinResult.message}</span>`;
+      // عرض رسالة النتيجة من السيرفر
+      result.innerHTML = `<span class="success">${spinResult.message}</span>`;
 
-// تحديث حالة الزر بناءً على الاستجابة من السيرفر
-canSpin = !spinResult.hasSpunWheel;
-spinBtn.disabled = !canSpin;
+      // تحديث حالة الزر بناءً على الاستجابة من السيرفر
+      canSpin = !spinResult.hasSpunWheel;
+      spinBtn.disabled = !canSpin;
 
-// إذا كانت الدوران قد استخدمت، عطل الزر فوراً
-if (spinResult.hasSpunWheel) {
-  canSpin = false;
-  spinBtn.disabled = true;
-  
-  // تحديث واجهة المستخدم فوراً
-  result.textContent = "You already used your spin this subscription ❌";
-  statusMessage.textContent = "Wait for your next subscription period to spin again";
-  userStatus.textContent = `Active ${updatedUser.subscriptionType} subscription - Already spun`;
-  userStatus.style.color = "var(--error-color)";
-} else if (prize.type === "extra") {
-  // إذا كان الجائزة دورة إضافية
-  result.textContent = "You earned an extra spin! 🎉";
-  statusMessage.textContent = "Ready to spin again!";
-  // إعادة التحقق من الحالة للدوران الإضافي
-  setTimeout(checkEligibility, 1000);
-} else {
-  // إعادة التحقق من الحالة بعد الدوران العادي
-  setTimeout(checkEligibility, 1000);
-}
+      // إذا كانت الدوران قد استخدمت، عطل الزر فوراً
+      if (spinResult.hasSpunWheel) {
+        canSpin = false;
+        spinBtn.disabled = true;
+        
+        // تحديث واجهة المستخدم فوراً
+        result.textContent = "You already used your spin this subscription ❌";
+        statusMessage.textContent = "Wait for your next subscription period to spin again";
+        userStatus.textContent = `Active ${updatedUser.subscriptionType} subscription - Already spun`;
+        userStatus.style.color = "var(--error-color)";
+      } else if (prize.type === "extra") {
+        // إذا كان الجائزة دورة إضافية
+        result.textContent = "You earned an extra spin! 🎉";
+        statusMessage.textContent = "Ready to spin again!";
+        // إعادة التحقق من الحالة للدوران الإضافي
+        setTimeout(checkEligibility, 1000);
+      } else {
+        // إعادة التحقق من الحالة بعد الدوران العادي
+        setTimeout(checkEligibility, 1000);
+      }
+    } catch (err) {
+      console.error("Error processing spin:", err);
+      result.innerHTML = `<span class="error">${err.message || "Error processing spin"}</span>`;
+      statusMessage.textContent = "Please try again later";
+      wheel.style.transform = 'rotate(0deg)';
+      
+      // إعادة تعيين حالة الزر والتحقق من الأهلية
+      canSpin = false;
+      spinBtn.disabled = true;
+      
+      // إعادة التحقق من الحالة بعد الخطأ
+      setTimeout(checkEligibility, 2000);
+    }
   }, 5000);
 });
 
