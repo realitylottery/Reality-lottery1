@@ -779,11 +779,6 @@ async function loadLotteryList() {
   }
 } // <-- هنا يجب أن تنتهي الدالة فقط
 
-// الدوال الأخرى يجب أن تكون خارج دالة loadLotteryList
-// استدعاء الدالة بعد تحميل الصفحة
-window.onload = () => {
-  loadLotteryList();
-}
 
 
 async function testEndpoint() {
@@ -2013,6 +2008,8 @@ document.querySelector('[data-tab="tab-tickers"]').addEventListener('click', () 
     loadWithdrawals();
     loadNewsList();
     loadBannerList();
+    loadAdminDashboard(); 
+    loadLotteryList();
     loadTickers();
     loadInvites();
     loadNotificationsList()
