@@ -761,15 +761,7 @@ async function debugAllUsers() {
       <strong>Sample User Fields:</strong><br>
     `;
     
-    // Show first 3 users as sample
-    users.slice(0, 3).forEach(user => {
-      debugInfo += `
-        ${user.username}: 
-        completedTasks=${user.completedTasks !== undefined ? user.completedTasks : 'UNDEFINED'}, 
-        taskProgress=${user.taskProgress !== undefined ? user.taskProgress : 'UNDEFINED'}<br>
-      `;
-    });
-    
+
     resultDiv.innerHTML = debugInfo;
     
   } catch (error) {
@@ -802,7 +794,7 @@ async function testEndpoint() {
       options.body = data;
     } else if (endpoint.startsWith('PUT')) {
       options.method = 'PUT';
-      options.body = JSON.stringify({ completedTasks: 5 }); // Default test
+      options.body = JSON.stringify({});
     }
     
     const r = await safeFetch(url, options);
@@ -911,7 +903,7 @@ async function loadUsersWithDebug(){
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
         
         try {
-          console.log('Sending update:', { balance, subscriptionType, completedTasks });
+          console.log('Sending update:', { balance, subscriptionType });
           
           const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
             method: 'PUT',
