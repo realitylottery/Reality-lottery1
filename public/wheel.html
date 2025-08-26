@@ -459,32 +459,46 @@ async function checkEligibility() {
     const res = await fetch(`${API_BASE}/api/auth/me`, {
       headers: { Authorization: "Bearer " + token }
     });
+    
     if (!res.ok) throw new Error("Failed to fetch user data");
+    
     const data = await res.json();
-    localStorage.setItem("rl_user", JSON.stringify(data));
-    userBalance.textContent = `Balance: $${data.balance || 0}`;
+    console.log("User data from server:", data); // لأغراض التصحيح
+    
+    // حفظ بيانات المستخدم مع القيم الافتراضية
+    const userData = {
+      balance: data.balance || 0,
+      subscriptionActive: data.subscriptionActive || false,
+      hasSpunWheel: data.hasSpunWheel || false,
+      subscriptionType: data.subscriptionType || "none",
+      ...data
+    };
+    
+    localStorage.setItem("rl_user", JSON.stringify(userData));
+    userBalance.textContent = `Balance: $${userData.balance}`;
 
-    if (data.subscriptionActive && !data.hasSpunWheel) {
-  canSpin = true;
-  spinBtn.disabled = false;
-  result.textContent = "You have 1 spin available 🎉";
-  statusMessage.textContent = "Ready to spin!";
-  userStatus.textContent = "Active subscription - Spin available";
-  userStatus.style.color = "var(--success-color)";
-} else if (data.subscriptionActive && data.hasSpunWheel) {
-  canSpin = false; // ⬅ أضف هذا السطر
-  spinBtn.disabled = true; // ⬅ تأكد من وجود هذا
-  result.textContent = "You already used your spin this subscription ❌";
-  statusMessage.textContent = "Wait for your next subscription period to spin again";
-  userStatus.textContent = "Active subscription - Already spun";
-  userStatus.style.color = "var(--error-color)";
-} else {
-  canSpin = false; // ⬅ أضف هذا السطر
-  spinBtn.disabled = true;
-  result.textContent = "Subscribe to unlock your spin!";
-  statusMessage.textContent = "Active subscription required";
-  userStatus.textContent = "No active subscription";
-  userStatus.style.color = "var(--error-color)";
+    if (userData.subscriptionActive && !userData.hasSpunWheel) {
+      canSpin = true;
+      spinBtn.disabled = false;
+      result.textContent = "You have 1 spin available 🎉";
+      statusMessage.textContent = "Ready to spin!";
+      userStatus.textContent = `Active ${userData.subscriptionType} subscription - Spin available`;
+      userStatus.style.color = "var(--success-color)";
+    } else if (userData.subscriptionActive && userData.hasSpunWheel) {
+      canSpin = false;
+      spinBtn.disabled = true;
+      result.textContent = "You already used your spin this subscription ❌";
+      statusMessage.textContent = "Wait for your next subscription period to spin again";
+      userStatus.textContent = `Active ${userData.subscriptionType} subscription - Already spun`;
+      userStatus.style.color = "var(--error-color)";
+    } else {
+      canSpin = false;
+      spinBtn.disabled = true;
+      result.textContent = "Subscribe to unlock your spin!";
+      statusMessage.textContent = "Active subscription required";
+      userStatus.textContent = userData.subscriptionType !== "none" ? 
+        `${userData.subscriptionType} subscription - Inactive` : "No active subscription";
+      userStatus.style.color = "var(--error-color)";
     }
     
   } catch (err) {
@@ -531,12 +545,18 @@ spinBtn.addEventListener("click", async () => {
   }
 
   const spinResult = await response.json();
+  console.log("Spin result from server:", spinResult); // لأغراض التصحيح
 
-// تحديث بيانات المستخدم من الاستجابة
-const updatedUser = { 
-  ...JSON.parse(localStorage.getItem("rl_user") || "{}"),
-  balance: spinResult.balance,
-  hasSpunWheel: spinResult.hasSpunWheel
+// تحديث بيانات المستخدم من الاستجابة مع القيم الافتراضية
+const currentUser = JSON.parse(localStorage.getItem("rl_user") || "{}");
+const updatedUser = {
+  balance: currentUser.balance || 0,
+  subscriptionActive: currentUser.subscriptionActive || false,
+  hasSpunWheel: currentUser.hasSpunWheel || false,
+  subscriptionType: currentUser.subscriptionType || "none",
+  ...currentUser,
+  balance: spinResult.balance !== undefined ? spinResult.balance : currentUser.balance,
+  hasSpunWheel: spinResult.hasSpunWheel !== undefined ? spinResult.hasSpunWheel : currentUser.hasSpunWheel
 };
 
 localStorage.setItem("rl_user", JSON.stringify(updatedUser));
@@ -559,17 +579,18 @@ if (spinResult.hasSpunWheel) {
   // تحديث واجهة المستخدم فوراً
   result.textContent = "You already used your spin this subscription ❌";
   statusMessage.textContent = "Wait for your next subscription period to spin again";
-  userStatus.textContent = "Active subscription - Already spun";
+  userStatus.textContent = `Active ${updatedUser.subscriptionType} subscription - Already spun`;
   userStatus.style.color = "var(--error-color)";
 } else if (prize.type === "extra") {
   // إذا كان الجائزة دورة إضافية
   result.textContent = "You earned an extra spin! 🎉";
   statusMessage.textContent = "Ready to spin again!";
+  // إعادة التحقق من الحالة للدوران الإضافي
+  setTimeout(checkEligibility, 1000);
 } else {
-  
-      // إعادة التحقق من الحالة بعد الخطأ
-      setTimeout(checkEligibility, 2000);
-    }
+  // إعادة التحقق من الحالة بعد الدوران العادي
+  setTimeout(checkEligibility, 1000);
+}
   }, 5000);
 });
 
