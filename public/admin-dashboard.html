@@ -133,7 +133,16 @@
         <span class="muted">If endpoint is not ready, you'll see a gentle message instead of an error.</span>
       </div>
     </section>
-
+<section class="card" style="margin-top:12px">
+  <div class="title"><i class="fa-solid fa-ticket"></i> Lottery</div>
+  <div class="muted">
+    List of users and their Lottery Entries.
+  </div>
+  <div id="lotteryList" style="margin-top:10px">
+    Loading...
+  </div>
+</section>
+    
     <section id="tab-notifications" class="section hidden">
   <div class="title"><i class="fa-solid fa-bell"></i> Notification Management</div>
   
@@ -480,7 +489,7 @@
         </div>
       </div>
     </section>
-
+     
     <section id="tab-tickers" class="section hidden">
   <div class="title"><i class="fa-solid fa-scroll"></i> News Tickers Management</div>
   
@@ -730,6 +739,51 @@ async function debugAllUsers() {
     resultDiv.innerHTML = `<span class="danger">Exception: ${error.message}</span>`;
   }
 }
+
+async function loadLotteryList() {
+  try {
+    const users = await safeFetch(API_BASE + '/api/admin/users'); // تأكد أن هذه الـ API ترجع كل المستخدمين
+    const listEl = document.getElementById('lotteryList');
+    if (!users || users.length === 0) {
+      listEl.textContent = "No users found.";
+      return;
+    }
+
+    // بناء جدول أو قائمة
+    const table = document.createElement('table');
+    table.style.width = "100%";
+    table.style.borderCollapse = "collapse";
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:6px; border-bottom:1px solid rgba(255,215,0,.25)">Username</th>
+          <th style="text-align:right; padding:6px; border-bottom:1px solid rgba(255,215,0,.25)">Lottery Entries</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${users.map(u => `
+          <tr>
+            <td style="padding:6px; border-bottom:1px solid rgba(255,215,0,.1)">${u.username}</td>
+            <td style="padding:6px; text-align:right; border-bottom:1px solid rgba(255,215,0,.1)">${u.lotteryEntries || 0}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    `;
+    listEl.innerHTML = "";
+    listEl.appendChild(table);
+
+  } catch(err) {
+    console.error(err);
+    document.getElementById('lotteryList').textContent = "Failed to load data.";
+  }
+}
+
+// استدعاء الدالة بعد تحميل الصفحة
+window.onload = () => {
+  loadAdminDashboard(); // لو عندك دالة موجودة مسبقًا
+  loadLotteryList();
+};
+  
 
 async function testEndpoint() {
   const endpoint = $('#debugEndpoint').value;
