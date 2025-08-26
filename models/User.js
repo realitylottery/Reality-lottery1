@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema({
   // الاشتراك
   subscriptionType: { type: String, enum: ['', 'BASIC', 'PRO', 'VIP'], default: '' },
   subscriptionActive: { type: Boolean, default: false },
+  lotteryEntries: { type: Number, default: 0 },
   subscriptionExpires: { type: Date, default: null },
   hasSpunWheel: { type: Boolean, default: false },
   // الطوابع الزمنية
