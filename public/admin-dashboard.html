@@ -911,6 +911,7 @@ $('#btnTestEndpoint').addEventListener('click', testEndpoint);
 
 // ========= ENHANCED USER LOADING WITH DEBUG INFO =========
 async function loadUsersWithDebug(){
+  console.log('🔄 Loading users...');
   const tb = $('#usersTbody');
   tb.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
   
@@ -919,29 +920,20 @@ async function loadUsersWithDebug(){
       headers: authHeaders(true) 
     });
     
+    console.log('📦 Users API response:', r); // ← إضافة للتصحيح
+    
     if (r._error){
-      let errorMessage = r.message;
-      
-      // رسائل أكثر وضوحاً
-      if (r.status === 403) {
-        errorMessage = 'Access forbidden - Please login again';
-        clearToken();
-        updateAuthUI();
-      } else if (r.message.includes('Network error')) {
-        errorMessage = 'Cannot connect to server. Check your internet connection.';
-      }
-      
-      tb.innerHTML = `
-        <tr><td colspan="7">
-          <div class="notice">
-            <strong>Error:</strong> ${errorMessage}
-            <br><br>
-            <button class="btn small" onclick="loadUsersWithDebug()">
-              <i class="fa-solid fa-rotate"></i> Try Again
-            </button>
-          </div>
-        </td></tr>
-      `;
+      console.error('❌ Users API error:', r.message);
+      tb.innerHTML = '<tr><td colspan="7"><div class="notice">'+ r.message +'</div></td></tr>';
+      return;
+    }
+    
+    const users = (r.users || []);
+    console.log('👥 Users found:', users.length); // ← إضافة للتصحيح
+    
+    if (!users.length){
+      console.log('ℹ️ No users in database');
+      tb.innerHTML = '<tr><td colspan="7" class="muted">No users yet.</td></tr>';
       return;
     }
     
