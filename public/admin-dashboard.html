@@ -944,19 +944,22 @@ $('#btnTestEndpoint').addEventListener('click', testEndpoint);
 async function loadUsers(){
   const tb = $('#usersTbody');
   tb.innerHTML = '<tr><td colspan="7" class="muted">Loading…</td></tr>';
-  const r = await safeFetch(API_BASE + '/api/admin/users', { headers: authHeaders(false) });
   
+  const r = await safeFetch(API_BASE + '/api/admin/users', {
+    headers: authHeaders(true)
+  });
+
   if (r._error){
     tb.innerHTML = '<tr><td colspan="7"><div class="notice">'+ r.message +'</div></td></tr>';
     return;
   }
-  
-  const users = (r.users || []);
+
+  const users = (r.users || r || []);
   if (!users.length){
     tb.innerHTML = '<tr><td colspan="7" class="muted">No users yet.</td></tr>';
     return;
   }
-  
+
   const q = $('#userSearch').value.trim().toLowerCase();
   const filtered = q ? users.filter(u => {
     const searchText = (u.username || '') + ' ' + (u.email || '') + ' ' + (u.fullName || '');
@@ -964,34 +967,24 @@ async function loadUsers(){
   }) : users;
 
   tb.innerHTML = '';
-  
+
   filtered.forEach(u => {
-    
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>
-        <div><strong>${u.username || '-'}</strong></div>
-        <div class="small muted mono">${u._id || ''}</div>
-      </td>
+      <td><strong>${u.username || '-'}</strong></td>
       <td>${u.email || '-'}</td>
+      <td><input type="number" data-field="balance" data-id="${u._id || u.id}" value="${u.balance || 0}" style="width: 70px;" /></td>
       <td>
-        <input type="number" data-field="balance" data-id="${u._id}" value="${Number(u.balance || 0)}" />
-      </td>
-      <td>
-        <select data-field="subscriptionType" data-id="${u._id}">
-          <option value="">None</option>
-          <option value="BASIC" ${u.subscriptionType === 'BASIC' ? 'selected' : ''}>BASIC</option>
-          <option value="PRO" ${u.subscriptionType === 'PRO' ? 'selected' : ''}>PRO</option>
-          <option value="VIP" ${u.subscriptionType === 'VIP' ? 'selected' : ''}>VIP</option>
+        <select data-field="subscriptionType" data-id="${u._id || u.id}">
+          <option value="none" ${(u.subscriptionType || 'none') === 'none' ? 'selected' : ''}>None</option>
+          <option value="basic" ${(u.subscriptionType || 'none') === 'basic' ? 'selected' : ''}>Basic</option>
+          <option value="premium" ${(u.subscriptionType || 'none') === 'premium' ? 'selected' : ''}>Premium</option>
         </select>
       </td>
-      <td>
-        <div class="muted small">Invites: ${u.successfulInvites || 0}/${u.totalInvites || 0}</div>
-        <div class="muted small">Sub: ${u.subscriptionType || 'None'}</div>
-      </td>
+      <td>${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-'}</td>
       <td class="nowrap">
-        <button class="btn small" data-action="save" data-id="${u._id}">
-          <i class="fa-solid fa-floppy-disk"></i> Save
+        <button class="btn small" data-action="save" data-id="${u._id || u.id}">
+          <i class="fa-solid fa-save"></i> Save
         </button>
       </td>
     `;
@@ -1005,31 +998,21 @@ async function loadUsers(){
       const balance = Number(tb.querySelector(`input[data-field="balance"][data-id="${id}"]`).value || 0);
       const subscriptionType = tb.querySelector(`select[data-field="subscriptionType"][data-id="${id}"]`).value;
       
-
-      btn.disabled = true; 
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+      const updateResult = await safeFetch(API_BASE + '/api/admin/users/' + id, {
+        method: 'PUT',
+        headers: authHeaders(true),
+        body: JSON.stringify({ balance, subscriptionType })
+      });
       
-      try {
-        const r = await safeFetch(API_BASE + '/api/admin/users/' + id, {
-          method: 'PUT',
-          headers: authHeaders(true),
-          body: JSON.stringify({ balance, subscriptionType })
-        });
-        
-        if (r._error) {
-          alert('Update failed: ' + r.message);
-        } else {
-          alert('Saved successfully!');
-        }
-      } catch (error) {
-        alert('Error: ' + error.message);
-      } finally {
-        btn.disabled = false; 
-        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save';
+      if (updateResult._error) {
+        alert('Error updating user: ' + updateResult.message);
+      } else {
+        alert('User updated successfully!');
+        loadUsers(); // إعادة تحميل البيانات
       }
     });
   });
-  }
+}
 
 $('#btnReloadUsers').addEventListener('click', loadUsers);
 $('#userSearch').addEventListener('input', loadUsers);
