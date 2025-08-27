@@ -4373,7 +4373,7 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
-      'BASIC': 30,
+      'BASIC': 365,
 
 
 
@@ -4381,7 +4381,7 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
-      'PRO': 30,
+      'PRO': 365,
 
 
 
@@ -4389,7 +4389,7 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
-      'VIP': 30
+      'VIP': 365
 
 
 
@@ -10343,6 +10343,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
