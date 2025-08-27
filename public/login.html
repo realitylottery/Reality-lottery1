@@ -6,99 +6,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body {
-      background:#000;
-      color:#fff;
-      font-family:Arial, sans-serif;
-      display:flex;
-      flex-direction:column;
-      min-height:100vh;
-      margin:0;
-    }
-    .box {
-      background:#111;
-      padding:30px;
-      border-radius:10px;
-      border:2px solid #ffd700;
-      max-width:400px;
-      width:90%;
-      margin: auto;
-      text-align:center;
-      flex:1;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-    }
-    input {
-      width:100%;
-      padding:10px;
-      margin:10px 0;
-      border-radius:6px;
-      border:1px solid #ccc;
-    }
-    button {
-      padding:10px 20px;
-      background:linear-gradient(45deg,#ffd700,#ffa500);
-      border:none;
-      border-radius:6px;
-      font-weight:bold;
-      cursor:pointer;
-      margin-top:10px;
-    }
-    button:hover {
-      opacity:0.9;
-    }
-    .secondary-btn {
-      background: transparent;
-      border: 1px solid #ffd700;
-      color: #ffd700;
-    }
-    #msg {
-      margin-top:10px;
-      color:#ff4d4d;
-    }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+    body{background:#000;color:#fff;display:flex;flex-direction:column;min-height:100vh;}
+    header{padding:20px;background:#111;border-bottom:2px solid #ffd700;text-align:center;}
+    .logo{font-size:28px;font-weight:bold;color:#ffd700;text-align:center;}
+    .form-container{flex:1;display:flex;justify-content:center;align-items:center;padding:30px;}
+    .box{background:#111;padding:30px;border-radius:10px;width:100%;max-width:400px;border:1px solid #ffd700;display:flex;flex-direction:column;}
+    .box h2{margin-bottom:20px;color:#ffd700;text-align:center;}
+    input{width:100%;padding:12px;margin:10px 0;border:none;border-radius:6px;}
+    button{padding:12px;background:linear-gradient(45deg,#ffd700,#ffa500);border:none;border-radius:6px;font-weight:bold;cursor:pointer;margin-top:10px;width:100%;}
+    button:hover{background:linear-gradient(45deg,#ffa500,#ffd700);}
+    .secondary-btn{background: transparent; border: 1px solid #ffd700; color: #ffd700; text-align:center; padding:12px; border-radius:6px; margin-top:10px; width:100%;}
+    #msg{margin-top:10px;color:#ff4d4d;text-align:center;}
 
     /* Footer styling */
-    footer {
-      position:fixed;
-      bottom:0;
-      left:0;
-      right:0;
-      background:#111;
-      border-top:2px solid #ffd700;
-      padding:10px 0;
-      display:flex;
-      justify-content:space-around;
-      align-items:center;
-    }
-    footer a {
-      color:#ffd700;
-      text-decoration:none;
-      font-size:14px;
-      font-weight:bold;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-    }
-    footer a i {
-      font-size:18px;
-      margin-bottom:4px;
-    }
-    footer a:hover {
-      color:#ffa500;
+    footer{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:2px solid #ffd700;padding:10px 0;display:flex;justify-content:space-around;align-items:center;flex-wrap:wrap;}
+    footer a{color:#ffd700;text-decoration:none;font-size:14px;font-weight:bold;display:flex;flex-direction:column;align-items:center;margin:5px 0;}
+    footer a i{font-size:18px;margin-bottom:4px;}
+    footer a:hover{color:#ffa500;}
+
+    /* Responsive adjustments */
+    @media (max-width:480px){
+      .form-container{padding:15px;}
+      .box{padding:20px;}
+      button, .secondary-btn{font-size:14px;padding:10px;}
     }
   </style>
 </head>
 <body>
+  <header><div class="logo">RealityLottery</div></header>
 
-  <div class="box">
-    <h2>Login</h2>
-    <input type="text" id="usernameOrEmail" placeholder="Username or Email">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-    <button onclick="goToRegister()" class="secondary-btn">Don't have an account? Register</button>
-    <button onclick="goToHome()">Home</button>
-    <p id="msg"></p>
+  <div class="form-container">
+    <div class="box">
+      <h2>Login</h2>
+      <input type="text" id="usernameOrEmail" placeholder="Username or Email">
+      <input type="password" id="password" placeholder="Password">
+      <button onclick="login()">Login</button>
+      <a href="register.html" class="secondary-btn">Don't have an account? Register</a>
+      <a href="index.html" class="secondary-btn">Home</a>
+      <p id="msg"></p>
+    </div>
   </div>
 
   <footer>
@@ -131,21 +78,11 @@
         } else {
           document.getElementById("msg").textContent = data.message || "Login failed";
         }
-
       } catch (err) {
         document.getElementById("msg").textContent = "Network error";
         console.error(err);
       }
     }
-
-    function goToRegister() {
-      window.location.href = "register.html";
-    }
-
-    function goToHome() {
-      window.location.href = "index.html";
-    }
   </script>
-
 </body>
 </html>
