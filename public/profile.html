@@ -385,7 +385,16 @@
       // إحصائيات الدعوات - استخدام الحقول الصحيحة من الخادم
       document.getElementById('totalInvited').textContent = user.totalInvites || 0; // جميع المدعوين
       document.getElementById('subscribedInvited').textContent = user.successfulInvites || 0; // فقط المشتركين
-      document.getElementById('lotteryEntries').textContent = user.lotteryEntries || 0;
+      // محاولة العثور على حقل اليانصيب من أي اسم محتمل
+const lotteryFieldNames = ['lotteryEntries', 'lottery_entries', 'entriesInLottery', 'lotteryCount'];
+let lotteryEntries = 0;
+for (const field of lotteryFieldNames) {
+  if (user[field] !== undefined) {
+    lotteryEntries = user[field];
+    break;
+  }
+}
+document.getElementById('lotteryEntries').textContent = lotteryEntries || 0;
       
       // Task progress - يعتمد فقط على عدد المدعوين المشتركين (كل مشترك = +1 تقدم)
       const progress = Math.min(6, user.currentTaskProgress || 0);
