@@ -11,45 +11,25 @@
     header{padding:20px;background:#111;border-bottom:2px solid #ffd700;text-align:center;}
     .logo{font-size:28px;font-weight:bold;color:#ffd700;}
     .form-container{flex:1;display:flex;justify-content:center;align-items:center;padding:30px;}
-    form{background:#111;padding:30px;border-radius:10px;width:100%;max-width:400px;border:1px solid #ffd700;}
-    form h2{margin-bottom:20px;color:#ffd700;}
+    form{background:#111;padding:30px;border-radius:10px;width:100%;max-width:400px;border:1px solid #ffd700;display:flex;flex-direction:column;}
+    form h2{margin-bottom:20px;color:#ffd700;text-align:center;}
     input{width:100%;padding:12px;margin:10px 0;border:none;border-radius:6px;}
-    button{width:100%;padding:12px;background:linear-gradient(45deg,#ffd700,#ffa500);border:none;border-radius:6px;font-weight:bold;cursor:pointer;}
+    button{padding:12px;background:linear-gradient(45deg,#ffd700,#ffa500);border:none;border-radius:6px;font-weight:bold;cursor:pointer;margin-top:10px;width:100%;}
     button:hover{background:linear-gradient(45deg,#ffa500,#ffd700);}
-    footer{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:2px solid #ffd700;padding:10px 0;display:flex;justify-content:space-around;align-items:center;}
-    footer a{color:#ffd700;text-decoration:none;font-size:14px;font-weight:bold;display:flex;flex-direction:column;align-items:center;}
+    .secondary-btn{background: transparent; border: 1px solid #ffd700; color: #ffd700; text-align:center; padding:12px; border-radius:6px; margin-top:10px; width:100%;}
+    .referral-notice{display:none;margin-top:10px;color:#00cc66;font-size:14px;text-align:center;}
+
+    /* Footer styling */
+    footer{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:2px solid #ffd700;padding:10px 0;display:flex;justify-content:space-around;align-items:center;flex-wrap:wrap;}
+    footer a{color:#ffd700;text-decoration:none;font-size:14px;font-weight:bold;display:flex;flex-direction:column;align-items:center;margin:5px 0;}
     footer a i{font-size:18px;margin-bottom:4px;}
     footer a:hover{color:#ffa500;}
-    
-    /* New styles for referral section */
-    .referral-notice {
-      background: rgba(255, 215, 0, 0.1);
-      border: 1px solid rgba(255, 215, 0, 0.3);
-      border-radius: 6px;
-      padding: 10px;
-      margin: 10px 0;
-      font-size: 14px;
-      text-align: center;
-    }
-    
-    .referral-success {
-      color: #23d18b;
-    }
-    
-    .referral-code-input {
-      position: relative;
-    }
-    
-    .referral-code-input input {
-      padding-right: 40px;
-    }
-    
-    .referral-code-input i {
-      position: absolute;
-      right: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #ffd700;
+
+    /* Responsive adjustments */
+    @media (max-width:480px){
+      .form-container{padding:15px;}
+      form{padding:20px;}
+      button, .secondary-btn{font-size:14px;padding:10px;}
     }
   </style>
 </head>
@@ -59,109 +39,78 @@
   <div class="form-container">
     <form id="registerForm">
       <h2>Register</h2>
-      
-      <!-- Referral notice section -->
-      <div id="referralNotice" class="referral-notice" style="display: none;">
-        <i class="fas fa-gift"></i> 
-        <span id="referralMessage">You're joining with a referral code! You'll get special benefits.</span>
-      </div>
-      
       <input type="text" id="fullName" placeholder="Full Name" required>
       <input type="email" id="email" placeholder="Email" required>
-      <input type="text" id="phone" placeholder="Phone (optional)">
+      <input type="text" id="phone" placeholder="Phone" required>
       <input type="text" id="username" placeholder="Username" required>
       <input type="password" id="password" placeholder="Password" required>
-      
-      <!-- Referral code input -->
-      <div class="referral-code-input">
-        <input type="text" id="referral" placeholder="Referral Code (optional)" value="">
-        <i class="fas fa-user-friends"></i>
-      </div>
-      
-      <button type="submit">Register</button>
+      <input type="hidden" id="referral">
 
-<!-- Stylish buttons -->
-<div style="display:flex;justify-content:space-between;margin-top:15px;gap:10px;">
-  <a href="login.html" 
-     style="flex:1;padding:12px;text-align:center;background:linear-gradient(45deg,#ffd700,#ffa500);
-            border-radius:6px;font-weight:bold;color:#000;text-decoration:none;
-            transition:0.3s;">Already have an account? Login</a>
-  
-  <a href="index.html" 
-     style="flex:1;padding:12px;text-align:center;background:linear-gradient(45deg,#ffd700,#ffa500);
-            border-radius:6px;font-weight:bold;color:#000;text-decoration:none;
-            transition:0.3s;">Home</a>
-</div>
+      <button type="submit">Register</button>
+      <a href="login.html" class="secondary-btn">Already have an account? Login</a>
+      <a href="index.html" class="secondary-btn">Home</a>
+      <div id="referralNotice" class="referral-notice"></div>
     </form>
   </div>
 
   <footer>
     <a href="index.html"><i class="fas fa-home"></i>Home</a>
-    <a href="news.html"><i class="fas fa-sign-in-alt"></i>News</a>
-    <a href="withdrawal.html"><i class="fas fa-user-plus"></i>Withdrawal</a>
-    <a href="profile.html"><i class="fas fa-star"></i>Profile</a>
+    <a href="news.html"><i class="fas fa-newspaper"></i>News</a>
+    <a href="withdrawal.html"><i class="fas fa-wallet"></i>Withdrawal</a>
+    <a href="profile.html"><i class="fas fa-user"></i>Profile</a>
   </footer>
 
   <script>
     const API_BASE = "https://realitylottery.koyeb.app/api";
-    
-    // Function to get URL parameters
+
     function getUrlParameter(name) {
       name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
       const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
       const results = regex.exec(location.search);
       return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
     }
-    
-    // Check for referral code in URL on page load
+
     document.addEventListener('DOMContentLoaded', function() {
       const referralCode = getUrlParameter('ref');
       if (referralCode) {
         document.getElementById('referral').value = referralCode;
         document.getElementById('referralNotice').style.display = 'block';
-        
-        // Optional: Fetch referrer name from API to personalize message
         fetchReferrerName(referralCode);
       }
     });
-    
-    // Function to fetch referrer name (optional enhancement)
+
     async function fetchReferrerName(referralCode) {
       try {
         const res = await fetch(`${API_BASE}/auth/referrer-info?code=${referralCode}`);
         if (res.ok) {
           const data = await res.json();
           if (data.referrerName) {
-            document.getElementById('referralMessage').textContent = 
+            document.getElementById('referralNotice').textContent = 
               `You're joining through ${data.referrerName}'s referral! You'll get special benefits.`;
-            document.getElementById('referralMessage').classList.add('referral-success');
           }
         }
       } catch (error) {
         console.error('Error fetching referrer info:', error);
       }
     }
-    
-    // Registration form submission
+
     document.getElementById("registerForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      
       const fullName = document.getElementById("fullName").value;
       const email = document.getElementById("email").value;
       const phone = document.getElementById("phone").value;
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
       const referral = document.getElementById("referral").value;
-      
+
       try {
         const res = await fetch(API_BASE + "/auth/register", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({fullName, email, phone, username, password, referralCode: referral}) // التعديل هنا
+          body: JSON.stringify({fullName, email, phone, username, password, referralCode: referral})
         });
-        
+
         const data = await res.json();
-        
         if (res.ok) {
           alert("Registration successful!");
           window.location = "login.html";
