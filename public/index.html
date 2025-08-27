@@ -156,32 +156,36 @@
       max-width: 700px;
       margin-bottom: 2rem;
     }
-
-    .banner-slider {
+    
+.banner-slider {
   display: flex;
   overflow-x: auto;
+  overflow-y: hidden;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   gap: 15px;
   padding: 10px;
   scroll-behavior: smooth;
+  white-space: nowrap; /* مهم عشان يظل أفقي */
 }
 
 .banner-card {
-  flex: 0 0 400px;   /* العرض */
-  height: 250px;     /* الطول */
+  flex: 0 0 auto;      /* يخلي كل كارد ياخذ مقاسه بدون تمدد */
+  width: 400px;        /* العرض ثابت */
+  height: 250px;       /* الطول ثابت */
   scroll-snap-align: center;
   border-radius: 12px;
   overflow: hidden;
   background: #222;
   color: white;
   position: relative;
+  display: inline-block; /* يخلي البانرات جنبا لجنب */
 }
 
 .banner-card img {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* الصورة تظهر كاملة داخل المستطيل */
+  object-fit: contain; /* الصورة تظهر كاملة */
   display: block;
 }
 /* تحسين عرض البانرات على الموبايل */
