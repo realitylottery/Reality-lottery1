@@ -157,7 +157,7 @@
       margin-bottom: 2rem;
     }
     
-banner-slider {
+.banner-slider {
   display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
@@ -168,8 +168,9 @@ banner-slider {
 }
 
 .banner-card {
-  flex: 0 0 100%;   /* العرض */
-  height: 250px;     /* الطول */
+  flex: 0 0 80%;   /* البانر أصغر من الشاشة */
+  max-width: 500px; /* الحد الأقصى للعرض */
+  height: 250px;    /* الطول ثابت */
   scroll-snap-align: center;
   border-radius: 10px;
   overflow: hidden;
@@ -180,31 +181,31 @@ banner-slider {
 
 .banner-card img {
   width: 100%;
-  height: auto;
+  height: 100%;
   object-fit: contain; /* الصورة تظهر كاملة داخل المستطيل */
   display: block;
 }
+
+.banner-card h3 {
+  margin-bottom: 8px;
+  color: var(--primary-color);
+}
+
+.banner-card a {
+  color: var(--primary-color);
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 10px;
+}
+
 /* تحسين عرض البانرات على الموبايل */
 @media (max-width: 768px) {
-  .banner-slider {
-    grid-template-columns: 1fr; /* بانر واحد في كل صف */
-  }
-
   .banner-card {
-    min-width: 100%; /* العرض كامل */
+    flex: 0 0 100%; /* على الموبايل يأخذ العرض كامل */
+    max-width: none;
+    height: 200px;
   }
 }
-    .banner-card h3 {
-      margin-bottom: 8px;
-      color: var(--primary-color);
-    }
-
-    .banner-card a {
-      color: var(--primary-color);
-      text-decoration: none;
-      display: inline-block;
-      margin-top: 10px;
-    }
     
   .lucky-wheel-container {
     text-align: center;
