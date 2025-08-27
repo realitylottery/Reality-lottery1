@@ -68,6 +68,12 @@
   .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
   .filter-bar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px;}
   .filter-select{background:#0f0f0f; border:1px solid rgba(255,215,0,.25); color:#fff; padding:6px 10px; border-radius:6px;}
+  .copy-wrap {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  }
 </style>
 </head>
 <body>
@@ -348,18 +354,18 @@
       </div>
       <div class="row" style="margin-top:12px; overflow:auto">
         <table>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Amount</th>
-              <th>Wallet Address</th>
-              <th>Status</th>
-              <th class="nowrap">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="withdrawalsTbody">
-            <tr><td colspan="5" class="muted">Loading…</td></tr>
-          </tbody>
+  <thead>
+    <tr>
+      <th>User</th>
+      <th>Amount</th>
+      <th>Wallet Address</th>
+      <th>Status</th>
+      <th class="nowrap">Actions</th>
+    </tr>
+  </thead>
+  <tbody id="withdrawalsTbody">
+    <tr><td colspan="6" class="muted">Loading…</td></tr>
+  </tbody>
         </table>
       </div>
       <div class="notice" style="margin-top:10px">
@@ -1286,24 +1292,56 @@ tb.querySelectorAll('button[data-reject-payment]').forEach(b => {
       return;
     }
     tb.innerHTML = '';
-    rows.forEach(w=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><strong>${w.userId?.username || '-'}</strong></td>
-        <td>${Number(w.amount || 0)}</td>
-        <td class="mono">${w.walletAddress || '-'}</td>
-        <td>${getStatusChip(w.status)}</td>
-        <td class="nowrap">
-          <button class="btn-ok small" data-approve="${w._id}">
-            <i class="fa-solid fa-check"></i> Approve
+rows.forEach(w=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><strong>${w.userId?.username || '-'}</strong></td>
+    <td>${Number(w.amount || 0)}</td>
+    <td>
+      <div class="copy-wrap">
+        <span class="mono" style="font-size:12px">${w.walletAddress || '-'}</span>
+        ${w.walletAddress ? `
+          <button class="btn-small btn-outline" data-copy-wallet="${w.walletAddress}" style="padding:3px 6px;font-size:11px">
+            <i class="fa-regular fa-copy"></i> Copy
           </button>
-                    <button class="btn-danger small" data-reject="${w._id}">
-            <i class="fa-solid fa-xmark"></i> Reject
-          </button>
-        </td>
-      `;
-      tb.appendChild(tr);
+        ` : ''}
+      </div>
+    </td>
+    <td>${getStatusChip(w.status)}</td>
+    <td class="nowrap">
+      <button class="btn-ok small" data-approve="${w._id}">
+        <i class="fa-solid fa-check"></i> Approve
+      </button>
+      <button class="btn-danger small" data-reject="${w._id}">
+        <i class="fa-solid fa-xmark"></i> Reject
+      </button>
+    </td>
+  `;
+  tb.appendChild(tr);
+});
+
+// إضافة event listener لأزرار النسخ
+tb.querySelectorAll('button[data-copy-wallet]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const walletAddress = btn.dataset.copyWallet;
+    navigator.clipboard.writeText(walletAddress).then(() => {
+      // تغيير الأيقونة مؤقتاً للإشارة إلى النسخ
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+      btn.style.background = 'var(--green)';
+      btn.style.color = '#000';
+      
+      setTimeout(() => {
+        btn.innerHTML = originalHTML;
+        btn.style.background = '';
+        btn.style.color = '';
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+      alert('Failed to copy wallet address');
     });
+  });
+});
 
     tb.querySelectorAll('button[data-approve]').forEach(b=>{
       b.addEventListener('click', async ()=>{
