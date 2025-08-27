@@ -381,20 +381,21 @@
       document.getElementById('balanceAmount').textContent = user.balance||0;
       document.getElementById('subType').textContent = user.subscriptionType||'None';
       document.getElementById('refLink').value = `${location.origin}/register.html?ref=${user.referralCode||''}`;
-      
       // إحصائيات الدعوات - استخدام الحقول الصحيحة من الخادم
-      document.getElementById('totalInvited').textContent = user.totalInvites || 0; // جميع المدعوين
-      document.getElementById('subscribedInvited').textContent = user.successfulInvites || 0; // فقط المشتركين
-      // محاولة العثور على حقل اليانصيب من أي اسم محتمل
-const lotteryFieldNames = ['lotteryEntries', 'lottery_entries', 'entriesInLottery', 'lotteryCount'];
-let lotteryEntries = 0;
-for (const field of lotteryFieldNames) {
-  if (user[field] !== undefined) {
-    lotteryEntries = user[field];
-    break;
-  }
-}
-document.getElementById('lotteryEntries').textContent = lotteryEntries || 0;
+document.getElementById('totalInvited').textContent = user.totalInvites || 0; // جميع المدعوين
+document.getElementById('subscribedInvited').textContent = user.successfulInvites || 0; // فقط المشتركين
+
+// حساب lotteryEntries تلقائياً
+const subscriptionBonusMap = { 
+  'basic': 1, 
+  'pro': 3, 
+  'vip': 5 
+};
+const subTypeLower = (user.subscriptionType || 'none').toLowerCase();
+const subscriptionBonus = subscriptionBonusMap[subTypeLower] || 0;
+
+const lotteryEntries = (user.successfulInvites || 0) + subscriptionBonus;
+document.getElementById('lotteryEntries').textContent = lotteryEntries;
       
       // Task progress - يعتمد فقط على عدد المدعوين المشتركين (كل مشترك = +1 تقدم)
       const progress = Math.min(6, user.currentTaskProgress || 0);
