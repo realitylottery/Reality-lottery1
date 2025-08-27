@@ -18,6 +18,9 @@
     <input type="text" id="usernameOrEmail" placeholder="Username or Email">
     <input type="password" id="password" placeholder="Password">
     <button onclick="login()">Login</button>
+    <button onclick="goToRegister()" style="background: transparent; border: 1px solid #ffd700; color: #ffd700; margin-top: 10px;">
+  Don't have an account? Register
+    </button>
     <p id="msg"></p>
   </div>
 
@@ -50,6 +53,10 @@
       console.error(err);
     }
   }
+
+    function goToRegister() {
+  window.location.href = "register.html";
+    }
   </script>
 </body>
 </html>
