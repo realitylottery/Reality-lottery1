@@ -18,9 +18,17 @@
     <input type="text" id="usernameOrEmail" placeholder="Username or Email">
     <input type="password" id="password" placeholder="Password">
     <button onclick="login()">Login</button>
-    <button onclick="goToRegister()" style="background: transparent; border: 1px solid #ffd700; color: #ffd700; margin-top: 10px;">
+
+<button onclick="goToRegister()" 
+        style="background: transparent; border: 1px solid #ffd700; color: #ffd700; margin-top: 10px;">
   Don't have an account? Register
-    </button>
+</button>
+
+<button onclick="goToHome()" 
+        style="background: linear-gradient(45deg,#ffd700,#ffa500); border: none; color: #000; 
+               padding: 10px 20px; border-radius:6px; font-weight:bold; cursor:pointer; margin-top: 10px;">
+  Home
+</button>
     <p id="msg"></p>
   </div>
 <footer>
@@ -62,6 +70,10 @@
 
     function goToRegister() {
   window.location.href = "register.html";
+    }
+
+    function goToHome() {
+  window.location.href = "index.html";
     }
   </script>
 </body>
