@@ -168,19 +168,21 @@
 }
 
 .banner-card {
-  flex: 0 0 100%; /* كل بانر ياخذ عرض الشاشة كامل */
+  flex: 0 0 400px;   /* العرض */
+  height: 250px;     /* الطول */
   scroll-snap-align: center;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   background: #222;
   color: white;
+  position: relative;
 }
 
 .banner-card img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: contain; /* الصورة تظهر كاملة داخل المستطيل */
   display: block;
-  object-fit: contain; /* يخلي الصورة كاملة */
 }
 /* تحسين عرض البانرات على الموبايل */
 @media (max-width: 768px) {
