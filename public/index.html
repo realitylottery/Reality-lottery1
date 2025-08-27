@@ -156,62 +156,40 @@
       max-width: 700px;
       margin-bottom: 2rem;
     }
-    
-/* بانر السلايدر */
+html, body {
+  overflow-x: hidden; /* يمنع التمدد يمين/يسار */
+  max-width: 100%;
+}
+
 .banner-slider {
   display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   gap: 15px;
-  padding: 0; /* إزالة أي padding يؤثر على العرض */
+  padding: 10px;
   scroll-behavior: smooth;
 }
 
-/* كل بطاقة بانر */
 .banner-card {
-  flex: 0 0 100%; /* تأخذ كامل العرض */
-  width: 100%;    /* عرض كامل */
-  height: auto;   /* الطول حسب الصورة */
+  flex: 0 0 100%;   /* كل بانر يأخذ عرض الشاشة */
+  max-width: 100%;
+  height: 250px;
   scroll-snap-align: center;
   border-radius: 10px;
   overflow: hidden;
   background: #222;
   color: white;
   position: relative;
+  box-sizing: border-box;
 }
 
-/* الصورة داخل البانر */
 .banner-card img {
-  width: 100%;    /* عرض كامل */
-  height: auto;   /* الطول يتناسب مع العرض */
-  object-fit: cover; /* يملأ البانر بالكامل دون تقطيع */
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  object-fit: cover; /* الصورة تملى المستطيل بدون ما تتعدى العرض */
   display: block;
-}
-
-/* نصوص البانر */
-.banner-card h3 {
-  margin-bottom: 8px;
-  color: var(--primary-color);
-}
-
-.banner-card a {
-  color: var(--primary-color);
-  text-decoration: none;
-  display: inline-block;
-  margin-top: 10px;
-}
-
-/* تحسين عرض البانرات على الموبايل */
-@media (max-width: 768px) {
-  .banner-slider {
-    gap: 10px;
-  }
-  .banner-card {
-    flex: 0 0 100%;
-    width: 100%;
-    border-radius: 0; /* يمكن إزالة الزوايا لتملأ الشاشة */
-  }
 }
     
   .lucky-wheel-container {
