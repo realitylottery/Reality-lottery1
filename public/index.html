@@ -158,29 +158,29 @@
     }
 
     .banner-slider {
-  width: 100%;
-  max-width: 1200px;
-  margin: 2rem auto;
-  display: grid; /* بدلاً من flex */
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
   gap: 15px;
   padding: 10px;
+  scroll-behavior: smooth;
 }
 
 .banner-card {
+  flex: 0 0 100%; /* كل بانر ياخذ عرض الشاشة كامل */
+  scroll-snap-align: center;
+  border-radius: 10px;
+  overflow: hidden;
   background: #222;
   color: white;
-  border-radius: 10px;
-  overflow: hidden; /* مهم عشان الصورة ما تطلع برا الكارد */
-  display: flex;
-  flex-direction: column;
 }
 
 .banner-card img {
   width: 100%;
-  height: auto; /* الصورة تتمدد تلقائي */
+  height: auto;
   display: block;
-  object-fit: cover; /* الصورة تتناسب بدون تشويه */
+  object-fit: contain; /* يخلي الصورة كاملة */
 }
 /* تحسين عرض البانرات على الموبايل */
 @media (max-width: 768px) {
@@ -850,6 +850,9 @@ document.head.appendChild(style);
               `;
               container.appendChild(bannerCard);
             });
+
+            initBannerSlider();
+            
           } else {
             container.innerHTML = '<p>No banners available at the moment</p>';
           }
@@ -859,7 +862,24 @@ document.head.appendChild(style);
           container.innerHTML = '<p>Failed to load banners. Please try again later.</p>';
         }
       }
+// Auto-slide banners
+function initBannerSlider() {
+  const slider = document.getElementById('banner-slider');
+  const slides = slider.querySelectorAll('.banner-card');
+  let index = 0;
 
+  function autoSlide() {
+    index = (index + 1) % slides.length;
+    slider.scrollTo({
+      left: slides[index].offsetLeft,
+      behavior: 'smooth'
+    });
+  }
+
+  if (slides.length > 1) {
+    setInterval(autoSlide, 5000); // يتحرك كل 5 ثواني
+  }
+}
       
       // دالة جديدة محسنة لتحميل وعرض الأخبار
       async function loadTicker() {
