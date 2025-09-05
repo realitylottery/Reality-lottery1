@@ -99,6 +99,9 @@
     <button class="navbtn" data-tab="tab-tickers"><i class="fa-solid fa-scroll"></i> News Tickers</button>
     <button class="navbtn" data-tab="tab-notifications">
   <i class="fa-solid fa-bell"></i> Notifications</button>
+    <button class="navbtn" data-tab="tab-reviews">
+  <i class="fa-solid fa-star"></i> Reviews Management
+    </button>
     <div class="divider"></div>
     <div class="small muted">All actions require admin token.</div>
   </aside>
@@ -276,6 +279,101 @@
     • Basic: Invites + 1<br>
     • Pro: Invites + 3<br>
     • VIP: Invites + 5
+  </div>
+</section>
+
+    <!-- REVIEWS MANAGEMENT -->
+<section id="tab-reviews" class="section hidden">
+  <div class="title"><i class="fa-solid fa-star"></i> Reviews Management</div>
+  
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="title" style="font-size:16px"><i class="fa-solid fa-chart-simple"></i> Reviews Statistics</div>
+      <div id="reviewsStats" class="grid grid-2" style="margin-bottom:15px;">
+        <div class="stat">
+          <div class="label">Total Reviews</div>
+          <div class="value" id="totalReviews">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">Active Reviews</div>
+          <div class="value" id="activeReviews">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">Average Rating</div>
+          <div class="value" id="averageRating">0.0</div>
+        </div>
+        <div class="stat">
+          <div class="label">Rating Distribution</div>
+          <div class="value" id="ratingDistribution">-</div>
+        </div>
+      </div>
+      
+      <div class="filter-bar">
+        <select id="reviewsFilter" class="filter-select">
+          <option value="all">All Reviews</option>
+          <option value="active">Active Only</option>
+          <option value="inactive">Inactive Only</option>
+          <option value="rating5">5 Stars</option>
+          <option value="rating4">4 Stars</option>
+          <option value="rating3">3 Stars</option>
+          <option value="rating2">2 Stars</option>
+          <option value="rating1">1 Star</option>
+        </select>
+        <input id="reviewsSearch" placeholder="Search by username..." />
+        <button class="btn" id="btnReloadReviews"><i class="fa-solid fa-rotate"></i> Reload</button>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="title" style="font-size:16px"><i class="fa-solid fa-gear"></i> Review Actions</div>
+      
+      <div class="notice" style="margin-bottom:15px;">
+        <strong>Quick Actions:</strong> Select reviews from the list and perform bulk actions.
+      </div>
+      
+      <div class="row">
+        <button class="btn btn-ok" id="btnActivateSelected">
+          <i class="fa-solid fa-eye"></i> Activate Selected
+        </button>
+        <button class="btn btn-danger" id="btnDeactivateSelected">
+          <i class="fa-solid fa-eye-slash"></i> Deactivate Selected
+        </button>
+        <button class="btn btn-outline" id="btnDeleteSelected">
+          <i class="fa-solid fa-trash"></i> Delete Selected
+        </button>
+      </div>
+      
+      <div class="divider" style="margin:15px 0;"></div>
+      
+      <div class="row">
+        <button class="btn btn-info" id="btnExportReviews">
+          <i class="fa-solid fa-download"></i> Export to CSV
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row" style="overflow:auto; margin-top:20px;">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:20px;"><input type="checkbox" id="selectAllReviews" /></th>
+          <th>User</th>
+          <th>Rating</th>
+          <th>Comment</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th class="nowrap">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="reviewsTbody">
+        <tr><td colspan="7" class="muted">Loading reviews...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="notice" style="margin-top:12px;">
+    This section allows you to manage user reviews. You can activate/deactivate reviews, delete inappropriate content, and monitor review statistics.
   </div>
 </section>
     
@@ -1035,6 +1133,384 @@ async function loadLotteryEntries() {
     loadLotteryEntries();
   }
 });
+  // ========= REVIEWS MANAGEMENT =========
+let allReviews = [];
+let selectedReviewIds = [];
+
+async function loadReviews() {
+  const tb = $('#reviewsTbody');
+  tb.innerHTML = '<tr><td colspan="7" class="muted">Loading reviews...</td></tr>';
+  
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/reviews', { 
+      headers: authHeaders(false) 
+    });
+    
+    if (r._error) {
+      tb.innerHTML = '<tr><td colspan="7"><div class="notice">' + r.message + '</div></td></tr>';
+      return;
+    }
+    
+    allReviews = r.reviews || [];
+    
+    if (!allReviews.length) {
+      tb.innerHTML = '<tr><td colspan="7" class="muted">No reviews yet.</td></tr>';
+      updateReviewsStats(allReviews);
+      return;
+    }
+    
+    // تطبيق الفلتر والبحث
+    const filter = $('#reviewsFilter').value;
+    const searchQuery = $('#reviewsSearch').value.trim().toLowerCase();
+    
+    const filtered = allReviews.filter(review => {
+      // تطبيق الفلتر
+      if (filter === 'active' && !review.isActive) return false;
+      if (filter === 'inactive' && review.isActive) return false;
+      if (filter === 'rating5' && review.rating !== 5) return false;
+      if (filter === 'rating4' && review.rating !== 4) return false;
+      if (filter === 'rating3' && review.rating !== 3) return false;
+      if (filter === 'rating2' && review.rating !== 2) return false;
+      if (filter === 'rating1' && review.rating !== 1) return false;
+      
+      // تطبيق البحث
+      if (searchQuery && !review.userName.toLowerCase().includes(searchQuery)) return false;
+      
+      return true;
+    });
+    
+    updateReviewsStats(allReviews);
+    renderReviewsTable(filtered);
+    
+  } catch (error) {
+    console.error('Error loading reviews:', error);
+    tb.innerHTML = '<tr><td colspan="7"><div class="notice">Error loading reviews: ' + error.message + '</div></td></tr>';
+  }
+}
+
+function updateReviewsStats(reviews) {
+  const totalReviews = reviews.length;
+  const activeReviews = reviews.filter(r => r.isActive).length;
+  
+  // حساب متوسط التقييم
+  const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+  const averageRating = totalReviews > 0 ? (totalRating / totalReviews).toFixed(1) : '0.0';
+  
+  // توزيع التقييمات
+  const ratingDistribution = {};
+  for (let i = 1; i <= 5; i++) {
+    ratingDistribution[i] = reviews.filter(r => r.rating === i).length;
+  }
+  
+  $('#totalReviews').textContent = totalReviews;
+  $('#activeReviews').textContent = activeReviews;
+  $('#averageRating').textContent = averageRating;
+  $('#ratingDistribution').textContent = Object.entries(ratingDistribution)
+    .map(([rating, count]) => `${rating}★: ${count}`)
+    .join(', ');
+}
+
+function renderReviewsTable(reviews) {
+  const tb = $('#reviewsTbody');
+  
+  if (!reviews.length) {
+    tb.innerHTML = '<tr><td colspan="7" class="muted">No matching reviews found.</td></tr>';
+    return;
+  }
+  
+  tb.innerHTML = '';
+  selectedReviewIds = [];
+  $('#selectAllReviews').checked = false;
+  
+  reviews.forEach(review => {
+    const tr = document.createElement('tr');
+    
+    // إنشاء نجوم التقييم
+    let starsHtml = '';
+    for (let i = 1; i <= 5; i++) {
+      starsHtml += i <= review.rating ? 
+        '<span style="color:var(--gold);">★</span>' : 
+        '<span style="color:#555;">☆</span>';
+    }
+    
+    tr.innerHTML = `
+      <td>
+        <input type="checkbox" class="review-checkbox" data-id="${review._id}" />
+      </td>
+      <td>
+        <div><strong>${review.userName || 'Anonymous'}</strong></div>
+        <div class="small muted">${review.userId?.username || ''}</div>
+      </td>
+      <td>
+        <div class="review-stars">${starsHtml}</div>
+        <div class="small muted">${review.rating}/5</div>
+      </td>
+      <td>
+        <div class="review-content">${review.comment || 'No comment'}</div>
+      </td>
+      <td class="small">${new Date(review.createdAt).toLocaleDateString()}</td>
+      <td>
+        ${review.isActive ? 
+          '<span class="chip" style="color:#23d18b">Active</span>' : 
+          '<span class="chip" style="color:#ff5252">Inactive</span>'
+        }
+      </td>
+      <td class="nowrap">
+        <button class="btn small ${review.isActive ? 'btn-danger' : 'btn-ok'}" 
+                data-toggle-review="${review._id}">
+          <i class="fa-solid ${review.isActive ? 'fa-eye-slash' : 'fa-eye'}"></i> 
+          ${review.isActive ? 'Deactivate' : 'Activate'}
+        </button>
+        <button class="btn btn-outline small" data-delete-review="${review._id}">
+          <i class="fa-solid fa-trash"></i> Delete
+        </button>
+      </td>
+    `;
+    
+    tb.appendChild(tr);
+  });
+  
+  // إضافة معالجات الأحداث
+  addReviewsEventListeners();
+}
+
+function addReviewsEventListeners() {
+  // تحديد/إلغاء تحديد الكل
+  $('#selectAllReviews').addEventListener('change', function() {
+    const checkboxes = $$('.review-checkbox');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = this.checked;
+      const reviewId = checkbox.dataset.id;
+      
+      if (this.checked && !selectedReviewIds.includes(reviewId)) {
+        selectedReviewIds.push(reviewId);
+      } else if (!this.checked) {
+        selectedReviewIds = selectedReviewIds.filter(id => id !== reviewId);
+      }
+    });
+  });
+  
+  // تحديد مراجعات فردية
+  $$('.review-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const reviewId = this.dataset.id;
+      
+      if (this.checked) {
+        if (!selectedReviewIds.includes(reviewId)) {
+          selectedReviewIds.push(reviewId);
+        }
+      } else {
+        selectedReviewIds = selectedReviewIds.filter(id => id !== reviewId);
+        $('#selectAllReviews').checked = false;
+      }
+    });
+  });
+  
+  // تفعيل/تعطيل المراجعات
+  $$('[data-toggle-review]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const reviewId = btn.dataset.toggleReview;
+      const review = allReviews.find(r => r._id === reviewId);
+      
+      if (!review) return;
+      
+      const newStatus = !review.isActive;
+      const action = newStatus ? 'activate' : 'deactivate';
+      
+      if (!confirm(`Are you sure you want to ${action} this review?`)) return;
+      
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
+      
+      try {
+        const r = await safeFetch(API_BASE + '/api/admin/reviews/' + reviewId, {
+          method: 'PUT',
+          headers: authHeaders(true),
+          body: JSON.stringify({ isActive: newStatus })
+        });
+        
+        if (r._error) {
+          alert('Update failed: ' + r.message);
+        } else {
+          alert(`Review ${action}d successfully!`);
+          loadReviews(); // إعادة تحميل القائمة
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    });
+  });
+  
+  // حذف المراجعات
+  $$('[data-delete-review]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const reviewId = btn.dataset.deleteReview;
+      
+      if (!confirm('Are you sure you want to delete this review? This action cannot be undone.')) return;
+      
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+      
+      try {
+        const r = await safeFetch(API_BASE + '/api/admin/reviews/' + reviewId, {
+          method: 'DELETE',
+          headers: authHeaders(false)
+        });
+        
+        if (r._error) {
+          alert('Delete failed: ' + r.message);
+        } else {
+          alert('Review deleted successfully!');
+          loadReviews(); // إعادة تحميل القائمة
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    });
+  });
+}
+
+// تفعيل/تعطيل المراجعات المحددة
+$('#btnActivateSelected').addEventListener('click', async () => {
+  if (!selectedReviewIds.length) {
+    alert('Please select at least one review.');
+    return;
+  }
+  
+  if (!confirm(`Activate ${selectedReviewIds.length} selected review(s)?`)) return;
+  
+  await updateReviewsStatus(selectedReviewIds, true);
+});
+
+$('#btnDeactivateSelected').addEventListener('click', async () => {
+  if (!selectedReviewIds.length) {
+    alert('Please select at least one review.');
+    return;
+  }
+  
+  if (!confirm(`Deactivate ${selectedReviewIds.length} selected review(s)?`)) return;
+  
+  await updateReviewsStatus(selectedReviewIds, false);
+});
+
+async function updateReviewsStatus(reviewIds, isActive) {
+  const action = isActive ? 'activate' : 'deactivate';
+  const results = [];
+  
+  for (const reviewId of reviewIds) {
+    try {
+      const r = await safeFetch(API_BASE + '/api/admin/reviews/' + reviewId, {
+        method: 'PUT',
+        headers: authHeaders(true),
+        body: JSON.stringify({ isActive })
+      });
+      
+      results.push({
+        id: reviewId,
+        success: !r._error,
+        message: r._error ? r.message : 'Success'
+      });
+    } catch (error) {
+      results.push({
+        id: reviewId,
+        success: false,
+        message: error.message
+      });
+    }
+  }
+  
+  const successful = results.filter(r => r.success).length;
+  alert(`Updated ${successful} out of ${reviewIds.length} review(s).`);
+  loadReviews(); // إعادة تحميل القائمة
+}
+
+// حذف المراجعات المحددة
+$('#btnDeleteSelected').addEventListener('click', async () => {
+  if (!selectedReviewIds.length) {
+    alert('Please select at least one review.');
+    return;
+  }
+  
+  if (!confirm(`Permanently delete ${selectedReviewIds.length} selected review(s)? This action cannot be undone.`)) return;
+  
+  const results = [];
+  
+  for (const reviewId of selectedReviewIds) {
+    try {
+      const r = await safeFetch(API_BASE + '/api/admin/reviews/' + reviewId, {
+        method: 'DELETE',
+        headers: authHeaders(false)
+      });
+      
+      results.push({
+        id: reviewId,
+        success: !r._error,
+        message: r._error ? r.message : 'Success'
+      });
+    } catch (error) {
+      results.push({
+        id: reviewId,
+        success: false,
+        message: error.message
+      });
+    }
+  }
+  
+  const successful = results.filter(r => r.success).length;
+  alert(`Deleted ${successful} out of ${selectedReviewIds.length} review(s).`);
+  loadReviews(); // إعادة تحميل القائمة
+});
+
+// تصدير البيانات
+$('#btnExportReviews').addEventListener('click', () => {
+  if (!allReviews.length) {
+    alert('No reviews to export.');
+    return;
+  }
+  
+  const csvContent = generateReviewsCSV(allReviews);
+  downloadCSV(csvContent, 'reviews_export.csv');
+});
+
+function generateReviewsCSV(reviews) {
+  const headers = ['User', 'Rating', 'Comment', 'Date', 'Status'];
+  const rows = reviews.map(review => [
+    review.userName,
+    review.rating,
+    `"${review.comment.replace(/"/g, '""')}"`,
+    new Date(review.createdAt).toLocaleDateString(),
+    review.isActive ? 'Active' : 'Inactive'
+  ]);
+  
+  return [headers, ...rows].map(row => row.join(',')).join('\n');
+}
+
+function downloadCSV(content, filename) {
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.visibility = 'hidden';
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// إضافة مستمعي الأحداث للفلترة والبحث
+$('#btnReloadReviews').addEventListener('click', loadReviews);
+$('#reviewsFilter').addEventListener('change', loadReviews);
+$('#reviewsSearch').addEventListener('input', loadReviews);
+
+// تحميل التقييمات عند فتح التبويب
+document.querySelector('[data-tab="tab-reviews"]').addEventListener('click', () => {
+  if (isSigned()) {
+    loadReviews();
+  }
+});
+
   
  // ========= USERS =========
 async function loadUsers(){
@@ -2098,7 +2574,8 @@ document.querySelector('[data-tab="tab-tickers"]').addEventListener('click', () 
     loadTickers();
     loadLotteryEntries();
     loadInvites();
-    loadNotificationsList()
+    loadNotificationsList();
+    loadReviews();
   }
 
   // If the admin navigates into tabs while not signed, we keep UI friendly
