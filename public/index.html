@@ -77,6 +77,54 @@
       color: var(--primary-color);
     }
 
+    review-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 20px;
+    transition: transform 0.3s;
+  }
+  
+  .review-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary-color);
+  }
+  
+  .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .reviewer-name {
+    color: var(--primary-color);
+    font-weight: bold;
+  }
+  
+  .review-date {
+    color: #888;
+    font-size: 0.9rem;
+  }
+  
+  .review-stars {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+  }
+  
+  .review-content {
+    color: #ddd;
+    line-height: 1.5;
+  }
+  
+  .star.active {
+    color: var(--primary-color);
+  }
+  
+  .review-form-hidden {
+    display: none;
+  }
+
     /* News Ticker Styles */
     #news-ticker {
       background: var(--header-bg);
@@ -713,6 +761,48 @@ html, body {
       <p><strong>Note 3:</strong> All subscriptions are one-time payments valid until the lottery draw date.</p>
     </div>
   </section>
+
+
+  <!-- قسم تقييمات المستخدمين -->
+<section class="reviews-section" style="padding: 3rem 5%; background: #111;">
+  <h2 class="section-title">User Reviews & Ratings</h2>
+  <p style="text-align: center; color: #ccc; margin-bottom: 2rem;">
+    See what our users say about their experience with RealityLottery
+  </p>
+
+  <!-- نموذج إضافة تقييم جديد -->
+  <div class="add-review-form" id="reviewFormContainer" style="max-width: 600px; margin: 0 auto 3rem; background: #1a1a1a; padding: 20px; border-radius: 10px; border: 1px solid #333;">
+    <h3 style="color: var(--primary-color); margin-bottom: 15px;">Add Your Review</h3>
+    
+    <div class="rating-stars" style="margin-bottom: 15px;">
+      <span class="star" data-value="1" style="font-size: 24px; color: #555; cursor: pointer; transition: color 0.2s;">☆</span>
+      <span class="star" data-value="2" style="font-size: 24px; color: #555; cursor: pointer; transition: color 0.2s;">☆</span>
+      <span class="star" data-value="3" style="font-size: 24px; color: #555; cursor: pointer; transition: color 0.2s;">☆</span>
+      <span class="star" data-value="4" style="font-size: 24px; color: #555; cursor: pointer; transition: color 0.2s;">☆</span>
+      <span class="star" data-value="5" style="font-size: 24px; color: #555; cursor: pointer; transition: color 0.2s;">☆</span>
+    </div>
+    
+    <textarea id="reviewText" placeholder="Share your experience with RealityLottery..." style="width: 100%; height: 100px; padding: 10px; background: #222; border: 1px solid #333; color: white; border-radius: 5px; margin-bottom: 15px;"></textarea>
+    
+    <button id="submitReview" class="subscribe-btn" style="width: 100%;">
+      <i class="fas fa-paper-plane"></i> Submit Review
+    </button>
+    
+    <div id="reviewMessage" style="margin-top: 10px; text-align: center;"></div>
+  </div>
+
+  <!-- قسم عرض التقييمات -->
+  <div class="reviews-container" id="reviewsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+    <!-- سيتم تحميل التقييمات هنا ديناميكيًا -->
+  </div>
+
+  <!-- نموذج التقييم للضيوف -->
+  <div id="guestReviewMessage" style="text-align: center; display: none;">
+    <p style="color: #ffd700; margin-bottom: 15px;">Please <a href="login.html" style="color: #ffa500;">login</a> to submit a review</p>
+  </div>
+</section>
+
+  
 <!-- Contact Section -->
 <section class="contact" style="padding:40px; text-align:center; background:#000; color:#fff;">
   <h2 style="margin-bottom:20px;">Contact Us</h2>
@@ -937,7 +1027,185 @@ function initBannerSlider() {
     setInterval(autoSlide, 5000); // يتحرك كل 5 ثواني
   }
 }
+
       
+  // دالة لإدارة نظام التقييمات
+  function setupReviewsSystem() {
+    const API_BASE = 'https://realitylottery.koyeb.app';
+    const token = localStorage.getItem('rl_token');
+    const userData = JSON.parse(localStorage.getItem('rl_user') || '{}');
+    
+    const reviewFormContainer = document.getElementById('reviewFormContainer');
+    const guestReviewMessage = document.getElementById('guestReviewMessage');
+    const reviewsContainer = document.getElementById('reviewsContainer');
+    const submitButton = document.getElementById('submitReview');
+    const reviewMessage = document.getElementById('reviewMessage');
+    
+    let userRating = 0;
+    
+    // التحقق من حالة المستخدم
+    if (!token || !userData.username) {
+      reviewFormContainer.style.display = 'none';
+      guestReviewMessage.style.display = 'block';
+    } else {
+      reviewFormContainer.style.display = 'block';
+      guestReviewMessage.style.display = 'none';
+      
+      // التحقق مما إذا كان المستخدم قد قام بالتقييم مسبقًا
+      checkUserReview();
+    }
+    
+    // إعداد نظام النجوم
+    const stars = document.querySelectorAll('.star');
+    stars.forEach(star => {
+      star.addEventListener('click', () => {
+        const value = parseInt(star.getAttribute('data-value'));
+        userRating = value;
+        
+        // تحديث مظهر النجوم
+        stars.forEach(s => {
+          const starValue = parseInt(s.getAttribute('data-value'));
+          if (starValue <= value) {
+            s.classList.add('active');
+            s.innerHTML = '★';
+          } else {
+            s.classList.remove('active');
+            s.innerHTML = '☆';
+          }
+        });
+      });
+    });
+    
+    // إرسال التقييم
+    submitButton.addEventListener('click', async () => {
+      const reviewText = document.getElementById('reviewText').value.trim();
+      
+      if (userRating === 0) {
+        reviewMessage.textContent = 'Please select a rating';
+        reviewMessage.style.color = '#ff6b6b';
+        return;
+      }
+      
+      if (reviewText.length < 10) {
+        reviewMessage.textContent = 'Review must be at least 10 characters long';
+        reviewMessage.style.color = '#ff6b6b';
+        return;
+      }
+      
+      try {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="loader"></span> Submitting...';
+        
+        const response = await fetch(`${API_BASE}/api/reviews`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            rating: userRating,
+            comment: reviewText
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          reviewMessage.textContent = 'Thank you for your review!';
+          reviewMessage.style.color = '#4CAF50';
+          document.getElementById('reviewText').value = '';
+          
+          // إخفاء النموذج بعد الإرسال الناجح
+          reviewFormContainer.classList.add('review-form-hidden');
+          
+          // إعادة تحميل التقييمات
+          loadReviews();
+        } else {
+          reviewMessage.textContent = data.message || 'Error submitting review';
+          reviewMessage.style.color = '#ff6b6b';
+        }
+      } catch (error) {
+        console.error('Error submitting review:', error);
+        reviewMessage.textContent = 'Network error. Please try again later.';
+        reviewMessage.style.color = '#ff6b6b';
+      } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Review';
+      }
+    });
+    
+    // تحميل التقييمات
+    async function loadReviews() {
+      try {
+        reviewsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #ccc;">Loading reviews...</div>';
+        
+        const response = await fetch(`${API_BASE}/api/reviews`);
+        const data = await response.json();
+        
+        if (response.ok && data.reviews && data.reviews.length > 0) {
+          reviewsContainer.innerHTML = '';
+          
+          data.reviews.forEach(review => {
+            const reviewCard = document.createElement('div');
+            reviewCard.className = 'review-card';
+            
+            // إنشاء عناصر النجوم
+            let starsHtml = '';
+            for (let i = 1; i <= 5; i++) {
+              starsHtml += i <= review.rating ? '★' : '☆';
+            }
+            
+            reviewCard.innerHTML = `
+              <div class="review-header">
+                <span class="reviewer-name">${review.userName || 'Anonymous'}</span>
+                <span class="review-date">${new Date(review.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div class="review-stars">${starsHtml}</div>
+              <div class="review-content">${review.comment}</div>
+            `;
+            
+            reviewsContainer.appendChild(reviewCard);
+          });
+        } else {
+          reviewsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #ccc;">No reviews yet. Be the first to review!</div>';
+        }
+      } catch (error) {
+        console.error('Error loading reviews:', error);
+        reviewsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #ff6b6b;">Failed to load reviews. Please try again later.</div>';
+      }
+    }
+    
+    // التحقق مما إذا كان المستخدم قد قام بالتقييم مسبقًا
+    async function checkUserReview() {
+      try {
+        const response = await fetch(`${API_BASE}/api/reviews/check`, {
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.hasReviewed) {
+            reviewFormContainer.classList.add('review-form-hidden');
+            reviewMessage.textContent = 'You have already submitted a review. Thank you!';
+            reviewMessage.style.color = '#4CAF50';
+            reviewMessage.style.display = 'block';
+          }
+        }
+      } catch (error) {
+        console.error('Error checking user review:', error);
+      }
+    }
+    
+    // تحميل التقييمات عند تهيئة الصفحة
+    loadReviews();
+  }
+
+  // تهيئة نظام التقييمات عند تحميل الصفحة
+  document.addEventListener('DOMContentLoaded', function() {
+    
       // دالة جديدة محسنة لتحميل وعرض الأخبار
       async function loadTicker() {
     try {
@@ -1147,7 +1415,7 @@ function initBannerSlider() {
       loadBanners();
       loadTicker();
       displaySubscriptionStatus();
-      
+      setupReviewsSystem();
       
       // إضافة event listener لتحديث حالة الاشتراك عند النقر
       subscriptionStatus.addEventListener('click', displaySubscriptionStatus);
