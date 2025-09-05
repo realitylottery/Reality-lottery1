@@ -118,8 +118,20 @@
   }
   
   .star.active {
-    color: var(--primary-color);
-  }
+  color: var(--primary-color) !important;
+}
+
+.star {
+  font-size: 24px;
+  color: #555;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin: 0 2px;
+}
+
+.star:hover {
+  color: var(--primary-color);
+}
   
   .review-form-hidden {
     display: none;
@@ -847,22 +859,38 @@ html, body {
       const userBox = document.getElementById('userBox');
 
       // Handle authentication state
-      function updateAuthUI() {
-        if (token && userData.username) {
-          loginLink.style.display = 'none';
-          registerLink.style.display = 'none';
-          userBox.innerHTML = `
-            👤 ${userData.username} | 
-            <a href="#" id="logoutBtn" style="color:var(--secondary-color)">Logout</a>`;
-          
-          document.getElementById('logoutBtn').addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('rl_token');
-            localStorage.removeItem('rl_user');
-            window.location.href = 'index.html';
-          });
-        }
-      }
+function updateAuthUI() {
+  const token = localStorage.getItem('rl_token');
+  const userData = JSON.parse(localStorage.getItem('rl_user') || '{}');
+  const loginLink = document.getElementById('loginLink');
+  const registerLink = document.getElementById('registerLink');
+  const userBox = document.getElementById('userBox');
+  
+  if (token && userData.username) {
+    loginLink.style.display = 'none';
+    registerLink.style.display = 'none';
+    userBox.innerHTML = `
+      👤 ${userData.username} | 
+      <a href="#" id="logoutBtn" style="color:var(--secondary-color)">Logout</a>`;
+    
+    document.getElementById('logoutBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.removeItem('rl_token');
+      localStorage.removeItem('rl_user');
+      window.location.href = 'index.html';
+    });
+  } else {
+    loginLink.style.display = 'block';
+    registerLink.style.display = 'block';
+    userBox.innerHTML = '';
+  }
+}
+
+// تأكد من استدعاء هذه الدالة عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+  updateAuthUI(); // أضف هذا الاستدعاء
+  // ... باقي الكود
+
 
  let notificationsQueue = []; // طابور الإشعارات
   let isShowing = false;       // هل يوجد إشعار معروض الآن؟
