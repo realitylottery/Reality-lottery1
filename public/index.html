@@ -557,6 +557,22 @@ html, body {
     </nav>
   </header>
 <body>
+
+  <!-- Sales Notification Popup -->
+<div id="sale-popup" style="
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: #222;
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 14px;
+    display: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 9999;
+"></div>
+  
   <div id="notification-system"></div>
   
   <div id="news-ticker">
@@ -841,6 +857,33 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+      // Random names, cities, and plans
+const names = ["John", "Michael", "Emily", "Sarah", "David", "Sophia", "James", "Emma", "Daniel", "Olivia"];
+const cities = ["New York", "London", "Toronto", "Sydney", "Los Angeles", "Dubai", "Berlin", "Paris", "Rome", "Chicago"];
+const plans = ["BASIC", "PRO", "VIP"];
+
+// Function to generate a random notification
+function showSalePopup() {
+    const name = names[Math.floor(Math.random() * names.length)];
+    const city = cities[Math.floor(Math.random() * cities.length)];
+    const plan = plans[Math.floor(Math.random() * plans.length)];
+
+    const popup = document.getElementById("sale-popup");
+    popup.innerHTML = `🎉 ${name} from ${city} just subscribed to the <b>${plan}</b> plan!`;
+    
+    popup.style.display = "block";
+    
+    // Hide after 5 seconds
+    setTimeout(() => {
+        popup.style.display = "none";
+    }, 5000);
+}
+
+// Show popup every 60 seconds
+setInterval(showSalePopup, 60000);
+
+// Show the first popup after 3 seconds
+setTimeout(showSalePopup, 3000);
       
       // Load banners
       async function loadBanners() {
