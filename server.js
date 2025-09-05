@@ -18,7 +18,7 @@ const mongoose = require('mongoose');
 
 
 
-
+const Review = require('./models/Review');
 
 
 
@@ -1428,8 +1428,216 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 
 
+// ================= REVIEW ROUTES =================
 
+// GET /api/reviews - الحصول على جميع التقييمات النشطة
+app.get('/api/reviews', async (req, res) => {
+  try {
+    const reviews = await Review.find({ isActive: true })
+      .populate('userId', 'username')
+      .sort({ createdAt: -1 })
+      .select('-__v');
+    
+    res.json({
+      success: true,
+      reviews,
+      count: reviews.length
+    });
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching reviews'
+    });
+  }
+});
 
+// GET /api/reviews/check - التحقق مما إذا كان المستخدم قد قام بالتقييم
+app.get('/api/reviews/check', authMiddleware, async (req, res) => {
+  try {
+    const review = await Review.findOne({ userId: req.user.id });
+    
+    res.json({
+      success: true,
+      hasReviewed: !!review
+    });
+  } catch (error) {
+    console.error('Error checking review:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking review status'
+    });
+  }
+});
+
+// POST /api/reviews - إضافة تقييم جديد
+app.post('/api/reviews', authMiddleware, async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+    
+    // التحقق من صحة البيانات
+    if (!rating || !comment) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rating and comment are required'
+      });
+    }
+    
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rating must be between 1 and 5'
+      });
+    }
+    
+    if (comment.length < 10 || comment.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: 'Comment must be between 10 and 500 characters'
+      });
+    }
+    
+    // التحقق مما إذا كان المستخدم قد قام بالتقييم مسبقاً
+    const existingReview = await Review.findOne({ userId: req.user.id });
+    if (existingReview) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already submitted a review'
+      });
+    }
+    
+    // الحصول على معلومات المستخدم
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // إنشاء التقييم الجديد
+    const review = new Review({
+      userId: req.user.id,
+      userName: user.username,
+      rating,
+      comment
+    });
+    
+    await review.save();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Review submitted successfully',
+      review
+    });
+  } catch (error) {
+    console.error('Error submitting review:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error submitting review'
+    });
+  }
+});
+
+// GET /api/admin/reviews - الحصول على جميع التقييمات (للمسؤولين)
+app.get('/api/admin/reviews', authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes('admin')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: Admin access required'
+      });
+    }
+    
+    const reviews = await Review.find()
+      .populate('userId', 'username email')
+      .sort({ createdAt: -1 })
+      .select('-__v');
+    
+    res.json({
+      success: true,
+      reviews,
+      count: reviews.length
+    });
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching reviews'
+    });
+  }
+});
+
+// PUT /api/admin/reviews/:id - تحديث حالة التقييم (للمسؤولين)
+app.put('/api/admin/reviews/:id', authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes('admin')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: Admin access required'
+      });
+    }
+    
+    const { isActive } = req.body;
+    
+    const review = await Review.findByIdAndUpdate(
+      req.params.id,
+      { isActive },
+      { new: true, runValidators: true }
+    ).select('-__v');
+    
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: 'Review not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Review updated successfully',
+      review
+    });
+  } catch (error) {
+    console.error('Error updating review:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating review'
+    });
+  }
+});
+
+// DELETE /api/admin/reviews/:id - حذف التقييم (للمسؤولين)
+app.delete('/api/admin/reviews/:id', authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes('admin')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: Admin access required'
+      });
+    }
+    
+    const review = await Review.findByIdAndDelete(req.params.id);
+    
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: 'Review not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Review deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting review'
+    });
+  }
+});
 
 // الحصول على جميع التيكرات
 
@@ -10343,6 +10551,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
