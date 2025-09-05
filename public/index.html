@@ -1384,9 +1384,9 @@ function initBannerSlider() {
         });
       }
 
-      // Handle subscription button clicks
-      document.querySelectorAll('.subscribe-btn').forEach(button => {
-        button.addEventListener('click', async function() {
+      // Handle subscription button clicks (استثناء زر التقييم)
+document.querySelectorAll('.subscribe-btn:not(#submitReview)').forEach(button => {
+  button.addEventListener('click', async function() {
           const token = localStorage.getItem('rl_token');
           if (!token) {
             alert('Please login first to subscribe.');
