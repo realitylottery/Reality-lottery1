@@ -44,7 +44,7 @@
       <input type="text" id="phone" placeholder="Phone" required>
       <input type="text" id="username" placeholder="Username" required>
       <input type="password" id="password" placeholder="Password" required>
-      <input type="hidden" id="referral">
+      <input type="text" id="referralInput" placeholder="Referral Code (optional)">
 
       <button type="submit">Register</button>
       <a href="login.html" class="secondary-btn">Already have an account? Login</a>
@@ -71,13 +71,13 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-      const referralCode = getUrlParameter('ref');
-      if (referralCode) {
-        document.getElementById('referral').value = referralCode;
-        document.getElementById('referralNotice').style.display = 'block';
-        fetchReferrerName(referralCode);
-      }
-    });
+  const referralCode = getUrlParameter('ref');
+  if (referralCode) {
+    const referralInput = document.getElementById('referralInput');
+    referralInput.value = referralCode;
+    referralInput.readOnly = true; // منع التعديل إذا جاء من الرابط
+  }
+});
 
     async function fetchReferrerName(referralCode) {
       try {
@@ -101,7 +101,7 @@
       const phone = document.getElementById("phone").value;
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
-      const referral = document.getElementById("referral").value;
+      const referral = document.getElementById("referralInput").value;
 
       try {
         const res = await fetch(API_BASE + "/auth/register", {
