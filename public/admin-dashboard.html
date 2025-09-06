@@ -1776,8 +1776,8 @@ rows.forEach(w=>{
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td><strong>${w.userId?.username || '-'}</strong></td>
-    <td>${w.userId?.phone || '-'}</td> 
     <td>${Number(w.amount || 0)}</td>
+    <td>${w.userId?.phone || '-'}</td> 
     <td>
       <div class="copy-wrap">
         <span class="mono" style="font-size:12px">${w.walletAddress || '-'}</span>
