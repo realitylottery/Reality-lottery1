@@ -5753,7 +5753,7 @@ app.get("/api/admin/withdrawals", authMiddleware, async (req, res) => {
 
 
 
-      .populate("userId", "username")
+      .populate("userId", "username phone")
 
 
 
@@ -6893,7 +6893,7 @@ app.post('/api/auth/register', async (req, res) => {
 
 
 
-      phone,
+      phone: phone || '',
 
 
 
@@ -9430,6 +9430,7 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
         email: u.email,
+        phone: u.phone || '', 
 
 
 
@@ -10551,6 +10552,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
