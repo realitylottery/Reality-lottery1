@@ -391,6 +391,7 @@
             <tr>
               <th>username</th>
               <th>Email</th>
+              <th>Phone</th>
               <th>Balance</th>
               <th>Subscription</th>
               <th class="nowrap">Save</th>
@@ -456,6 +457,7 @@
     <tr>
       <th>User</th>
       <th>Amount</th>
+      <th>Phone</th>
       <th>Wallet Address</th>
       <th>Status</th>
       <th class="nowrap">Actions</th>
@@ -972,6 +974,7 @@ async function loadUsersWithDebug(){
           <div class="small muted mono">${u._id || ''}</div>
         </td>
         <td>${u.email || '-'}</td>
+        <td>${u.phone || '-'}</td>
         <td>
           <input type="number" data-field="balance" data-id="${u._id}" value="${Number(u.balance || 0)}" />
         </td>
@@ -1546,6 +1549,7 @@ async function loadUsers(){
         <div class="small muted mono">${u._id || ''}</div>
       </td>
       <td>${u.email || '-'}</td>
+      <td>${u.phone || '-'}</td>
       <td>
         <input type="number" data-field="balance" data-id="${u._id}" value="${Number(u.balance || 0)}" />
       </td>
@@ -1772,6 +1776,7 @@ rows.forEach(w=>{
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td><strong>${w.userId?.username || '-'}</strong></td>
+    <td>${w.userId?.phone || w.phone || '-'}</td> 
     <td>${Number(w.amount || 0)}</td>
     <td>
       <div class="copy-wrap">
