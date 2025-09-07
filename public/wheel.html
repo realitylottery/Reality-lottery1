@@ -480,8 +480,8 @@ async function checkEligibility() {
     localStorage.setItem("rl_user", JSON.stringify(userData));
     userBalance.textContent = `Balance: $${userData.balance}`;
 
-    // تعيين عدد الدورات المتاحة
-availableSpins = userData.availableSpins || (userData.subscriptionActive && !userData.hasSpunWheel ? 1 : 0);
+// تعيين عدد الدورات المتاحة من السيرفر فقط
+availableSpins = userData.availableSpins || 0;
 availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
 
 if (availableSpins > 0) {
@@ -489,15 +489,14 @@ if (availableSpins > 0) {
     spinBtn.disabled = false;
     result.textContent = `You have ${availableSpins} spin${availableSpins > 1 ? 's' : ''} available 🎉`;
     statusMessage.textContent = "Ready to spin!";
-    userStatus.textContent = `Active ${userData.subscriptionType} subscription - Spin available`;
+    userStatus.textContent = "You can spin now";
     userStatus.style.color = "var(--success-color)";
 } else {
     canSpin = false;
     spinBtn.disabled = true;
     result.textContent = "No spins available ❌";
-    statusMessage.textContent = "Wait for your next subscription period";
-    userStatus.textContent = userData.subscriptionType !== "none" ? 
-        `${userData.subscriptionType} subscription - Already spun` : "No active subscription";
+    statusMessage.textContent = "Get more invites to unlock spins";
+    userStatus.textContent = "No spins available";
     userStatus.style.color = "var(--error-color)";
 }
     
