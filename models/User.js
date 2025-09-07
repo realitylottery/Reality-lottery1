@@ -27,6 +27,8 @@ const userSchema = new mongoose.Schema({
   referredBy: { type: String, default: null },
   referralCode: { type: String, unique: true, sparse: true },
   totalInvites: { type: Number, default: 0 },
+  extraSpins: { type: Number, default: 0 },
+spinsUsed: { type: Number, default: 0 },
   successfulInvites: { type: Number, default: 0 },
   availableSpins: { type: Number, default: 0 },
   // الاشتراك
