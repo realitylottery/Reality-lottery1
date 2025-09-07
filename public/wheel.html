@@ -529,8 +529,6 @@ spinBtn.addEventListener("click", async () => {
     const normalizedDeg = deg % 360;
     const sector = Math.floor(normalizedDeg / 60);
     const prize = prizes[sector];
-    // خصم دورة واحدة عند الدوران
-
 
     try {
       const response = await fetch(`${API_BASE}/api/wheel/spin`, {
@@ -545,6 +543,8 @@ spinBtn.addEventListener("click", async () => {
         })
       });
 
+      console.log("Response status:", response.status);
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.msg || "Server error");
@@ -553,30 +553,22 @@ spinBtn.addEventListener("click", async () => {
       const spinResult = await response.json();
       console.log("Spin result from server:", spinResult);
 
-      // تحديث availableSpins من استجابة الخادم
-if (spinResult.availableSpins !== undefined) {
-    availableSpins = spinResult.availableSpins;
-    availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
-    
-    // تحديث حالة الزر بناءً على عدد الدورات المتاحة
-    canSpin = availableSpins > 0;
-    spinBtn.disabled = !canSpin;
-    
-    console.log("Updated spins from server:", availableSpins);
-} else {
-    console.error("availableSpins not found in response");
-}
+      // تحديث availableSpins من استجابة الخادم فقط
+      if (spinResult.availableSpins !== undefined) {
+        availableSpins = spinResult.availableSpins;
+        availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
+        
+        // تحديث حالة الزر بناءً على عدد الدورات المتاحة
+        canSpin = availableSpins > 0;
+        spinBtn.disabled = !canSpin;
+      }
 
-      // تحديث بيانات المستخدم من الاستجابة مع القيم الافتراضية
+      // تحديث بيانات المستخدم من الاستجابة
       const currentUser = JSON.parse(localStorage.getItem("rl_user") || "{}");
       const updatedUser = {
-        balance: currentUser.balance || 0,
-        subscriptionActive: currentUser.subscriptionActive || false,
-        hasSpunWheel: currentUser.hasSpunWheel || false,
-        subscriptionType: currentUser.subscriptionType || "none",
         ...currentUser,
         balance: spinResult.balance !== undefined ? spinResult.balance : currentUser.balance,
-        hasSpunWheel: spinResult.hasSpunWheel !== undefined ? spinResult.hasSpunWheel : currentUser.hasSpunWheel
+        availableSpins: spinResult.availableSpins !== undefined ? spinResult.availableSpins : currentUser.availableSpins
       };
 
       localStorage.setItem("rl_user", JSON.stringify(updatedUser));
@@ -587,30 +579,18 @@ if (spinResult.availableSpins !== undefined) {
       // عرض رسالة النتيجة من السيرفر
       result.innerHTML = `<span class="success">${spinResult.message}</span>`;
 
-      // تحديث حالة الزر بناءً على الاستجابة من السيرفر
-      canSpin = !spinResult.hasSpunWheel;
-      spinBtn.disabled = !canSpin;
-
-      // إذا كانت الدوران قد استخدمت، عطل الزر فوراً
-      if (spinResult.hasSpunWheel) {
+      // إذا لم يعد هناك دورات متاحة
+      if (availableSpins <= 0) {
         canSpin = false;
         spinBtn.disabled = true;
-        
-        // تحديث واجهة المستخدم فوراً
-        result.textContent = "You already used your spin this subscription ❌";
-        statusMessage.textContent = "Wait for your next subscription period to spin again";
-        userStatus.textContent = `Active ${updatedUser.subscriptionType} subscription - Already spun`;
+        statusMessage.textContent = "Get more invites to unlock spins";
+        userStatus.textContent = "No spins available";
         userStatus.style.color = "var(--error-color)";
       } else if (prize.type === "extra") {
-        // إذا كان الجائزة دورة إضافية
-        result.textContent = "You earned an extra spin! 🎉";
-        statusMessage.textContent = "Ready to spin again!";
-        // إعادة التحقق من الحالة للدوران الإضافي
-        setTimeout(checkEligibility, 1000);
-      } else {
-        // إعادة التحقق من الحالة بعد الدوران العادي
-        setTimeout(checkEligibility, 1000);
+        // إذا كانت الجائزة دورة إضافية
+        statusMessage.textContent = "You earned an extra spin! Ready to spin again!";
       }
+
     } catch (err) {
       console.error("Error processing spin:", err);
       result.innerHTML = `<span class="error">${err.message || "Error processing spin"}</span>`;
