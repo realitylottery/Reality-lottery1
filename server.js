@@ -1040,48 +1040,44 @@ app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-    const availableSpins = calculateAvailableSpins(user);
+    const availableSpins = user.calculateAvailableSpins();
     if (availableSpins <= 0) return res.status(400).json({ msg: "No spins available" });
 
-    let balanceChange = 0;
+    let spinsUsedIncrement = 1; // نخصم دورة واحدة دائمًا
+    let extraSpinsIncrement = 0;
+    let balanceIncrement = 0;
     let message = "";
 
     if (prize === "lose") {
       message = "Better luck next time!";
     } else if (prize === "extra") {
-      balanceChange = 0;
+      extraSpinsIncrement = 1; // نضيف دورة إضافية
       message = "You earned an extra spin!";
     } else if (prize.startsWith("$") && amount > 0) {
-      balanceChange = amount;
+      balanceIncrement = amount;
       message = `You won ${prize}! Balance updated.`;
     }
 
-    // خصم لفّة واحدة + إضافة extra spin إذا لزم
-    await User.findByIdAndUpdate(
-      req.user.id,
-      {
-        $inc: { spinsUsed: 1, balance: balanceChange, extraSpins: prize === "extra" ? 1 : 0 }
-      }
-    );
+    // تحديث المستخدم
+    user.spinsUsed = (user.spinsUsed || 0) + spinsUsedIncrement;
+    user.extraSpins = (user.extraSpins || 0) + extraSpinsIncrement;
+    user.balance = (user.balance || 0) + balanceIncrement;
 
-    const updatedUser = await User.findById(req.user.id);
-    const newAvailableSpins = calculateAvailableSpins(updatedUser);
+    await user.save();
 
     res.json({
       success: true,
       prize,
-      amount: balanceChange,
-      balance: updatedUser.balance,
-      availableSpins: newAvailableSpins,
+      amount: amount || 0,
+      balance: user.balance,
+      availableSpins: user.calculateAvailableSpins(),
       message
     });
-
   } catch (err) {
     console.error("Wheel Spin Error:", err);
     res.status(500).json({ msg: "Server error" });
   }
 });
-
 
 
 
@@ -9401,20 +9397,18 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
+
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // حساب availableSpins ديناميكيًا باستخدام الدالة
-    const availableSpins = calculateAvailableSpins(user);
+    const availableSpins = user.calculateAvailableSpins(); // العدد المحسوب ديناميكيًا
 
-    // التقدم الحقيقي: الدعوات الناجحة + نقطة البونس لو عنده اشتراك
     const currentProgress = Math.min(6, (user.successfulInvites || 0) + (user.subscriptionActive ? 1 : 0));
-
     const expectedReward = calculateTaskReward(user.subscriptionType, currentProgress);
 
-    return res.json({
+    res.json({
       id: user._id,
       username: user.username,
       fullName: user.fullName,
@@ -9430,7 +9424,7 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       successfulInvites: user.successfulInvites,
       currentTaskProgress: user.currentTaskProgress || 0,
       completedTasks: user.completedTasks,
-      availableSpins,  // ✅ العدد المحسوب ديناميكيًا
+      availableSpins,
       currentProgress,
       lotteryEntries: user.lotteryEntries || 0,
       expectedReward,
@@ -9441,7 +9435,6 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 });
-
 
 
 
@@ -10288,6 +10281,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
