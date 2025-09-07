@@ -1037,21 +1037,19 @@ app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
     }
 
     let message = "";
-    let spinUsed = true;
+    
+    // دائماً نخصم لفة واحدة أولاً
+    user.availableSpins -= 1;
 
     if (prize === "lose") {
       message = "Better luck next time!";
     } else if (prize === "extra") {
-      spinUsed = false; // لا تستهلك لفة عند الفوز بدورة إضافية
+      // نضيف لفة إضافية عند الفوز بـ "Extra Spin"
+      user.availableSpins += 1;
       message = "You earned an extra spin!";
     } else if (prize.startsWith("$") && amount > 0) {
       user.balance += amount;
       message = `You won ${prize}! Balance updated.`;
-    }
-
-    // خصم لفة واحدة فقط إذا لم تربح دورة إضافية
-    if (spinUsed) {
-      user.availableSpins -= 1;
     }
 
     await user.save();
@@ -1069,7 +1067,6 @@ app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 });
-
 
 
 
@@ -10286,6 +10283,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
