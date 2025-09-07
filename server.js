@@ -1079,6 +1079,7 @@ app.post("/api/wheel/spin", async (req, res) => {
   console.error(err);
   res.status(500).json({ msg: "Server error" });
   }
+});
 
 
 // Create withdrawal
@@ -10281,6 +10282,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
