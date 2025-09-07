@@ -480,14 +480,10 @@ async function checkEligibility() {
     localStorage.setItem("rl_user", JSON.stringify(userData));
     userBalance.textContent = `Balance: $${userData.balance}`;
 
-// تعيين عدد الدورات المتاحة من السيرفر فقط
-availableSpins = userData.availableSpins || 0;
+// الجديد:
+availableSpins = data.availableSpins || 0; // اعتمد مباشرة على عدد الدورات من السيرفر
 availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
 
-// تحديث حالة الزر بناءً على عدد الدورات المتاحة
-canSpin = availableSpins > 0;
-spinBtn.disabled = !canSpin;
-    
 if (availableSpins > 0) {
     canSpin = true;
     spinBtn.disabled = false;
@@ -543,65 +539,59 @@ spinBtn.addEventListener("click", async () => {
         })
       });
 
-      console.log("Response status:", response.status);
-      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.msg || "Server error");
       }
 
       const spinResult = await response.json();
-      console.log("Spin result from server:", spinResult);
 
-      // تحديث availableSpins من استجابة الخادم فقط
-      if (spinResult.availableSpins !== undefined) {
-        availableSpins = spinResult.availableSpins;
-        availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
-        
-        // تحديث حالة الزر بناءً على عدد الدورات المتاحة
-        canSpin = availableSpins > 0;
-        spinBtn.disabled = !canSpin;
-      }
+      // ✅ تحديث availableSpins من استجابة السيرفر فقط
+      availableSpins = spinResult.availableSpins ?? 0;
+      availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
+      canSpin = availableSpins > 0;
+      spinBtn.disabled = !canSpin;
 
-      // تحديث بيانات المستخدم من الاستجابة
-      const currentUser = JSON.parse(localStorage.getItem("rl_user") || "{}");
-      const updatedUser = {
-        ...currentUser,
-        balance: spinResult.balance !== undefined ? spinResult.balance : currentUser.balance,
-        availableSpins: spinResult.availableSpins !== undefined ? spinResult.availableSpins : currentUser.availableSpins
-      };
-
-      localStorage.setItem("rl_user", JSON.stringify(updatedUser));
-
-      // تحديث واجهة المستخدم
-      userBalance.textContent = `Balance: $${spinResult.balance || 0}`;
+      // تحديث الرصيد
+      userBalance.textContent = `Balance: $${spinResult.balance ?? 0}`;
 
       // عرض رسالة النتيجة من السيرفر
       result.innerHTML = `<span class="success">${spinResult.message}</span>`;
 
-      // إذا لم يعد هناك دورات متاحة
+      // حالة الزر ورسائل المستخدم
       if (availableSpins <= 0) {
-        canSpin = false;
-        spinBtn.disabled = true;
         statusMessage.textContent = "Get more invites to unlock spins";
         userStatus.textContent = "No spins available";
         userStatus.style.color = "var(--error-color)";
       } else if (prize.type === "extra") {
-        // إذا كانت الجائزة دورة إضافية
         statusMessage.textContent = "You earned an extra spin! Ready to spin again!";
+        userStatus.textContent = "You can spin now";
+        userStatus.style.color = "var(--success-color)";
+      } else {
+        statusMessage.textContent = "Ready to spin again!";
+        userStatus.textContent = "You can spin now";
+        userStatus.style.color = "var(--success-color)";
       }
+
+      // تحديث بيانات المستخدم في localStorage فقط من السيرفر
+      const currentUser = JSON.parse(localStorage.getItem("rl_user") || "{}");
+      const updatedUser = {
+        ...currentUser,
+        balance: spinResult.balance ?? currentUser.balance,
+        availableSpins: spinResult.availableSpins ?? currentUser.availableSpins
+      };
+      localStorage.setItem("rl_user", JSON.stringify(updatedUser));
 
     } catch (err) {
       console.error("Error processing spin:", err);
       result.innerHTML = `<span class="error">${err.message || "Error processing spin"}</span>`;
       statusMessage.textContent = "Please try again later";
       wheel.style.transform = 'rotate(0deg)';
-      
-      // إعادة تعيين حالة الزر والتحقق من الأهلية
+
       canSpin = false;
       spinBtn.disabled = true;
-      
-      // إعادة التحقق من الحالة بعد الخطأ
+
+      // إعادة التحقق من الأهلية بعد الخطأ
       setTimeout(checkEligibility, 2000);
     }
   }, 5000);
