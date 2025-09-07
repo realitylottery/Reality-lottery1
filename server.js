@@ -555,8 +555,8 @@ async function updateUserSpins(userId) {
     const user = await User.findById(userId);
     if (!user) return;
     
-    // حساب عدد اللفات الجديد
-    const newSpins = Math.floor(user.successfulInvites / 3);
+    // حساب عدد اللفات الجديد (كل 3 دعوات ناجحة = 1 لفة)
+    const newSpins = Math.floor((user.successfulInvites || 0) / 3);
     
     // تحديث فقط إذا تغير العدد
     if (user.availableSpins !== newSpins) {
@@ -10343,6 +10343,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
