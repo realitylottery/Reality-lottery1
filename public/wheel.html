@@ -500,17 +500,32 @@ const availableSpinsDisplay = document.getElementById("availableSpins");
 spinBtn.addEventListener("click", async () => {
   if (!canSpin) return;  // لا تفعل شيء إذا لم يكن المستخدم مؤهلاً
 
-  const deg = Math.floor(2000 + Math.random() * 2000);
+  const spins = 6; // عدد القطاعات
+  const sectorDeg = 360 / spins;
+
+  // دوران عشوائي كبير لإعطاء الإحساس بالدوران
+  const extraRotation = Math.floor(Math.random() * 360);
+  const deg = 2000 + extraRotation;
+  wheel.style.transition = 'transform 5s cubic-bezier(0.17, 0.67, 0.21, 0.99)';
   wheel.style.transform = `rotate(${deg}deg)`;
+
   spinBtn.disabled = true;
   result.innerHTML = `<div class="loading"></div> Spinning...`;
   statusMessage.textContent = "";
 
   setTimeout(async () => {
+    // زاوية بعد التدوير % 360
     const normalizedDeg = deg % 360;
-const correctedDeg = (360 - normalizedDeg + 30) % 360; // +30 لتوسيط القطاع
-const sector = Math.floor(correctedDeg / 60);
-const prize = prizes[sector];
+
+    // حساب القطاع الذي وقع تحته المؤشر (أعلى العجلة)
+    // نضيف sectorDeg/2 لتوسيط القطاع تحت المؤشر
+    const correctedDeg = (normalizedDeg + sectorDeg / 2) % 360;
+
+    // الحصول على رقم القطاع الصحيح (من 0 إلى 5)
+    const sectorIndex = Math.floor(correctedDeg / sectorDeg) % spins;
+    const prize = prizes[sectorIndex];
+
+    console.log("deg:", deg, "normalizedDeg:", normalizedDeg, "correctedDeg:", correctedDeg, "sectorIndex:", sectorIndex, "prize:", prize);
 
     try {
       const response = await fetch(`${API_BASE}/api/wheel/spin`, {
@@ -534,9 +549,10 @@ const prize = prizes[sector];
 
       // تحديث عدد الدورات مباشرة
       availableSpins = spinResult.availableSpins ?? 0;
-availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
-canSpin = availableSpins > 0;
-spinBtn.disabled = !canSpin;
+      availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
+      canSpin = availableSpins > 0;
+      spinBtn.disabled = !canSpin;
+
       // تحديث الرصيد
       userBalance.textContent = `Balance: $${spinResult.balance ?? 0}`;
 
@@ -558,7 +574,7 @@ spinBtn.disabled = !canSpin;
         userStatus.style.color = "var(--success-color)";
       }
 
-      // تحديث بيانات المستخدم في localStorage فقط
+      // تحديث بيانات المستخدم في localStorage
       const currentUser = JSON.parse(localStorage.getItem("rl_user") || "{}");
       const updatedUser = {
         ...currentUser,
@@ -572,10 +588,8 @@ spinBtn.disabled = !canSpin;
       result.innerHTML = `<span class="error">${err.message || "Error processing spin"}</span>`;
       statusMessage.textContent = "Please try again later";
       wheel.style.transform = 'rotate(0deg)';
-
       canSpin = false;
       spinBtn.disabled = true;
-
       setTimeout(checkEligibility, 2000);
     }
   }, 5000);
