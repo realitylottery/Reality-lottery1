@@ -2021,7 +2021,7 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 
 // في ملف الخادم (مثال باستخدام Express)
-app.post('/api/tasks/subscription-progress', authenticateToken, async (req, res) => {
+app.post('/api/tasks/subscription-progress', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
     
@@ -10286,6 +10286,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
