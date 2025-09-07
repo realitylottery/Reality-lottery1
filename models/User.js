@@ -29,6 +29,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  availableSpins: { type: Number, default: 0 },
   // الاشتراك
   subscriptionType: { type: String, enum: ['', 'BASIC', 'PRO', 'VIP'], default: '' },
   subscriptionActive: { type: Boolean, default: false },
