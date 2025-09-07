@@ -515,15 +515,15 @@ spinBtn.addEventListener("click", async () => {
 
   setTimeout(async () => {
     // زاوية بعد التدوير % 360
-    const normalizedDeg = deg % 360;
+    const spins = 6; // عدد القطاعات
+const sectorDeg = 360 / spins;
 
-    // حساب القطاع الذي وقع تحته المؤشر (أعلى العجلة)
-    // نضيف sectorDeg/2 لتوسيط القطاع تحت المؤشر
-    const correctedDeg = (normalizedDeg + sectorDeg / 2) % 360;
+const normalizedDeg = deg % 360;
 
-    // الحصول على رقم القطاع الصحيح (من 0 إلى 5)
-    const sectorIndex = Math.floor(correctedDeg / sectorDeg) % spins;
-    const prize = prizes[sectorIndex];
+// حساب القطاع تحت المؤشر (أعلى العجلة)
+const sectorIndex = Math.floor(((360 - normalizedDeg + sectorDeg / 2) % 360) / sectorDeg);
+
+const prize = prizes[sectorIndex];
 
     console.log("deg:", deg, "normalizedDeg:", normalizedDeg, "correctedDeg:", correctedDeg, "sectorIndex:", sectorIndex, "prize:", prize);
 
