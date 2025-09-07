@@ -533,10 +533,9 @@ spinBtn.addEventListener("click", async () => {
 
       // تحديث عدد الدورات مباشرة
       availableSpins = spinResult.availableSpins ?? 0;
-      availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
-      canSpin = availableSpins > 0;
-      spinBtn.disabled = !canSpin;
-
+availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
+canSpin = availableSpins > 0;
+spinBtn.disabled = !canSpin;
       // تحديث الرصيد
       userBalance.textContent = `Balance: $${spinResult.balance ?? 0}`;
 
