@@ -143,9 +143,9 @@ spinBtn.addEventListener("click", async () => {
   result.textContent = "Spinning...";
 
   setTimeout(async () => {
-    const normalizedDeg = deg % 360;
-    const sectorIndex = Math.floor(((360 - normalizedDeg + sectorDeg/2) % 360) / sectorDeg);
-    const winningSector = sectors[sectorIndex];
+    const const normalizedDeg = deg % 360;
+const adjustedDeg = (normalizedDeg + 90) % 360; // تعديل لمكان المؤشر
+const sectorIndex = Math.floor(adjustedDeg / sectorDeg);
 
     const prize = {
       prize: winningSector.dataset.prize,
