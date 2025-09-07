@@ -455,12 +455,22 @@ resetBtn.onclick = async () => {
       user.completedTasks = result.completedTasks || user.completedTasks;
       user.currentTaskProgress = result.currentTaskProgress || 0;
       
+      // حساب قيمة lotteryEntries الجديدة
+      const subscriptionBonusMap = { 
+        'basic': 1, 
+        'pro': 3, 
+        'vip': 5 
+      };
+      const subTypeLower = (user.subscriptionType || 'none').toLowerCase();
+      const subscriptionBonus = subscriptionBonusMap[subTypeLower] || 0;
+      const newLotteryEntries = (user.successfulInvites || 0) + subscriptionBonus;
+      
       // تحديث واجهة المستخدم
       document.getElementById('balanceAmount').textContent = user.balance;
       document.getElementById('completedTasks').textContent = user.completedTasks;
       document.getElementById('progressText').textContent = '0/6';
       document.getElementById('progressFill').style.width = '0%';
-      document.getElementById('lotteryEntries').textContent = user.lotteryEntries || 0;
+      document.getElementById('lotteryEntries').textContent = newLotteryEntries;
       
       // إعادة تعيين الخطوات
       const stepElements = document.querySelectorAll('#stepsWrap .step');
@@ -470,7 +480,7 @@ resetBtn.onclick = async () => {
       resetBtn.style.display = 'none';
       document.getElementById('resetInfo').style.display = 'none';
       
-      // التصحيح المهم: استخدام user.successfulInvites بدلاً من 0
+      // تحديث تفاصيل التقدم
       updateProgressBreakdown(0, user.subscriptionType, user.successfulInvites, 0);
     } else {
       throw new Error('Failed to reset task');
