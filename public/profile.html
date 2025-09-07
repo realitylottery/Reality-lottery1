@@ -401,17 +401,8 @@ const subscriptionBonus = subscriptionBonusMap[subTypeLower] || 0;
 const lotteryEntries = (user.successfulInvites || 0) + subscriptionBonus;
 document.getElementById('lotteryEntries').textContent = lotteryEntries;
 
-      // حساب spins: كل 3 successfulInvites = 1 spin
-const spins = Math.floor((user.successfulInvites || 0) / 3);
-document.getElementById('availableSpins').textContent = spins;
-
-      function updateSpins(successfulInvites){
-  const spins = Math.floor(successfulInvites / 3);
-  document.getElementById('availableSpins').textContent = spins;
-}
-
-const successfulInvites = user.successfulInvites || 0;
-updateSpins(successfulInvites);
+// استخدام availableSpins من السيرفر مباشرة
+document.getElementById('availableSpins').textContent = user.availableSpins || 0;
       
       // Task progress - يعتمد فقط على عدد المدعوين المشتركين (كل مشترك = +1 تقدم)
       const progress = Math.min(6, user.currentTaskProgress || 0);
