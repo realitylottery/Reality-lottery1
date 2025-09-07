@@ -446,10 +446,9 @@ const prizes = [
   let availableSpins = 0;
 const availableSpinsDisplay = document.getElementById("availableSpins");
 // التحقق من الاشتراك والدوران
-async function checkEligibility() {
-  statusMessage.textContent = "Checking your spin eligibility...";
-  userStatus.textContent = "Checking status...";
-  
+
+    
+  async function checkEligibility() {
   if (!token) {
     spinBtn.disabled = true;
     result.textContent = "Login & subscribe to unlock your spin!";
@@ -462,44 +461,30 @@ async function checkEligibility() {
     const res = await fetch(`${API_BASE}/api/auth/me`, {
       headers: { Authorization: "Bearer " + token }
     });
-    
     if (!res.ok) throw new Error("Failed to fetch user data");
-    
+
     const data = await res.json();
-    console.log("User data from server:", data); // لأغراض التصحيح
-    
-    // حفظ بيانات المستخدم مع القيم الافتراضية
-    const userData = {
-      balance: data.balance || 0,
-      subscriptionActive: data.subscriptionActive || false,
-      hasSpunWheel: data.hasSpunWheel || false,
-      subscriptionType: data.subscriptionType || "none",
-      ...data
-    };
-    
+    const userData = { ...data };
     localStorage.setItem("rl_user", JSON.stringify(userData));
-    userBalance.textContent = `Balance: $${userData.balance}`;
 
-// الجديد:
-availableSpins = data.availableSpins || 0; // اعتمد مباشرة على عدد الدورات من السيرفر
-availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
+    availableSpins = data.availableSpins ?? 0;
+    availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
 
-if (availableSpins > 0) {
-    canSpin = true;
-    spinBtn.disabled = false;
-    result.textContent = `You have ${availableSpins} spin${availableSpins > 1 ? 's' : ''} available 🎉`;
-    statusMessage.textContent = "Ready to spin!";
-    userStatus.textContent = "You can spin now";
-    userStatus.style.color = "var(--success-color)";
-} else {
-    canSpin = false;
-    spinBtn.disabled = true;
-    result.textContent = "No spins available ❌";
-    statusMessage.textContent = "Get more invites to unlock spins";
-    userStatus.textContent = "No spins available";
-    userStatus.style.color = "var(--error-color)";
-}
-    
+    if (availableSpins > 0) {
+      canSpin = true;
+      spinBtn.disabled = false;
+      result.textContent = `You have ${availableSpins} spin${availableSpins > 1 ? 's' : ''} available 🎉`;
+      statusMessage.textContent = "Ready to spin!";
+      userStatus.textContent = "You can spin now";
+      userStatus.style.color = "var(--success-color)";
+    } else {
+      canSpin = false;
+      spinBtn.disabled = true;
+      result.textContent = "No spins available ❌";
+      statusMessage.textContent = "Get more invites to unlock spins";
+      userStatus.textContent = "No spins available";
+      userStatus.style.color = "var(--error-color)";
+    }
   } catch (err) {
     console.error("Eligibility check error:", err);
     spinBtn.disabled = true;
@@ -508,12 +493,12 @@ if (availableSpins > 0) {
     userStatus.textContent = "Error loading status";
     userStatus.style.color = "var(--error-color)";
   }
-}
+  }
 
   
 // دوران العجلة
 spinBtn.addEventListener("click", async () => {
-  if (!canSpin) return;
+  if (!canSpin) return;  // لا تفعل شيء إذا لم يكن المستخدم مؤهلاً
 
   const deg = Math.floor(2000 + Math.random() * 2000);
   wheel.style.transform = `rotate(${deg}deg)`;
@@ -546,7 +531,7 @@ spinBtn.addEventListener("click", async () => {
 
       const spinResult = await response.json();
 
-      // ✅ تحديث availableSpins من استجابة السيرفر فقط
+      // تحديث عدد الدورات مباشرة
       availableSpins = spinResult.availableSpins ?? 0;
       availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
       canSpin = availableSpins > 0;
@@ -555,10 +540,10 @@ spinBtn.addEventListener("click", async () => {
       // تحديث الرصيد
       userBalance.textContent = `Balance: $${spinResult.balance ?? 0}`;
 
-      // عرض رسالة النتيجة من السيرفر
+      // عرض رسالة النتيجة
       result.innerHTML = `<span class="success">${spinResult.message}</span>`;
 
-      // حالة الزر ورسائل المستخدم
+      // تحديث حالة المستخدم
       if (availableSpins <= 0) {
         statusMessage.textContent = "Get more invites to unlock spins";
         userStatus.textContent = "No spins available";
@@ -573,7 +558,7 @@ spinBtn.addEventListener("click", async () => {
         userStatus.style.color = "var(--success-color)";
       }
 
-      // تحديث بيانات المستخدم في localStorage فقط من السيرفر
+      // تحديث بيانات المستخدم في localStorage فقط
       const currentUser = JSON.parse(localStorage.getItem("rl_user") || "{}");
       const updatedUser = {
         ...currentUser,
@@ -591,12 +576,10 @@ spinBtn.addEventListener("click", async () => {
       canSpin = false;
       spinBtn.disabled = true;
 
-      // إعادة التحقق من الأهلية بعد الخطأ
       setTimeout(checkEligibility, 2000);
     }
   }, 5000);
 });
-
 // عند تحميل الصفحة
 checkEligibility();
 </script>
