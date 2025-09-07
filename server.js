@@ -549,7 +549,27 @@ function calculateTaskReward(subscriptionType, progress) {
 
 
 
-
+// دالة لتحديث عدد اللفات تلقائياً بناءً على الدعوات الناجحة
+async function updateUserSpins(userId) {
+  try {
+    const user = await User.findById(userId);
+    if (!user) return;
+    
+    // حساب عدد اللفات الجديد
+    const newSpins = Math.floor(user.successfulInvites / 3);
+    
+    // تحديث فقط إذا تغير العدد
+    if (user.availableSpins !== newSpins) {
+      user.availableSpins = newSpins;
+      await user.save();
+      console.log(`🔄 Updated spins for user ${user.username}: ${newSpins}`);
+    }
+    
+    return newSpins;
+  } catch (error) {
+    console.error('Error updating user spins:', error);
+  }
+}
 
 
 async function authMiddleware(req, res, next) {
@@ -10552,6 +10572,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
