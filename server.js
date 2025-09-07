@@ -1033,19 +1033,29 @@ app.delete('/api/admin/notifications/:id', authMiddleware, async (req, res) => {
 
 /* ==== API spin العجلة ==== */
 
-
 app.post("/api/wheel/spin", async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    // قراءة التوكن من الهيدر
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+    if (!token) return res.status(401).json({ msg: "No token, authorization denied" });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ msg: "Token is not valid" });
+    }
+
+    const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ msg: "User not found" });
 
     const { prize, amount } = req.body;
 
-    // إضافة الجوائز
+    // إضافة الجوائز حسب النوع
     if (prize === "$3") user.balance += 3;
-    if (prize === "$2") user.balance += 2;
-    if (prize === "$1") user.balance += 1;
-    if (prize === "extra") user.extraSpins += 1;
+    else if (prize === "$2") user.balance += 2;
+    else if (prize === "$1") user.balance += 1;
+    else if (prize === "extra") user.extraSpins += 1;
 
     // تقليل عدد الدورات فقط إذا لم تكن الجائزة دورة إضافية
     if (prize !== "extra") {
@@ -10269,6 +10279,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
