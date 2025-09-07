@@ -703,7 +703,16 @@ async function authMiddleware(req, res, next) {
 // ================= ROUTES =================
 
 
+// =====> أعلى الملف قبل أي route <=====
+function calculateAvailableSpins(user) {
+  const subscriptionSpin = user.subscriptionActive ? 1 : 0;
+  const inviteSpins = Math.floor(user.successfulInvites / 3);
+  const extraSpins = user.extraSpins || 0;
+  const usedSpins = user.spinsUsed || 0;
 
+  return Math.max(0, subscriptionSpin + inviteSpins + extraSpins - usedSpins);
+}
+// =====> نهاية الدالة <=====
 
 
 // ========= NOTIFICATION ROUTES =========
@@ -1025,47 +1034,48 @@ app.delete('/api/admin/notifications/:id', authMiddleware, async (req, res) => {
 /* ==== API spin العجلة ==== */
 
 
-
 app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
   try {
     const { prize, amount } = req.body;
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-    if (user.availableSpins <= 0) {
-      return res.status(400).json({ msg: "No spins available" });
-    }
+    const availableSpins = calculateAvailableSpins(user);
+    if (availableSpins <= 0) return res.status(400).json({ msg: "No spins available" });
 
-    let spinsChange = -1; // ✅ نخصم واحد دائماً
     let balanceChange = 0;
     let message = "";
 
     if (prize === "lose") {
       message = "Better luck next time!";
     } else if (prize === "extra") {
-      spinsChange = 0; // نخصم 1 ثم نضيف 1 = ما يتغير العدد
+      balanceChange = 0;
       message = "You earned an extra spin!";
     } else if (prize.startsWith("$") && amount > 0) {
       balanceChange = amount;
       message = `You won ${prize}! Balance updated.`;
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
+    // خصم لفّة واحدة + إضافة extra spin إذا لزم
+    await User.findByIdAndUpdate(
       req.user.id,
       {
-        $inc: { availableSpins: spinsChange, balance: balanceChange }
-      },
-      { new: true } // يرجع نسخة محدثة
+        $inc: { spinsUsed: 1, balance: balanceChange, extraSpins: prize === "extra" ? 1 : 0 }
+      }
     );
+
+    const updatedUser = await User.findById(req.user.id);
+    const newAvailableSpins = calculateAvailableSpins(updatedUser);
 
     res.json({
       success: true,
       prize,
-      amount: amount || 0,
+      amount: balanceChange,
       balance: updatedUser.balance,
-      availableSpins: updatedUser.availableSpins,
+      availableSpins: newAvailableSpins,
       message
     });
+
   } catch (err) {
     console.error("Wheel Spin Error:", err);
     res.status(500).json({ msg: "Server error" });
@@ -9396,14 +9406,8 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // =====> أضف هذا الكود هنا <=====
-    // زيادة availableSpins بناءً على successfulInvites (كل 3 invites = 1 spin)
-    const calculatedSpins = Math.floor((user.successfulInvites || 0) / 3);
-    if (calculatedSpins > (user.availableSpins || 0)) {
-      user.availableSpins = calculatedSpins;
-      await user.save();
-    }
-    // =====> نهاية الإضافة <=====
+    // حساب availableSpins ديناميكيًا باستخدام الدالة
+    const availableSpins = calculateAvailableSpins(user);
 
     // التقدم الحقيقي: الدعوات الناجحة + نقطة البونس لو عنده اشتراك
     const currentProgress = Math.min(6, (user.successfulInvites || 0) + (user.subscriptionActive ? 1 : 0));
@@ -9426,8 +9430,8 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       successfulInvites: user.successfulInvites,
       currentTaskProgress: user.currentTaskProgress || 0,
       completedTasks: user.completedTasks,
-      availableSpins: user.availableSpins,
-      currentProgress: currentProgress,
+      availableSpins,  // ✅ العدد المحسوب ديناميكيًا
+      currentProgress,
       lotteryEntries: user.lotteryEntries || 0,
       expectedReward,
       canReset: currentProgress >= 2
@@ -9437,8 +9441,6 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 });
-
-
 
 
 
@@ -10286,6 +10288,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
