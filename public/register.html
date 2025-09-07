@@ -41,7 +41,81 @@
       <h2>Register</h2>
       <input type="text" id="fullName" placeholder="Full Name" required>
       <input type="email" id="email" placeholder="Email" required>
-      <input type="text" id="phone" placeholder="Phone" required>
+      <div style="display:flex;gap:5px;">
+  <!-- هنا تحط قائمة كود الدولة -->
+  <select id="countryCode" required style="width:40%;">
+  <!-- 🌍 الدول العربية -->
+  <option value="+20">🇪🇬 مصر (+20)</option>
+  <option value="+966">🇸🇦 السعودية (+966)</option>
+  <option value="+971">🇦🇪 الإمارات (+971)</option>
+  <option value="+965">🇰🇼 الكويت (+965)</option>
+  <option value="+974">🇶🇦 قطر (+974)</option>
+  <option value="+968">🇴🇲 عمان (+968)</option>
+  <option value="+964">🇮🇶 العراق (+964)</option>
+  <option value="+962">🇯🇴 الأردن (+962)</option>
+  <option value="+961">🇱🇧 لبنان (+961)</option>
+  <option value="+967">🇾🇪 اليمن (+967)</option>
+  <option value="+963">🇸🇾 سوريا (+963)</option>
+  <option value="+249">🇸🇩 السودان (+249)</option>
+  <option value="+218">🇱🇾 ليبيا (+218)</option>
+  <option value="+212">🇲🇦 المغرب (+212)</option>
+  <option value="+213">🇩🇿 الجزائر (+213)</option>
+  <option value="+216">🇹🇳 تونس (+216)</option>
+  <option value="+222">🇲🇷 موريتانيا (+222)</option>
+  <option value="+252">🇸🇴 الصومال (+252)</option>
+  <option value="+970">🇵🇸 فلسطين (+970)</option>
+  <option value="+269">🇰🇲 جزر القمر (+269)</option>
+
+  <!-- 🇪🇺 أوروبا -->
+  <option value="+44">🇬🇧 المملكة المتحدة (+44)</option>
+  <option value="+33">🇫🇷 فرنسا (+33)</option>
+  <option value="+49">🇩🇪 ألمانيا (+49)</option>
+  <option value="+39">🇮🇹 إيطاليا (+39)</option>
+  <option value="+34">🇪🇸 إسبانيا (+34)</option>
+  <option value="+31">🇳🇱 هولندا (+31)</option>
+  <option value="+32">🇧🇪 بلجيكا (+32)</option>
+  <option value="+47">🇳🇴 النرويج (+47)</option>
+  <option value="+46">🇸🇪 السويد (+46)</option>
+  <option value="+45">🇩🇰 الدنمارك (+45)</option>
+  <option value="+41">🇨🇭 سويسرا (+41)</option>
+  <option value="+43">🇦🇹 النمسا (+43)</option>
+  <option value="+420">🇨🇿 التشيك (+420)</option>
+  <option value="+48">🇵🇱 بولندا (+48)</option>
+  <option value="+36">🇭🇺 المجر (+36)</option>
+  <option value="+40">🇷🇴 رومانيا (+40)</option>
+  <option value="+30">🇬🇷 اليونان (+30)</option>
+  <option value="+351">🇵🇹 البرتغال (+351)</option>
+  <option value="+353">🇮🇪 إيرلندا (+353)</option>
+  <option value="+380">🇺🇦 أوكرانيا (+380)</option>
+  <option value="+375">🇧🇾 بيلاروسيا (+375)</option>
+  <option value="+7">🇷🇺 روسيا (+7)</option>
+  <option value="+90">🇹🇷 تركيا (+90)</option>
+
+  <!-- 🇺🇸 أمريكا وكندا -->
+  <option value="+1">🇺🇸 الولايات المتحدة (+1)</option>
+  <option value="+1">🇨🇦 كندا (+1)</option>
+  <option value="+52">🇲🇽 المكسيك (+52)</option>
+  <option value="+55">🇧🇷 البرازيل (+55)</option>
+  <option value="+54">🇦🇷 الأرجنتين (+54)</option>
+  <option value="+56">🇨🇱 تشيلي (+56)</option>
+
+  <!-- 🌏 آسيا -->
+  <option value="+91">🇮🇳 الهند (+91)</option>
+  <option value="+92">🇵🇰 باكستان (+92)</option>
+  <option value="+880">🇧🇩 بنغلادش (+880)</option>
+  <option value="+86">🇨🇳 الصين (+86)</option>
+  <option value="+81">🇯🇵 اليابان (+81)</option>
+  <option value="+82">🇰🇷 كوريا الجنوبية (+82)</option>
+  <option value="+63">🇵🇭 الفلبين (+63)</option>
+  <option value="+62">🇮🇩 إندونيسيا (+62)</option>
+  <option value="+60">🇲🇾 ماليزيا (+60)</option>
+  <option value="+66">🇹🇭 تايلاند (+66)</option>
+  <option value="+84">🇻🇳 فيتنام (+84)</option>
+  </select>
+
+  <!-- مربع إدخال الرقم -->
+  <input type="text" id="phone" placeholder="Phone Number" required style="width:60%;">
+      </div>
       <input type="text" id="username" placeholder="Username" required>
       <input type="password" id="password" placeholder="Password" required>
       <input type="text" id="referralInput" placeholder="Referral Code (optional)">
@@ -98,7 +172,8 @@
       e.preventDefault();
       const fullName = document.getElementById("fullName").value;
       const email = document.getElementById("email").value;
-      const phone = document.getElementById("phone").value;
+      const countryCode = document.getElementById("countryCode").value;
+const phone = countryCode + document.getElementById("phone").value;
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
       const referral = document.getElementById("referralInput").value;
