@@ -9696,6 +9696,9 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
 
       completedTasks: user.completedTasks,
 
+      availableSpins: user.availableSpins,
+      
+
 
 
       currentProgress: currentProgress,
@@ -10572,6 +10575,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
