@@ -163,10 +163,6 @@
         <div class="field">
   <label>Number of Getting into the Lottery</label>
   <div id="lotteryEntries">0</div>
-          <div class="field">
-  <label>Available Spins</label>
-  <div id="availableSpins">0</div>
-          </div>
         </div>
 
         <div class="row" style="margin-top:8px">
@@ -400,18 +396,6 @@ const subscriptionBonus = subscriptionBonusMap[subTypeLower] || 0;
 
 const lotteryEntries = (user.successfulInvites || 0) + subscriptionBonus;
 document.getElementById('lotteryEntries').textContent = lotteryEntries;
-
-      // حساب spins: كل 3 successfulInvites = 1 spin
-const spins = Math.floor((user.successfulInvites || 0) / 3);
-document.getElementById('availableSpins').textContent = spins;
-
-      function updateSpins(successfulInvites){
-  const spins = Math.floor(successfulInvites / 3);
-  document.getElementById('availableSpins').textContent = spins;
-}
-
-const successfulInvites = user.successfulInvites || 0;
-updateSpins(successfulInvites);
       
       // Task progress - يعتمد فقط على عدد المدعوين المشتركين (كل مشترك = +1 تقدم)
       const progress = Math.min(6, user.currentTaskProgress || 0);
