@@ -143,15 +143,20 @@ spinBtn.addEventListener("click", async () => {
   result.textContent = "Spinning...";
 
   setTimeout(async () => {
-    const const normalizedDeg = deg % 360;
-const adjustedDeg = (normalizedDeg + 90) % 360; // تعديل لمكان المؤشر
-const sectorIndex = Math.floor(adjustedDeg / sectorDeg);
+  const normalizedDeg = deg % 360;
+  const adjustedDeg = (normalizedDeg + 90) % 360; // تعديل لمكان المؤشر
+  const sectorIndex = Math.floor(adjustedDeg / sectorDeg);
 
-    const prize = {
-      prize: winningSector.dataset.prize,
-      type: winningSector.dataset.type,
-      amount: parseInt(winningSector.dataset.amount)
-    };
+  const sectors = document.querySelectorAll(".wheel-section-item");
+  const winningSector = sectors[sectorIndex];
+
+  const prize = {
+    prize: winningSector.dataset.prize,
+    type: winningSector.dataset.type,
+    amount: parseInt(winningSector.dataset.amount)
+  };
+
+  console.log("Winner:", prize);
 
     try {
       const response = await fetch(`${API_BASE}/api/wheel/spin`, {
