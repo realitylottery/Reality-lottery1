@@ -484,6 +484,10 @@ async function checkEligibility() {
 availableSpins = userData.availableSpins || 0;
 availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
 
+// تحديث حالة الزر بناءً على عدد الدورات المتاحة
+canSpin = availableSpins > 0;
+spinBtn.disabled = !canSpin;
+    
 if (availableSpins > 0) {
     canSpin = true;
     spinBtn.disabled = false;
