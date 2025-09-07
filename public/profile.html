@@ -410,9 +410,8 @@ document.getElementById('availableSpins').textContent = spins;
   document.getElementById('availableSpins').textContent = spins;
 }
 
-// مثال بعد reset
-user.successfulInvites = result.successfulInvites || user.successfulInvites;
-updateSpins(user.successfulInvites);
+const successfulInvites = user.successfulInvites || 0;
+updateSpins(successfulInvites);
       
       // Task progress - يعتمد فقط على عدد المدعوين المشتركين (كل مشترك = +1 تقدم)
       const progress = Math.min(6, user.currentTaskProgress || 0);
