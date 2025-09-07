@@ -80,6 +80,24 @@
       color: var(--primary-color);
     }
 
+    .reviews-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.reviews-container::-webkit-scrollbar-thumb {
+  background-color: var(--primary-color);
+  border-radius: 4px;
+}
+
+.review-card {
+  flex: 0 0 300px;
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 15px;
+  border: 1px solid #333;
+  box-sizing: border-box;
+}
+
     .review-card {
     background: #1a1a1a;
     border: 1px solid #333;
@@ -807,7 +825,7 @@ html, body {
   </div>
 
   <!-- قسم عرض التقييمات -->
-  <div class="reviews-container" id="reviewsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+  <div class="reviews-container" id="reviewsContainer" style="display: flex; overflow-x: auto; gap: 20px; padding: 10px; scroll-behavior: smooth;">  
     <!-- سيتم تحميل التقييمات هنا ديناميكيًا -->
   </div>
 
