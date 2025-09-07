@@ -488,15 +488,15 @@ function calculateTaskReward(subscriptionType, progress) {
 
 
 
-    'BASIC': { 2: 5, 3: 8, 6: 12 },
+    'BASIC': { 2: 5, 3: 8, 6: 20 },
 
 
 
-    'PRO': { 2: 8, 3: 12, 6: 15 },
+    'PRO': { 2: 8, 3: 12, 6: 26 },
 
 
 
-    'VIP': { 2: 12, 3: 15, 6: 20 },
+    'VIP': { 2: 10, 3: 16, 6: 35 },
 
 
 
@@ -10552,6 +10552,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
