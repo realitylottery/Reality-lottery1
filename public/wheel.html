@@ -530,20 +530,7 @@ spinBtn.addEventListener("click", async () => {
     const sector = Math.floor(normalizedDeg / 60);
     const prize = prizes[sector];
     // خصم دورة واحدة عند الدوران
-availableSpins--;
 
-// إذا كانت الجائزة Extra Spin، أضف دورة إضافية
-if (prize.type === "extra") {
-    availableSpins++;
-}
-
-// تحديث العرض في الصفحة
-availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
-
-    if (availableSpins <= 0) {
-    canSpin = false;
-    spinBtn.disabled = true;
-    }
 
     try {
       const response = await fetch(`${API_BASE}/api/wheel/spin`, {
@@ -565,6 +552,20 @@ availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
 
       const spinResult = await response.json();
       console.log("Spin result from server:", spinResult);
+
+      // تحديث availableSpins من استجابة الخادم
+if (spinResult.availableSpins !== undefined) {
+    availableSpins = spinResult.availableSpins;
+    availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
+    
+    // تحديث حالة الزر بناءً على عدد الدورات المتاحة
+    canSpin = availableSpins > 0;
+    spinBtn.disabled = !canSpin;
+    
+    console.log("Updated spins from server:", availableSpins);
+} else {
+    console.error("availableSpins not found in response");
+}
 
       // تحديث بيانات المستخدم من الاستجابة مع القيم الافتراضية
       const currentUser = JSON.parse(localStorage.getItem("rl_user") || "{}");
