@@ -410,6 +410,7 @@
       <div class="user-info">
         <div id="userStatus">Checking your status...</div>
         <div id="userBalance">Balance: $0</div>
+        <div id="availableSpins">Available Spins: 0</div>
       </div>
 
       <h2><i class="fas fa-info-circle"></i> How to Play</h2>
@@ -442,6 +443,8 @@ const prizes = [
   { label: "Extra Spin", type: "extra", amount: 0, section: 5, prize: "extra" }
 ];
 
+  let availableSpins = 0;
+const availableSpinsDisplay = document.getElementById("availableSpins");
 // التحقق من الاشتراك والدوران
 async function checkEligibility() {
   statusMessage.textContent = "Checking your spin eligibility...";
@@ -477,29 +480,26 @@ async function checkEligibility() {
     localStorage.setItem("rl_user", JSON.stringify(userData));
     userBalance.textContent = `Balance: $${userData.balance}`;
 
-    if (userData.subscriptionActive && !userData.hasSpunWheel) {
-      canSpin = true;
-      spinBtn.disabled = false;
-      result.textContent = "You have 1 spin available 🎉";
-      statusMessage.textContent = "Ready to spin!";
-      userStatus.textContent = `Active ${userData.subscriptionType} subscription - Spin available`;
-      userStatus.style.color = "var(--success-color)";
-    } else if (userData.subscriptionActive && userData.hasSpunWheel) {
-      canSpin = false;
-      spinBtn.disabled = true;
-      result.textContent = "You already used your spin this subscription ❌";
-      statusMessage.textContent = "Wait for your next subscription period to spin again";
-      userStatus.textContent = `Active ${userData.subscriptionType} subscription - Already spun`;
-      userStatus.style.color = "var(--error-color)";
-    } else {
-      canSpin = false;
-      spinBtn.disabled = true;
-      result.textContent = "Subscribe to unlock your spin!";
-      statusMessage.textContent = "Active subscription required";
-      userStatus.textContent = userData.subscriptionType !== "none" ? 
-        `${userData.subscriptionType} subscription - Inactive` : "No active subscription";
-      userStatus.style.color = "var(--error-color)";
-    }
+    // تعيين عدد الدورات المتاحة
+availableSpins = userData.availableSpins || (userData.subscriptionActive && !userData.hasSpunWheel ? 1 : 0);
+availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
+
+if (availableSpins > 0) {
+    canSpin = true;
+    spinBtn.disabled = false;
+    result.textContent = `You have ${availableSpins} spin${availableSpins > 1 ? 's' : ''} available 🎉`;
+    statusMessage.textContent = "Ready to spin!";
+    userStatus.textContent = `Active ${userData.subscriptionType} subscription - Spin available`;
+    userStatus.style.color = "var(--success-color)";
+} else {
+    canSpin = false;
+    spinBtn.disabled = true;
+    result.textContent = "No spins available ❌";
+    statusMessage.textContent = "Wait for your next subscription period";
+    userStatus.textContent = userData.subscriptionType !== "none" ? 
+        `${userData.subscriptionType} subscription - Already spun` : "No active subscription";
+    userStatus.style.color = "var(--error-color)";
+}
     
   } catch (err) {
     console.error("Eligibility check error:", err);
@@ -511,6 +511,7 @@ async function checkEligibility() {
   }
 }
 
+  
 // دوران العجلة
 spinBtn.addEventListener("click", async () => {
   if (!canSpin) return;
@@ -525,6 +526,21 @@ spinBtn.addEventListener("click", async () => {
     const normalizedDeg = deg % 360;
     const sector = Math.floor(normalizedDeg / 60);
     const prize = prizes[sector];
+    // خصم دورة واحدة عند الدوران
+availableSpins--;
+
+// إذا كانت الجائزة Extra Spin، أضف دورة إضافية
+if (prize.type === "extra") {
+    availableSpins++;
+}
+
+// تحديث العرض في الصفحة
+availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
+
+    if (availableSpins <= 0) {
+    canSpin = false;
+    spinBtn.disabled = true;
+    }
 
     try {
       const response = await fetch(`${API_BASE}/api/wheel/spin`, {
