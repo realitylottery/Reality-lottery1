@@ -19,7 +19,10 @@ const userSchema = new mongoose.Schema({
   balance: { type: Number, default: 0 },
   completedTasks: { type: Number, default: 0 },
   currentTaskProgress: { type: Number, default: 0, min: 0, max: 6 },
-
+  taskProgressUpdated: {
+  type: Boolean,
+  default: false
+  },
   // نظام الدعوات
   referredBy: { type: String, default: null },
   referralCode: { type: String, unique: true, sparse: true },
