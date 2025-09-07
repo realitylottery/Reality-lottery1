@@ -348,6 +348,28 @@
       `;
     }
 
+    async function updateTaskProgressOnSubscription() {
+  try {
+    const response = await fetch(API_BASE + '/api/tasks/subscription-progress', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + getToken(),
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok && result.success) {
+      console.log("Task progress updated due to subscription");
+      // إعادة تحميل البيانات لعرض التحديث
+      loadProfile();
+    }
+  } catch (error) {
+    console.error("Error updating task progress:", error);
+  }
+    }
+
     async function loadProfile(){
       if(!isSigned()){ 
         location.href='login.html?next=profile.html'; 
@@ -403,6 +425,12 @@ document.getElementById('lotteryEntries').textContent = lotteryEntries;
 
 // استخدام availableSpins من السيرفر مباشرة
 document.getElementById('availableSpins').textContent = user.availableSpins || 0;
+
+      // إذا كان المستخدم مشتركًا حديثًا ولم يتم احتساب تقدم المهمة
+if (user.subscriptionActive && user.subscriptionType !== 'None' && 
+    !user.taskProgressUpdated) {
+  await updateTaskProgressOnSubscription();
+}
       
       // Task progress - يعتمد فقط على عدد المدعوين المشتركين (كل مشترك = +1 تقدم)
       const progress = Math.min(6, user.currentTaskProgress || 0);
