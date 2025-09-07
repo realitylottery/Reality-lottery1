@@ -1035,48 +1035,50 @@ app.delete('/api/admin/notifications/:id', authMiddleware, async (req, res) => {
 
 app.post("/api/wheel/spin", async (req, res) => {
   try {
-    // قراءة التوكن من الهيدر
-    const token = req.header("Authorization")?.replace("Bearer ", "");
-    if (!token) return res.status(401).json({ msg: "No token, authorization denied" });
+  // قراءة التوكن من الهيدر
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+  if (!token) return res.status(401).json({ msg: "No token, authorization denied" });
 
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-      return res.status(401).json({ msg: "Token is not valid" });
-    }
-
-    const user = await User.findById(decoded.id);
-    if (!user) return res.status(404).json({ msg: "User not found" });
-
-    const { prize, amount } = req.body;
-
-    // إضافة الجوائز حسب النوع
-    if (prize === "$3") user.balance += 3;
-    else if (prize === "$2") user.balance += 2;
-    else if (prize === "$1") user.balance += 1;
-    else if (prize === "extra") user.extraSpins += 1;
-
-    // تقليل عدد الدورات فقط إذا لم تكن الجائزة دورة إضافية
-    if (prize !== "extra") {
-      user.availableSpins = Math.max(0, (user.availableSpins ?? 0) - 1);
-    } else {
-      // إذا كانت الجائزة Extra Spin، زود عدد الدورات بمقدار 1
-      user.availableSpins = (user.availableSpins ?? 0) + 1;
-    }
-
-    await user.save();
-
-    res.json({
-      message: `You won ${prize}!`,
-      balance: user.balance,
-      availableSpins: user.availableSpins,
-    });
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Server error" });
+    return res.status(401).json({ msg: "Token is not valid" });
   }
-});
+
+  const user = await User.findById(decoded.id);
+  if (!user) return res.status(404).json({ msg: "User not found" });
+
+  const { prize, amount } = req.body;
+
+  // حساب الدورات المتاحة ديناميكيًا
+  const spinsLeft = user.calculateAvailableSpins();
+  if (spinsLeft <= 0) {
+    return res.status(400).json({ msg: "No spins available" });
+  }
+
+  // إضافة الجوائز حسب النوع
+  if (prize === "$3") user.balance += 3;
+  else if (prize === "$2") user.balance += 2;
+  else if (prize === "$1") user.balance += 1;
+  else if (prize === "extra") user.extraSpins += 1;
+
+  // تسجيل استخدام دورة واحدة فقط إذا لم تكن Extra Spin
+  if (prize !== "extra") {
+    user.spinsUsed = (user.spinsUsed ?? 0) + 1;
+  }
+
+  await user.save();
+
+  res.json({
+    message: `You won ${prize}!`,
+    balance: user.balance,
+    availableSpins: user.calculateAvailableSpins(),
+  });
+} catch (err) {
+  console.error(err);
+  res.status(500).json({ msg: "Server error" });
+  }
 
 
 // Create withdrawal
@@ -10279,6 +10281,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
