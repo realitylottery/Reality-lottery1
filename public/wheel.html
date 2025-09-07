@@ -514,18 +514,15 @@ spinBtn.addEventListener("click", async () => {
   statusMessage.textContent = "";
 
   setTimeout(async () => {
-    // زاوية بعد التدوير % 360
     const spins = 6; // عدد القطاعات
-const sectorDeg = 360 / spins;
+    const sectorDeg = 360 / spins;
 
-const normalizedDeg = deg % 360;
+    const normalizedDeg = deg % 360;
+    const sectorIndex = Math.floor(((normalizedDeg + sectorDeg / 2) % 360) / sectorDeg);
 
-// حساب القطاع تحت المؤشر (أعلى العجلة)
-const sectorIndex = Math.floor(((360 - normalizedDeg + sectorDeg / 2) % 360) / sectorDeg);
+    const prize = prizes[sectorIndex];
 
-const prize = prizes[sectorIndex];
-
-    console.log("deg:", deg, "normalizedDeg:", normalizedDeg, "correctedDeg:", correctedDeg, "sectorIndex:", sectorIndex, "prize:", prize);
+    console.log("deg:", deg, "normalizedDeg:", normalizedDeg, "sectorIndex:", sectorIndex, "prize:", prize);
 
     try {
       const response = await fetch(`${API_BASE}/api/wheel/spin`, {
