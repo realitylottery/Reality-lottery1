@@ -50,6 +50,24 @@ userSchema.methods.calculateAvailableSpins = function() {
   return 0;
 };
 
+// داخل models/User.js
+userSchema.methods.calculateAvailableSpins = function() {
+  let spins = 0;
+
+  // 1️⃣ الاشتراك في أي خطة يعطي دورة واحدة
+  if (this.subscriptionActive && this.subscriptionExpires && this.subscriptionExpires > new Date()) {
+    spins += 1;
+  }
+
+  // 2️⃣ كل 3 successfulInvites تعطي دورة إضافية
+  spins += Math.floor(this.successfulInvites / 3);
+
+  // 3️⃣ نطرح الدورات المستخدمة (spinsUsed)
+  spins -= this.spinsUsed ?? 0;
+
+  // ضمان عدم ظهور قيمة سالبة
+  return Math.max(spins, 0);
+};
 // إنشاء كود دعوة تلقائي قبل الحفظ
 userSchema.pre('save', async function(next) {
   if (this.isNew && !this.referralCode) {
