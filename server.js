@@ -5279,79 +5279,6 @@ app.post("/api/user/add-balance", authMiddleware, async (req, res) => {
 
 
 
-// Reset spins when user subscribes (call this when payment is verified)
-
-
-
-app.post("/api/user/reset-spins", authMiddleware, async (req, res) => {
-
-
-
-  try {
-
-
-
-    const user = await User.findById(req.user.id);
-
-
-
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-
-
-
-
-
-
-    // Reset spins used flag when user subscribes
-
-
-
-    user.spinsUsed = false;
-
-
-
-    await user.save();
-
-
-
-
-
-
-
-    res.json({ 
-
-
-
-      success: true,
-
-
-
-      message: "Spins reset for new subscription"
-
-
-
-    });
-
-
-
-  } catch (err) {
-
-
-
-    console.error("Reset spins error:", err);
-
-
-
-    res.status(500).json({ message: "Error resetting spins" });
-
-
-
-  }
-
-
-
-});
 
 
 
@@ -9545,7 +9472,6 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
 
       currentProgress: currentProgress,
 
-      hasSpunWheel: user.hasSpunWheel,
       lotteryEntries: user.lotteryEntries || 0,
 
       expectedReward,
@@ -10417,6 +10343,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
