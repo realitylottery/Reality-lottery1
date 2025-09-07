@@ -25,17 +25,12 @@ const userSchema = new mongoose.Schema({
   referralCode: { type: String, unique: true, sparse: true },
   totalInvites: { type: Number, default: 0 },
   successfulInvites: { type: Number, default: 0 },
-  spinsUsed: {
-    type: Boolean,
-    default: false
-  },
   availableSpins: { type: Number, default: 0 },
   // الاشتراك
   subscriptionType: { type: String, enum: ['', 'BASIC', 'PRO', 'VIP'], default: '' },
   subscriptionActive: { type: Boolean, default: false },
   lotteryEntries: { type: Number, default: 0 },
   subscriptionExpires: { type: Date, default: null },
-  hasSpunWheel: { type: Boolean, default: false },
   // الطوابع الزمنية
   registeredAt: { type: Date, default: Date.now },
   lastLogin: { type: Date, default: Date.now }
