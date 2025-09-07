@@ -1027,150 +1027,48 @@ app.delete('/api/admin/notifications/:id', authMiddleware, async (req, res) => {
 
 
 app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
-
-
-
   try {
-
-
-
     const { prize, amount } = req.body;
-
-
-
     const user = await User.findById(req.user.id);
-
-
-
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-
-
-
-
-
-
-    if (!user.subscriptionActive) return res.status(400).json({ msg: "No active subscription" });
-
-
-
-    if (user.hasSpunWheel) return res.status(400).json({ msg: "You already used your spin" });
-
-
-
-
-
-
-
-    let message = "";
-
-
-
-
-
-
-
-    if (prize === "lose") {
-
-
-
-      user.hasSpunWheel = true;
-
-
-
-      message = "Better luck next time!";
-
-
-
-    } else if (prize === "extra") {
-  user.hasSpunWheel = false; // هذا السطر الناقص!
-  message = "You earned an extra spin!";
-    
-
-
-
-    } else if (prize.startsWith("$") && amount > 0) {
-
-
-
-      user.balance += amount;
-
-
-
-      user.hasSpunWheel = true;
-
-
-
-      message = `You won ${prize}! Balance updated.`;
-
-
-
+    if (user.availableSpins <= 0) {
+      return res.status(400).json({ msg: "No spins available" });
     }
 
+    let message = "";
+    let spinUsed = true;
 
+    if (prize === "lose") {
+      message = "Better luck next time!";
+    } else if (prize === "extra") {
+      spinUsed = false; // لا تستهلك لفة عند الفوز بدورة إضافية
+      message = "You earned an extra spin!";
+    } else if (prize.startsWith("$") && amount > 0) {
+      user.balance += amount;
+      message = `You won ${prize}! Balance updated.`;
+    }
 
-
-
-
+    // خصم لفة واحدة فقط إذا لم تربح دورة إضافية
+    if (spinUsed) {
+      user.availableSpins -= 1;
+    }
 
     await user.save();
 
-
-
-
-
-
-
     res.json({
-
-
-
       success: true,
-
-
-
       prize,
-
-
-
       amount: amount || 0,
-
-
-
       balance: user.balance,
-
-
-
-      hasSpunWheel: user.hasSpunWheel,
-
-
-
+      availableSpins: user.availableSpins,
       message
-
-
-
     });
-
-
-
   } catch (err) {
-
-
-
     console.error("Wheel Spin Error:", err);
-
-
-
     res.status(500).json({ msg: "Server error" });
-
-
-
   }
-
-
-
 });
-
 
 
 
@@ -4489,11 +4387,11 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
 
 
 
-     // Give user a spin when they subscribe
 
 
 
-    user.spinsUsed = false; // Reset spins
+    // إعطاء لفات عند الاشتراك
+user.availableSpins = 1; // أو أي عدد تريده
 
 
 
@@ -5270,73 +5168,17 @@ app.get("/api/admin/stats/payments", authMiddleware, async (req, res) => {
 
 
 app.get("/api/user/spins", authMiddleware, async (req, res) => {
-
-
-
   try {
-
-
-
     const user = await User.findById(req.user.id);
-
-
-
     if (!user) return res.status(404).json({ message: "User not found" });
 
-
-
-
-
-
-
-    // User gets 1 spin when they subscribe
-
-
-
-    const hasSubscription = user.subscriptionActive && user.subscriptionExpires > new Date();
-
-
-
-    const spinsAvailable = hasSubscription ? 1 : 0;
-
-
-
-
-
-
-
     res.json({ 
-
-
-
-      spinsAvailable,
-
-
-
-      hasSubscription 
-
-
-
+      availableSpins: user.availableSpins || 0
     });
-
-
-
   } catch (err) {
-
-
-
     console.error("Spins error:", err);
-
-
-
     res.status(500).json({ message: "Error checking spins" });
-
-
-
   }
-
-
-
 });
 
 
@@ -10575,6 +10417,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
