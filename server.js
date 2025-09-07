@@ -2020,7 +2020,46 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 });
 
 
-
+// في ملف الخادم (مثال باستخدام Express)
+app.post('/api/tasks/subscription-progress', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // البحث عن المستخدم
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // إذا كان المشترك نشطًا ولم يتم تحديث تقدم المهمة من قبل
+    if (user.subscriptionActive && user.subscriptionType !== 'None' && 
+        !user.taskProgressUpdated) {
+      
+      // زيادة تقدم المهمة بمقدار 1
+      user.currentTaskProgress = (user.currentTaskProgress || 0) + 1;
+      
+      // وضع علامة أنه تم تحديث تقدم المهمة
+      user.taskProgressUpdated = true;
+      
+      await user.save();
+      
+      return res.json({ 
+        success: true, 
+        message: 'Task progress updated',
+        newProgress: user.currentTaskProgress
+      });
+    }
+    
+    res.json({ 
+      success: false, 
+      message: 'No update needed',
+      currentProgress: user.currentTaskProgress
+    });
+  } catch (error) {
+    console.error('Error updating task progress:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 
 
@@ -10343,6 +10382,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
