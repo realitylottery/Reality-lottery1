@@ -1034,51 +1034,39 @@ app.delete('/api/admin/notifications/:id', authMiddleware, async (req, res) => {
 /* ==== API spin العجلة ==== */
 
 
-app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
+app.post("/api/wheel/spin", async (req, res) => {
   try {
-    const { prize, amount } = req.body;
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-    const availableSpins = user.calculateAvailableSpins();
-    if (availableSpins <= 0) return res.status(400).json({ msg: "No spins available" });
+    const { prize, amount } = req.body;
 
-    let spinsUsedIncrement = 1; // نخصم دورة واحدة دائمًا
-    let extraSpinsIncrement = 0;
-    let balanceIncrement = 0;
-    let message = "";
+    // إضافة الجوائز
+    if (prize === "$3") user.balance += 3;
+    if (prize === "$2") user.balance += 2;
+    if (prize === "$1") user.balance += 1;
+    if (prize === "extra") user.extraSpins += 1;
 
-    if (prize === "lose") {
-      message = "Better luck next time!";
-    } else if (prize === "extra") {
-      extraSpinsIncrement = 1; // نضيف دورة إضافية
-      message = "You earned an extra spin!";
-    } else if (prize.startsWith("$") && amount > 0) {
-      balanceIncrement = amount;
-      message = `You won ${prize}! Balance updated.`;
+    // تقليل عدد الدورات فقط إذا لم تكن الجائزة دورة إضافية
+    if (prize !== "extra") {
+      user.availableSpins = Math.max(0, (user.availableSpins ?? 0) - 1);
+    } else {
+      // إذا كانت الجائزة Extra Spin، زود عدد الدورات بمقدار 1
+      user.availableSpins = (user.availableSpins ?? 0) + 1;
     }
-
-    // تحديث المستخدم
-    user.spinsUsed = (user.spinsUsed || 0) + spinsUsedIncrement;
-    user.extraSpins = (user.extraSpins || 0) + extraSpinsIncrement;
-    user.balance = (user.balance || 0) + balanceIncrement;
 
     await user.save();
 
     res.json({
-      success: true,
-      prize,
-      amount: amount || 0,
+      message: `You won ${prize}!`,
       balance: user.balance,
-      availableSpins: user.calculateAvailableSpins(),
-      message
+      availableSpins: user.availableSpins,
     });
   } catch (err) {
-    console.error("Wheel Spin Error:", err);
+    console.error(err);
     res.status(500).json({ msg: "Server error" });
   }
 });
-
 
 
 // Create withdrawal
@@ -10281,6 +10269,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
