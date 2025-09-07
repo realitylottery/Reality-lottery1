@@ -1036,30 +1036,34 @@ app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
       return res.status(400).json({ msg: "No spins available" });
     }
 
+    let spinsChange = -1; // ✅ نخصم واحد دائماً
+    let balanceChange = 0;
     let message = "";
-    
-    // دائماً نخصم لفة واحدة أولاً
-    user.availableSpins -= 1;
 
     if (prize === "lose") {
       message = "Better luck next time!";
     } else if (prize === "extra") {
-      // نضيف لفة إضافية عند الفوز بـ "Extra Spin"
-      user.availableSpins += 1;
+      spinsChange = 0; // نخصم 1 ثم نضيف 1 = ما يتغير العدد
       message = "You earned an extra spin!";
     } else if (prize.startsWith("$") && amount > 0) {
-      user.balance += amount;
+      balanceChange = amount;
       message = `You won ${prize}! Balance updated.`;
     }
 
-    await user.save();
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $inc: { availableSpins: spinsChange, balance: balanceChange }
+      },
+      { new: true } // يرجع نسخة محدثة
+    );
 
     res.json({
       success: true,
       prize,
       amount: amount || 0,
-      balance: user.balance,
-      availableSpins: user.availableSpins,
+      balance: updatedUser.balance,
+      availableSpins: updatedUser.availableSpins,
       message
     });
   } catch (err) {
@@ -1067,7 +1071,6 @@ app.post("/api/wheel/spin", authMiddleware, async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 });
-
 
 
 
@@ -10283,6 +10286,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
