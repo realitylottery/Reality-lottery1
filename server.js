@@ -9391,157 +9391,61 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
-
-
-
   try {
-
-
-
     const user = await User.findById(req.user.id).select('-password');
-
-
-
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-
-
-
-
-
+    // =====> أضف هذا الكود هنا <=====
+    // زيادة availableSpins بناءً على successfulInvites (كل 3 invites = 1 spin)
+    const calculatedSpins = Math.floor((user.successfulInvites || 0) / 3);
+    if (calculatedSpins > (user.availableSpins || 0)) {
+      user.availableSpins = calculatedSpins;
+      await user.save();
+    }
+    // =====> نهاية الإضافة <=====
 
     // التقدم الحقيقي: الدعوات الناجحة + نقطة البونس لو عنده اشتراك
-
-
-
     const currentProgress = Math.min(6, (user.successfulInvites || 0) + (user.subscriptionActive ? 1 : 0));
-
-
-
-
-
-
 
     const expectedReward = calculateTaskReward(user.subscriptionType, currentProgress);
 
-
-
-
-
-
-
     return res.json({
-
-
-
       id: user._id,
-
-
-
       username: user.username,
-
-
-
       fullName: user.fullName,
-
-
-
       email: user.email,
-
-
-
       phone: user.phone,
-
-
-
       balance: user.balance,
-
-
-
       subscriptionType: user.subscriptionType,
-
-
-
       subscriptionActive: user.subscriptionActive,
-
-
-
       subscriptionExpires: user.subscriptionExpires,
-
-
-
       referralCode: user.referralCode,
-
-
-
       referredBy: user.referredBy,
-
-
-
       totalInvites: user.totalInvites,
-
-
-
       successfulInvites: user.successfulInvites,
-
-
-
       currentTaskProgress: user.currentTaskProgress || 0,
-
-
-
       completedTasks: user.completedTasks,
-
       availableSpins: user.availableSpins,
-      
-
-
-
       currentProgress: currentProgress,
-
       lotteryEntries: user.lotteryEntries || 0,
-
       expectedReward,
-
-
-
       canReset: currentProgress >= 2
-
-
-
     });
-
-
-
   } catch (err) {
-
-
-
     console.error('Me error:', err);
-
-
-
     return res.status(500).json({ message: 'Server error' });
-
-
-
   }
-
-
-
 });
+
+
+
+
+
+
+
+
+
 
 
 
@@ -10382,6 +10286,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
