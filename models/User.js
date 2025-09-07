@@ -41,6 +41,15 @@ spinsUsed: { type: Number, default: 0 },
   lastLogin: { type: Date, default: Date.now }
 });
 
+// داخل models/User.js بعد تعريف schema
+userSchema.methods.calculateAvailableSpins = function() {
+  // على سبيل المثال: كل اشتراك فعّال يعطي دورة واحدة
+  if (this.subscriptionActive && this.subscriptionExpires && this.subscriptionExpires > new Date()) {
+    return this.availableSpins ?? 1; // أو أي منطق تحب حسب مشروعك
+  }
+  return 0;
+};
+
 // إنشاء كود دعوة تلقائي قبل الحفظ
 userSchema.pre('save', async function(next) {
   if (this.isNew && !this.referralCode) {
