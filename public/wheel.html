@@ -508,8 +508,9 @@ spinBtn.addEventListener("click", async () => {
 
   setTimeout(async () => {
     const normalizedDeg = deg % 360;
-    const sector = Math.floor(normalizedDeg / 60);
-    const prize = prizes[sector];
+const correctedDeg = (360 - normalizedDeg + 30) % 360; // +30 لتوسيط القطاع
+const sector = Math.floor(correctedDeg / 60);
+const prize = prizes[sector];
 
     try {
       const response = await fetch(`${API_BASE}/api/wheel/spin`, {
