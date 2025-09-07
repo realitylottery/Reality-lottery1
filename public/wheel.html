@@ -7,13 +7,12 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <style>
     :root {
-      --primary-color: #ffd700;  /* Gold */
+      --primary-color: #ffd700;
       --secondary-color: #ffa500;
-      --dark-bg: #000;           /* Black */
-      --card-bg: #111;
+      --dark-bg: #000;
       --text-light: #eee;
-      --error-color: #ff4757;
       --success-color: #2ed573;
+      --error-color: #ff4757;
       --section-1: #e74c3c;
       --section-2: #2ecc71;
       --section-3: #3498db;
@@ -21,403 +20,54 @@
       --section-5: #9b59b6;
       --section-6: #1abc9c;
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background: linear-gradient(135deg, #0f0f0f 0%, #2a2a2a 100%);
-      color: var(--text-light);
-      font-family: 'Segoe UI', Arial, sans-serif;
-      min-height: 100vh;
-      padding: 20px;
-      padding-top: 70px;
-    }
-
-    .home-btn {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      background: var(--primary-color);
-      color: #000;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      font-size: 20px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-      z-index: 100;
-      transition: all 0.3s;
-    }
-
-    .home-btn:hover {
-      transform: scale(1.1);
-      background: var(--secondary-color);
-    }
-
-    .container {
-      max-width: 100%;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    header {
-      width: 100%;
-      padding: 15px;
-      background: linear-gradient(to right, #222, #000);
-      font-size: 24px;
-      font-weight: bold;
-      color: var(--primary-color);
-      box-shadow: 0 5px 15px rgba(255,215,0,0.3);
-      border-bottom: 2px solid var(--primary-color);
-      text-align: center;
-      margin-bottom: 20px;
-      border-radius: 10px;
-    }
-
-    .main-content {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 25px;
-    }
-
-    .wheel-section {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .info-section {
-      width: 100%;
-      text-align: left;
-      background: rgba(0, 0, 0, 0.6);
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 0 20px rgba(255,215,0,0.2);
-      border: 1px solid rgba(255,215,0,0.3);
-    }
-
-    .wheel-container {
-      position: relative;
-      width: 300px;
-      height: 300px;
-      margin: 20px auto;
-      border-radius: 50%;
-      overflow: hidden;
-      box-shadow: 
-        0 0 30px rgba(255,215,0,0.5),
-        inset 0 0 50px rgba(0,0,0,0.8);
-      background: #000;
-      border: 12px solid #2c2c2c;
-    }
-
-    .wheel {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      transition: transform 5s cubic-bezier(0.17, 0.67, 0.21, 0.99);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .wheel-section-item {
-  position: absolute;
-  width: 50%;
-  height: 50%;
-  transform-origin: 100% 100%; /* زاوية الدوران للقطاع */
-  left: 0;
-  top: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
-  font-size: 14px;
-  color: #fff;
-  padding: 0;
-}
-
-/* نخلي النص داخل كل قطاع يثبت للأعلى */
-.wheel-section-item span {
-  transform: rotate(-30deg); /* تعديل بسيط عشان يطلع النص مستقيم */
-  display: inline-block;
-}
-    .section-1 { transform: rotate(0deg); background: var(--section-1); }
-    .section-2 { transform: rotate(60deg); background: var(--section-2); }
+    body { background:#111; color:var(--text-light); font-family:Arial,sans-serif; padding:20px; padding-top:70px; }
+    .home-btn { position:fixed; top:20px; left:20px; background:var(--primary-color); color:#000; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; z-index:100; }
+    .container { max-width:700px; margin:0 auto; display:flex; flex-direction:column; align-items:center; gap:20px; }
+    header { width:100%; text-align:center; font-size:24px; font-weight:bold; color:var(--primary-color); margin-bottom:20px; }
+    .wheel-container { position:relative; width:320px; height:320px; border-radius:50%; overflow:hidden; border:10px solid #222; margin-bottom:15px; }
+    .wheel { width:100%; height:100%; border-radius:50%; position:relative; transition: transform 5s cubic-bezier(0.17, 0.67, 0.21, 0.99); }
+    .wheel-section-item { position:absolute; width:50%; height:50%; transform-origin:100% 100%; left:0; top:0; display:flex; align-items:center; justify-content:center; font-weight:bold; text-shadow:1px 1px 3px rgba(0,0,0,0.7); font-size:16px; color:#fff; }
+    .section-1 { transform: rotate(0deg);   background: var(--section-1); }
+    .section-2 { transform: rotate(60deg);  background: var(--section-2); }
     .section-3 { transform: rotate(120deg); background: var(--section-3); }
     .section-4 { transform: rotate(180deg); background: var(--section-4); }
     .section-5 { transform: rotate(240deg); background: var(--section-5); }
     .section-6 { transform: rotate(300deg); background: var(--section-6); }
-
-    .center-circle {
-      position: absolute;
-      width: 60px;
-      height: 60px;
-      background: var(--primary-color);
-      border-radius: 50%;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 10;
-      box-shadow: 0 0 20px rgba(255,215,0,0.8);
-      border: 4px solid #ffed4e;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #000;
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    .pointer {
-      position: absolute;
-      top: -30px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 20px solid transparent;
-      border-right: 20px solid transparent;
-      border-bottom: 35px solid var(--primary-color);
-      filter: drop-shadow(0 0 10px var(--primary-color));
-      z-index: 20;
-    }
-
-    .spin-btn {
-      margin-top: 20px;
-      background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
-      color: #000;
-      padding: 15px 35px;
-      font-size: 18px;
-      font-weight: bold;
-      border-radius: 50px;
-      border: none;
-      cursor: pointer;
-      transition: 0.3s;
-      box-shadow: 0 5px 15px rgba(255,215,0,0.5);
-      width: 80%;
-      max-width: 300px;
-    }
-
-    .spin-btn:hover:enabled {
-      transform: scale(1.05) translateY(-5px);
-      box-shadow: 0 8px 20px rgba(255,215,0,0.7);
-    }
-
-    .spin-btn:disabled {
-      background: #444;
-      color: #999;
-      cursor: not-allowed;
-      box-shadow: none;
-      transform: none;
-    }
-
-    .result {
-      margin-top: 20px;
-      font-size: 20px;
-      font-weight: bold;
-      min-height: 35px;
-      padding: 12px;
-      border-radius: 10px;
-      background: rgba(0,0,0,0.7);
-      box-shadow: 0 0 15px rgba(255,215,0,0.3);
-      border: 1px solid rgba(255,215,0,0.2);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-    }
-
-    .success {
-      color: var(--success-color);
-      animation: pulse 1.5s infinite;
-    }
-
-    .error {
-      color: var(--error-color);
-    }
-
-    .status-message {
-      margin-top: 15px;
-      font-size: 16px;
-      color: #aaa;
-      text-align: center;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-
-    .loading {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255,255,255,.3);
-      border-radius: 50%;
-      border-top-color: var(--primary-color);
-      animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .prizes-list {
-      list-style: none;
-      padding: 0;
-      margin-top: 15px;
-    }
-
-    .prizes-list li {
-      padding: 10px;
-      margin: 8px 0;
-      background: rgba(255,255,255,0.1);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 16px;
-    }
-
-    .prize-icon {
-      font-size: 20px;
-      width: 30px;
-      text-align: center;
-    }
-
-    h2 {
-      color: var(--primary-color);
-      border-bottom: 2px solid var(--primary-color);
-      padding-bottom: 8px;
-      margin-top: 0;
-      font-size: 20px;
-    }
-
-    .user-info {
-      background: rgba(255,215,0,0.1);
-      padding: 12px;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      font-size: 14px;
-    }
-
-    /* Medium and large screen improvements */
-    @media (min-width: 768px) {
-      body {
-        padding: 30px;
-        padding-top: 80px;
-      }
-      
-      .container {
-        max-width: 700px;
-      }
-      
-      .main-content {
-        flex-direction: row;
-        align-items: flex-start;
-      }
-      
-      .wheel-section {
-        width: 55%;
-      }
-      
-      .info-section {
-        width: 45%;
-      }
-      
-      .wheel-container {
-        width: 320px;
-        height: 320px;
-      }
-    }
-
-    /* Large screen improvements */
-    @media (min-width: 1024px) {
-      .container {
-        max-width: 1000px;
-      }
-      
-      .wheel-container {
-        width: 360px;
-        height: 360px;
-      }
-      
-      .wheel-section-item {
-        font-size: 20px;
-        padding-left: 60px;
-        padding-bottom: 30px;
-      }
-    }
+    .center-circle { position:absolute; width:60px; height:60px; background:var(--primary-color); border-radius:50%; top:50%; left:50%; transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; color:#000; font-weight:bold; font-size:14px; cursor:pointer; z-index:10; }
+    .pointer { position:absolute; top:-30px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:20px solid transparent; border-right:20px solid transparent; border-bottom:35px solid var(--primary-color); z-index:20; }
+    .spin-btn { background:linear-gradient(to bottom,var(--primary-color),var(--secondary-color)); color:#000; padding:15px 30px; font-size:18px; font-weight:bold; border-radius:50px; border:none; cursor:pointer; margin-bottom:10px; }
+    .spin-btn:disabled { background:#444; color:#999; cursor:not-allowed; }
+    .result { font-size:20px; font-weight:bold; text-align:center; min-height:35px; margin-top:10px; }
+    .user-info { background:rgba(255,215,0,0.1); padding:12px; border-radius:10px; font-size:14px; }
   </style>
 </head>
 <body>
 
-<a href="index.html" class="home-btn">
-  <i class="fas fa-home"></i>
-</a>
+<a href="index.html" class="home-btn"><i class="fas fa-home"></i></a>
 
 <div class="container">
-  <header>
-    <i class="fas fa-star"></i> Lucky Wheel <i class="fas fa-star"></i>
-  </header>
+  <header><i class="fas fa-star"></i> Lucky Wheel <i class="fas fa-star"></i></header>
 
-  <div class="main-content">
-    <div class="wheel-section">
-      <div class="wheel-container">
-        <div class="wheel" id="wheel">
-          <div class="wheel-section-item section-1">$3</div>
-          <div class="wheel-section-item section-2">$2</div>
-          <div class="wheel-section-item section-3">$1</div>
-          <div class="wheel-section-item section-4">Better Luck</div>
-          <div class="wheel-section-item section-5">Better Luck</div>
-          <div class="wheel-section-item section-6">Extra Spin</div>
-          <div class="center-circle">SPIN</div>
-        </div>
-        <div class="pointer"></div>
-      </div>
-
-      <button id="spinBtn" class="spin-btn">
-        <i class="fas fa-redo-alt"></i> Spin Now
-      </button>
-
-      <div class="result" id="result">Subscribe to unlock your spin!</div>
-      <div class="status-message" id="statusMessage"></div>
+  <div class="wheel-container">
+    <div class="wheel" id="wheel">
+      <div class="wheel-section-item section-1" data-prize="$3" data-type="money" data-amount="3">$3</div>
+      <div class="wheel-section-item section-2" data-prize="$2" data-type="money" data-amount="2">$2</div>
+      <div class="wheel-section-item section-3" data-prize="$1" data-type="money" data-amount="1">$1</div>
+      <div class="wheel-section-item section-4" data-prize="lose" data-type="lose" data-amount="0">Better Luck</div>
+      <div class="wheel-section-item section-5" data-prize="lose" data-type="lose" data-amount="0">Better Luck</div>
+      <div class="wheel-section-item section-6" data-prize="extra" data-type="extra" data-amount="0">Extra Spin</div>
+      <div class="center-circle">SPIN</div>
     </div>
+    <div class="pointer"></div>
+  </div>
 
-    <div class="info-section">
-      <h2><i class="fas fa-gift"></i> Prizes</h2>
-      <ul class="prizes-list">
-        <li><span class="prize-icon">💰</span> <span>$1 - Cash prize</span></li>
-        <li><span class="prize-icon">💰</span> <span>$2 - Cash prize</span></li>
-        <li><span class="prize-icon">💰</span> <span>$3 - Cash prize</span></li>
-        <li><span class="prize-icon">❌</span> <span>Better Luck - Try again</span></li>
-        <li><span class="prize-icon">🔄</span> <span>Extra Spin - Spin again</span></li>
-      </ul>
+  <button id="spinBtn" class="spin-btn">Spin Now</button>
+  <div class="result" id="result">Subscribe to unlock your spin!</div>
 
-      <h2><i class="fas fa-user"></i> Your Info</h2>
-      <div class="user-info">
-        <div id="userStatus">Checking your status...</div>
-        <div id="userBalance">Balance: $0</div>
-        <div id="availableSpins">Available Spins: 0</div>
-      </div>
-
-      <h2><i class="fas fa-info-circle"></i> How to Play</h2>
-      <p>1. You must have an active subscription</p>
-      <p>2. Each subscription period gives you one spin</p>
-      <p>3. Win cash prizes or extra spins</p>
-    </div>
+  <div class="user-info">
+    <div id="userStatus">Checking your status...</div>
+    <div id="userBalance">Balance: $0</div>
+    <div id="availableSpins">Available Spins: 0</div>
   </div>
 </div>
 
@@ -428,101 +78,80 @@ const token = localStorage.getItem("rl_token");
 const wheel = document.getElementById("wheel");
 const spinBtn = document.getElementById("spinBtn");
 const result = document.getElementById("result");
-const statusMessage = document.getElementById("statusMessage");
 const userStatus = document.getElementById("userStatus");
 const userBalance = document.getElementById("userBalance");
+const availableSpinsDisplay = document.getElementById("availableSpins");
+
+let availableSpins = 0;
 let canSpin = false;
 
-// الجوائز مع type
-const prizes = [
-  { label: "$3", type: "money", amount: 3, section: 0, prize: "$3" },
-  { label: "$2", type: "money", amount: 2, section: 1, prize: "$2" },
-  { label: "$1", type: "money", amount: 1, section: 2, prize: "$1" },
-  { label: "Better Luck", type: "lose", amount: 0, section: 3, prize: "lose" },
-  { label: "Better Luck", type: "lose", amount: 0, section: 4, prize: "lose" },
-  { label: "Extra Spin", type: "extra", amount: 0, section: 5, prize: "extra" }
-];
-
-  let availableSpins = 0;
-const availableSpinsDisplay = document.getElementById("availableSpins");
-// التحقق من الاشتراك والدوران
-
-    
-  async function checkEligibility() {
+// تحقق من حالة المستخدم
+async function checkEligibility() {
   if (!token) {
     spinBtn.disabled = true;
     result.textContent = "Login & subscribe to unlock your spin!";
-    statusMessage.textContent = "You need to be logged in to spin the wheel";
     userStatus.textContent = "Not logged in";
     return;
   }
-
   try {
     const res = await fetch(`${API_BASE}/api/auth/me`, {
       headers: { Authorization: "Bearer " + token }
     });
     if (!res.ok) throw new Error("Failed to fetch user data");
-
     const data = await res.json();
-    const userData = { ...data };
-    localStorage.setItem("rl_user", JSON.stringify(userData));
 
     availableSpins = data.availableSpins ?? 0;
     availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
+    userBalance.textContent = `Balance: $${data.balance ?? 0}`;
 
     if (availableSpins > 0) {
       canSpin = true;
       spinBtn.disabled = false;
       result.textContent = `You have ${availableSpins} spin${availableSpins > 1 ? 's' : ''} available 🎉`;
-      statusMessage.textContent = "Ready to spin!";
       userStatus.textContent = "You can spin now";
       userStatus.style.color = "var(--success-color)";
     } else {
       canSpin = false;
       spinBtn.disabled = true;
       result.textContent = "No spins available ❌";
-      statusMessage.textContent = "Get more invites to unlock spins";
       userStatus.textContent = "No spins available";
       userStatus.style.color = "var(--error-color)";
     }
   } catch (err) {
-    console.error("Eligibility check error:", err);
+    console.error("Eligibility error:", err);
     spinBtn.disabled = true;
-    result.innerHTML = `<span class="error">Error checking eligibility</span>`;
-    statusMessage.textContent = "Please check your connection and try again";
+    result.textContent = "Error checking eligibility ❌";
     userStatus.textContent = "Error loading status";
     userStatus.style.color = "var(--error-color)";
   }
-  }
+}
 
-  
 // دوران العجلة
 spinBtn.addEventListener("click", async () => {
-  if (!canSpin) return;  // لا تفعل شيء إذا لم يكن المستخدم مؤهلاً
+  if (!canSpin) return;
 
-  const spins = 6; // عدد القطاعات
-  const sectorDeg = 360 / spins;
+  const sectors = document.querySelectorAll(".wheel-section-item");
+  const sectorCount = sectors.length;
+  const sectorDeg = 360 / sectorCount;
 
-  // دوران عشوائي كبير لإعطاء الإحساس بالدوران
   const extraRotation = Math.floor(Math.random() * 360);
   const deg = 2000 + extraRotation;
-  wheel.style.transition = 'transform 5s cubic-bezier(0.17, 0.67, 0.21, 0.99)';
+  wheel.style.transition = 'transform 5s cubic-bezier(0.17,0.67,0.21,0.99)';
   wheel.style.transform = `rotate(${deg}deg)`;
 
   spinBtn.disabled = true;
-  result.innerHTML = `<div class="loading"></div> Spinning...`;
-  statusMessage.textContent = "";
+  result.textContent = "Spinning...";
 
   setTimeout(async () => {
-    const spins = 6; // عدد القطاعات
-    const sectorDeg = 360 / spins;
-
     const normalizedDeg = deg % 360;
-    const sectorIndex = Math.floor(((normalizedDeg + sectorDeg / 2) % 360) / sectorDeg);
+    const sectorIndex = Math.floor(((360 - normalizedDeg + sectorDeg/2) % 360) / sectorDeg);
+    const winningSector = sectors[sectorIndex];
 
-    const prize = prizes[sectorIndex];
-
-    console.log("deg:", deg, "normalizedDeg:", normalizedDeg, "sectorIndex:", sectorIndex, "prize:", prize);
+    const prize = {
+      prize: winningSector.dataset.prize,
+      type: winningSector.dataset.type,
+      amount: parseInt(winningSector.dataset.amount)
+    };
 
     try {
       const response = await fetch(`${API_BASE}/api/wheel/spin`, {
@@ -531,10 +160,7 @@ spinBtn.addEventListener("click", async () => {
           "Content-Type": "application/json",
           Authorization: "Bearer " + token
         },
-        body: JSON.stringify({
-          prize: prize.prize,
-          amount: prize.amount
-        })
+        body: JSON.stringify(prize)
       });
 
       if (!response.ok) {
@@ -544,34 +170,15 @@ spinBtn.addEventListener("click", async () => {
 
       const spinResult = await response.json();
 
-      // تحديث عدد الدورات مباشرة
       availableSpins = spinResult.availableSpins ?? 0;
       availableSpinsDisplay.textContent = `Available Spins: ${availableSpins}`;
+      userBalance.textContent = `Balance: $${spinResult.balance ?? 0}`;
       canSpin = availableSpins > 0;
       spinBtn.disabled = !canSpin;
 
-      // تحديث الرصيد
-      userBalance.textContent = `Balance: $${spinResult.balance ?? 0}`;
+      result.textContent = spinResult.message;
 
-      // عرض رسالة النتيجة
-      result.innerHTML = `<span class="success">${spinResult.message}</span>`;
-
-      // تحديث حالة المستخدم
-      if (availableSpins <= 0) {
-        statusMessage.textContent = "Get more invites to unlock spins";
-        userStatus.textContent = "No spins available";
-        userStatus.style.color = "var(--error-color)";
-      } else if (prize.type === "extra") {
-        statusMessage.textContent = "You earned an extra spin! Ready to spin again!";
-        userStatus.textContent = "You can spin now";
-        userStatus.style.color = "var(--success-color)";
-      } else {
-        statusMessage.textContent = "Ready to spin again!";
-        userStatus.textContent = "You can spin now";
-        userStatus.style.color = "var(--success-color)";
-      }
-
-      // تحديث بيانات المستخدم في localStorage
+      // تحديث بيانات المستخدم
       const currentUser = JSON.parse(localStorage.getItem("rl_user") || "{}");
       const updatedUser = {
         ...currentUser,
@@ -581,17 +188,14 @@ spinBtn.addEventListener("click", async () => {
       localStorage.setItem("rl_user", JSON.stringify(updatedUser));
 
     } catch (err) {
-      console.error("Error processing spin:", err);
-      result.innerHTML = `<span class="error">${err.message || "Error processing spin"}</span>`;
-      statusMessage.textContent = "Please try again later";
-      wheel.style.transform = 'rotate(0deg)';
-      canSpin = false;
+      console.error("Spin error:", err);
+      result.textContent = err.message || "Error processing spin";
       spinBtn.disabled = true;
       setTimeout(checkEligibility, 2000);
     }
   }, 5000);
 });
-// عند تحميل الصفحة
+
 checkEligibility();
 </script>
 
