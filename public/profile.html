@@ -282,47 +282,47 @@
     }
 
     function calculateReward(subscriptionType, currentTaskProgress){
-  const subType = (subscriptionType||'none').toLowerCase();
+  const subType = (subscriptionType || 'none').toLowerCase();
   const rewards = REWARD_AMOUNTS[subType] || REWARD_AMOUNTS.none;
   
-  if(currentTaskProgress >= 6) return rewards[6];
-  if(currentTaskProgress >= 3) return rewards[3]; // هذا سيعطي نفس المكافأة للمستويات 3، 4، 5
-  if(currentTaskProgress >= 2) return rewards[2];
+  // تأكد أن هذا يتوافق مع المنطق في Backend
+  if (currentTaskProgress >= 6) return rewards[6];
+  if (currentTaskProgress >= 5) return rewards[5] || rewards[3];
+  if (currentTaskProgress >= 4) return rewards[4] || rewards[3];
+  if (currentTaskProgress >= 3) return rewards[3];
+  if (currentTaskProgress >= 2) return rewards[2];
   
   return 0;
     }
 
-    async function completeTask(userId, rewardAmount, subscriptionType, isReset=false){
-  try{
-    console.log("Sending task completion request:", { userId, isReset });
+    // احذف دالة completeTask الحالية واستبدلها بهذه:
+async function claimReward(rewardAmount, subscriptionType) {
+  try {
+    console.log("Claiming reward for progress...");
     
-    const response = await fetch(API_BASE+'/api/tasks/complete', {
+    const response = await fetch(API_BASE + '/api/tasks/claim-reward', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer '+getToken(),
+        'Authorization': 'Bearer ' + getToken(),
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        userId: userId,
-        isReset: isReset
-      })
+      }
+      // لا حاجة لإرسال بيانات - السيرفر يعتمد على تقدم المستخدم الحالي
     });
     
     const responseData = await response.json();
-    console.log("Server response:", responseData);
+    console.log("Claim reward response:", responseData);
     
-    if(response.ok){
-      showRewardNotification(rewardAmount, subscriptionType, isReset); 
+    if (response.ok) {
+      showRewardNotification(rewardAmount, subscriptionType, true);
       return responseData;
     } else {
-      console.error('Failed to complete task:', responseData.message); 
-      throw new Error(responseData.message || 'Failed to complete task');
+      throw new Error(responseData.message || 'Failed to claim reward');
     }
   } catch(err) {
-    console.error('Error completing task:', err); 
+    console.error('Error claiming reward:', err);
     throw err;
   }
-    }
+}
 
     function updateResetButton(progress, subscriptionType){
   const resetBtn = document.getElementById('resetTaskBtn'); 
@@ -463,6 +463,7 @@ if (user.subscriptionActive && user.subscriptionType !== 'None' &&
 
 // Reset button event
 const resetBtn = document.getElementById('resetTaskBtn');
+// احذف الكود الحالي لـ resetBtn.onclick واستبدله بهذا:
 resetBtn.onclick = async () => {
   if (!confirm("Are you sure you want to reset the task and claim your reward?")) {
     return;
@@ -473,15 +474,19 @@ resetBtn.onclick = async () => {
     resetBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
     
     const rewardAmount = calculateReward(user.subscriptionType, user.currentTaskProgress || 0);
-    const result = await completeTask(user.id || user._id, rewardAmount, user.subscriptionType, true);
+    
+    // استخدام نقطة النهاية الجديدة
+    const result = await claimReward(rewardAmount, user.subscriptionType);
     
     if (result && result.success) {
       showRewardNotification(rewardAmount, user.subscriptionType, true);
       
       // تحديث البيانات من الاستجابة
-      user.balance = result.newBalance || user.balance;
-      user.completedTasks = result.completedTasks || user.completedTasks;
-      user.currentTaskProgress = result.currentTaskProgress || 0;
+      if (result.data) {
+        user.balance = result.data.newBalance || user.balance;
+        user.completedTasks = (user.completedTasks || 0) + 1;
+        user.currentTaskProgress = 0;
+      }
       
       // حساب قيمة lotteryEntries الجديدة
       const subscriptionBonusMap = { 
@@ -510,11 +515,15 @@ resetBtn.onclick = async () => {
       
       // تحديث تفاصيل التقدم
       updateProgressBreakdown(0, user.subscriptionType, user.successfulInvites, 0);
+      
+      // تحديث المكافأة التالية
+      document.getElementById('nextReward').textContent = "Complete more steps to earn a reward";
+      
     } else {
       throw new Error('Failed to reset task');
     }
   } catch(err) {
-    alert('Error: ' + (err.message || 'Failed to reset task'));
+    alert('Error: ' + (err.message || 'Failed to claim reward'));
     resetBtn.disabled = false;
     resetBtn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Reset Task & Claim Reward';
   }
