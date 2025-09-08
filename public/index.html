@@ -597,54 +597,177 @@ html, body {
       }
     }
 
-  #notification-system {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    max-width: 400px;
-    width: 90%;
-    z-index: 9999;
-  }
+/* نظام الإشعارات المحسن */
+.notification-system {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  max-width: 400px;
+  width: 90%;
+}
 
+.notification {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  border-left: 4px solid var(--primary-color);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  backdrop-filter: blur(10px);
+}
+
+.notification.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.notification.hide {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.notification::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  animation: progressBar 5s linear forwards;
+}
+
+@keyframes progressBar {
+  0% { width: 100%; }
+  100% { width: 0%; }
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.notification-title {
+  color: var(--primary-color);
+  font-weight: bold;
+  font-size: 16px;
+  margin: 0;
+  flex: 1;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 10px;
+  transition: color 0.3s ease;
+}
+
+.notification-close:hover {
+  color: #ff6b6b;
+}
+
+.notification-content {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  color: #e0e0e0;
+}
+
+.notification-link {
+  display: inline-block;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 8px;
+  transition: color 0.3s ease;
+}
+
+.notification-link:hover {
+  color: var(--secondary-color);
+  text-decoration: underline;
+}
+
+.notification-icon {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 24px;
+  color: var(--primary-color);
+}
+
+.notification.has-icon {
+  padding-left: 60px;
+}
+
+/* أنواع الإشعارات المختلفة */
+.notification.success {
+  border-left-color: #4CAF50;
+}
+
+.notification.success .notification-icon {
+  color: #4CAF50;
+}
+
+.notification.error {
+  border-left-color: #F44336;
+}
+
+.notification.error .notification-icon {
+  color: #F44336;
+}
+
+.notification.warning {
+  border-left-color: #FFC107;
+}
+
+.notification.warning .notification-icon {
+  color: #FFC107;
+}
+
+.notification.info {
+  border-left-color: #2196F3;
+}
+
+.notification.info .notification-icon {
+  color: #2196F3;
+}
+
+/* تأثيرات للهواتف */
+@media (max-width: 768px) {
+  .notification-system {
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-width: none;
+  }
+  
   .notification {
-    background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
-    border: 1px solid var(--primary-color);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-    color: #fff;
-    animation: fadeInScale 0.4s ease;
-    position: relative;
+    padding: 15px;
   }
-
-  .notification h4 {
-    margin: 0 0 8px;
-    font-size: 18px;
-    color: var(--primary-color);
+  
+  .notification.has-icon {
+    padding-left: 50px;
   }
-
-  .notification p {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.4;
+  
+  .notification-icon {
+    left: 15px;
+    font-size: 20px;
   }
-
-  .notification button {
-    background: none;
-    border: none;
-    color: #ff6b6b;
-    cursor: pointer;
-    font-size: 22px;
-    position: absolute;
-    top: 8px;
-    right: 12px;
-  }
-
-  @keyframes fadeInScale {
-    from { opacity: 0; transform: scale(0.8) translate(-50%, -50%); }
-    to { opacity: 1; transform: scale(1) translate(-50%, -50%); }
-  }
+}
   </style>
 </head>
 <body>
@@ -935,88 +1058,160 @@ function updateAuthUI() {
   // ... باقي الكود
 
 
- let notificationsQueue = []; // طابور الإشعارات
-  let isShowing = false;       // هل يوجد إشعار معروض الآن؟
+// نظام الإشعارات المحسن
+class NotificationSystem {
+  constructor() {
+    this.queue = [];
+    this.isShowing = false;
+    this.container = null;
+    this.init();
+  }
 
-  async function loadNotifications() {
+  init() {
+    // إنشاء حاوية الإشعارات
+    this.container = document.createElement('div');
+    this.container.className = 'notification-system';
+    document.body.appendChild(this.container);
+  }
+
+  async loadNotifications() {
     try {
       const response = await fetch('https://realitylottery.koyeb.app/api/notifications?active=true');
       if (!response.ok) throw new Error('Failed to fetch notifications');
 
       const data = await response.json();
+      const notifications = data.notifications || data;
 
-      if (Array.isArray(data)) {
-        notificationsQueue = data;
-      } else if (data.notifications && Array.isArray(data.notifications)) {
-        notificationsQueue = data.notifications;
-      }
-
-      if (notificationsQueue.length > 0) {
-        showNextNotification();
+      if (Array.isArray(notifications) && notifications.length > 0) {
+        notifications.forEach(notification => this.addToQueue(notification));
+        this.showNext();
       }
     } catch (error) {
       console.error('Error loading notifications:', error);
     }
   }
 
-  function showNextNotification() {
-    if (isShowing || notificationsQueue.length === 0) return;
+  addToQueue(notification) {
+    this.queue.push(notification);
+  }
 
-    isShowing = true;
-    const container = document.getElementById('notification-system');
-    container.innerHTML = '';
+  showNext() {
+    if (this.isShowing || this.queue.length === 0) return;
 
-    const notification = notificationsQueue.shift(); // أخذ أول إشعار
+    this.isShowing = true;
+    const notification = this.queue.shift();
+    this.showNotification(notification);
+  }
 
-    const el = document.createElement('div');
-    el.className = 'notification';
-    el.innerHTML = `
-      <button onclick="closeNotification()">&times;</button>
-      <h4>${notification.title || 'Notice'}</h4>
-      <p>${notification.message || 'No message provided'}</p>
-      ${notification.link ? `<a href="${notification.link}" 
-         style="display:block;margin-top:10px;color:var(--primary-color);font-size:13px;">
-         ${notification.linkText || 'Learn more'}
-      </a>` : ''}
+  showNotification(notification) {
+    const notificationEl = document.createElement('div');
+    notificationEl.className = `notification ${notification.type || 'info'}`;
+    
+    if (notification.type) {
+      notificationEl.classList.add('has-icon');
+    }
+
+    const icon = this.getIconForType(notification.type);
+    
+    notificationEl.innerHTML = `
+      ${icon ? `<div class="notification-icon">${icon}</div>` : ''}
+      <div class="notification-header">
+        <h4 class="notification-title">${notification.title || 'Notice'}</h4>
+        <button class="notification-close" onclick="notificationSystem.close(this.parentElement.parentElement)">
+          &times;
+        </button>
+      </div>
+      <div class="notification-content">
+        ${notification.message || 'No message provided'}
+      </div>
+      ${notification.link ? `
+        <a href="${notification.link}" class="notification-link" target="_blank">
+          ${notification.linkText || 'Learn more'} →
+        </a>
+      ` : ''}
     `;
 
-    container.appendChild(el);
+    this.container.appendChild(notificationEl);
+
+    // إضافة class للظهور بعد فترة قصيرة
+    setTimeout(() => {
+      notificationEl.classList.add('show');
+    }, 100);
+
+    // إغلاق تلقائي بعد 5 ثواني
+    const autoCloseTimer = setTimeout(() => {
+      this.close(notificationEl);
+    }, 5000);
+
+    // حفظ المؤقت للإلغاء إذا أغلق المستخدم يدوياً
+    notificationEl._autoCloseTimer = autoCloseTimer;
   }
 
-  function closeNotification() {
-    const container = document.getElementById('notification-system');
-    container.innerHTML = '';
-    isShowing = false;
+  getIconForType(type) {
+    const icons = {
+      success: '✅',
+      error: '❌',
+      warning: '⚠️',
+      info: 'ℹ️',
+      default: '📢'
+    };
+    return icons[type] || icons.default;
+  }
 
-    // عرض الإشعار التالي إذا وجد
-    if (notificationsQueue.length > 0) {
-      setTimeout(showNextNotification, 300); // مهلة صغيرة قبل العرض التالي
+  close(notificationEl) {
+    if (notificationEl._autoCloseTimer) {
+      clearTimeout(notificationEl._autoCloseTimer);
     }
+
+    notificationEl.classList.remove('show');
+    notificationEl.classList.add('hide');
+
+    setTimeout(() => {
+      if (notificationEl.parentNode) {
+        notificationEl.parentNode.removeChild(notificationEl);
+      }
+      this.isShowing = false;
+      this.showNext();
+    }, 500);
   }
 
-  // تحميل الإشعارات عند فتح الصفحة
-  window.addEventListener('load', loadNotifications);
-  window.closeNotification = closeNotification;
-
-
-
-// Add animation styles
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+  // دالة لإضافة إشعارات يدوياً
+  showCustomNotification(title, message, type = 'info', link = null, linkText = null) {
+    this.addToQueue({
+      title,
+      message,
+      type,
+      link,
+      linkText
+    });
+    this.showNext();
   }
+}
+
+// تهيئة النظام
+const notificationSystem = new NotificationSystem();
+
+// تحميل الإشعارات عند فتح الصفحة
+window.addEventListener('load', () => {
+  notificationSystem.loadNotifications();
   
-  .notification {
-    transition: transform 0.3s ease, opacity 0.3s ease;
-  }
-  
-  .notification:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-  }
-`;
+  // إضافة إشعار ترحيبي (اختياري)
+  setTimeout(() => {
+    notificationSystem.showCustomNotification(
+      'Welcome!',
+      'Thank you for visiting RealityLottery. Good luck!',
+      'info'
+    );
+  }, 2000);
+});
+
+// جعل النظام متاحاً globally للاستخدام من أي مكان
+window.notificationSystem = notificationSystem;
+
+// دالة مساعدة للاستخدام السريع
+window.showNotification = (title, message, type = 'info') => {
+  notificationSystem.showCustomNotification(title, message, type);
+};
 document.head.appendChild(style);
       // Random names, cities, and plans
 const names = ["John", "Michael", "Emily", "Sarah", "David", "Sophia", "James", "Emma", "Daniel", "Olivia"];
