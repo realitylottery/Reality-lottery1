@@ -7585,40 +7585,47 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
     task.completed = completed;
     task.completedAt = completed ? new Date() : null;
     
-    // إذا كان المستخدم يكمل المهمة، حساب المكافأة
     let reward = 0;
+    let autoClaimed = false;
+    
     if (completed && !oldCompletedStatus) {
-      // الحصول على نوع الاشتراك للمستخدم (افتراضي 'NONE')
+      // الحصول على بيانات المستخدم
       const user = await User.findById(userId);
       const subscriptionType = user?.subscriptionType || 'NONE';
       
-      // حساب التقدم (هنا يمكنك تعديله حسب منطق تطبيقك)
-      const progress = calculateProgress(task); // دالة افتراضية تحتاج إلى تنفيذها
+      // زيادة عدد المهام المكتملة
+      user.completedTasks = (user.completedTasks || 0) + 1;
+      const currentProgress = user.completedTasks;
       
-      // حساب المكافأة باستخدام الدالة المطلوبة
-      reward = calculateTaskReward(subscriptionType, progress);
+      // التحقق إذا كان التقدم 6 للمكافأة التلقائية
+      if (currentProgress === 6) {
+        reward = calculateTaskReward(subscriptionType, 6);
+        user.balance += reward;
+        user.completedTasks = 0; // إعادة تعيين العد
+        autoClaimed = true;
+        
+        // تسجيل المعاملة
+        await Transaction.create({
+          user: userId,
+          amount: reward,
+          type: 'TASK_REWARD_AUTO',
+          description: `مكافأة تلقائية عند التقدم 6: ${task.title}`
+        });
+      }
       
-      // تحديث رصيد المستخدم
-      user.balance += reward;
       await user.save();
-      
-      // تسجيل المعاملة إذا لزم الأمر
-      await Transaction.create({
-        user: userId,
-        amount: reward,
-        type: 'TASK_REWARD',
-        description: `مكافأة إكمال المهمة: ${task.title}`
-      });
     }
     
     await task.save();
 
     res.status(200).json({
       success: true,
-      message: `تم ${completed ? 'إكمال' : 'تعطيل إكمال'} المهمة بنجاح`,
+      message: `تم ${completed ? 'إكمال' : 'تعطيل إكمال'} المهمة بنجاح${autoClaimed ? ' ومكافأة تلقائية' : ''}`,
       data: {
         task,
-        reward: completed ? reward : 0
+        reward: completed ? reward : 0,
+        autoClaimed,
+        currentProgress: autoClaimed ? 0 : (await User.findById(userId)).completedTasks
       }
     });
 
@@ -7640,7 +7647,78 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
   }
 });
 
-// دالة حساب المكافآت كما طلبت
+// نقطة نهاية جديدة لسحب المكافأة عند التقدم 4 أو 5
+app.post("/api/tasks/claim-reward", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // الحصول على بيانات المستخدم
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'المستخدم غير موجود'
+      });
+    }
+
+    // حساب التقدم الحالي
+    const currentProgress = user.completedTasks || 0;
+    
+    // التحقق إذا كان التقدم 4 أو 5
+    if (currentProgress !== 4 && currentProgress !== 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'يمكن سحب المكافأة فقط عندما يكون التقدم 4 أو 5'
+      });
+    }
+    
+    // حساب المكافأة
+    const reward = calculateTaskReward(user.subscriptionType, currentProgress);
+    
+    if (reward <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'لا توجد مكافأة متاحة للسحب'
+      });
+    }
+    
+    // منح المكافأة للمستخدم
+    user.balance += reward;
+    user.completedTasks = 0; // إعادة تعيين التقدم
+    
+    await user.save();
+    
+    // تسجيل المعاملة
+    await Transaction.create({
+      user: userId,
+      amount: reward,
+      type: 'TASK_REWARD_CLAIM',
+      description: `سحب مكافأة عند التقدم ${currentProgress}`
+    });
+    
+    res.status(200).json({
+      success: true,
+      message: `تم سحب المكافأة بنجاح: $${reward}`,
+      data: {
+        reward: reward,
+        newBalance: user.balance,
+        progressBeforeReset: currentProgress
+      }
+    });
+
+  } catch (err) {
+    console.error('خطأ في سحب المكافأة:', err);
+    
+    res.status(500).json({
+      success: false,
+      message: 'خطأ داخلي في الخادم',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+});
+
+// دالة حساب المكافآت
 function calculateTaskReward(subscriptionType, progress) {
   const rewards = {
     'BASIC': { 2: 5, 3: 8, 4: 8, 5: 8, 6: 20 },
@@ -7664,16 +7742,14 @@ function calculateTaskReward(subscriptionType, progress) {
   return 0;
 }
 
-// دالة مساعدة لحساب التقدم (تحتاج إلى تعديلها حسب منطق تطبيقك)
+// دالة مساعدة لحساب التقدم (يمكنك تعديلها حسب احتياجاتك)
 function calculateProgress(task) {
-  // هذا مثال - يمكنك تعديله حسب احتياجاتك
   // يمكن أن يعتمد على تعقيد المهمة، وقت إكمالها، إلخ.
+  if (task.difficulty === 'hard') return 3; // مهمة صعبة = 3 نقاط
+  if (task.difficulty === 'medium') return 2; // متوسطة = 2 نقطة
+  if (task.difficulty === 'easy') return 1; // سهلة = 1 نقطة
   
-  if (task.difficulty === 'hard') return 6;
-  if (task.difficulty === 'medium') return 4;
-  if (task.difficulty === 'easy') return 2;
-  
-  return 3; // افتراضي
+  return 1; // افتراضي: مهمة عادية = 1 نقطة
 }
 
 
@@ -10203,6 +10279,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
