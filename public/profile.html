@@ -240,11 +240,11 @@
     const API_BASE = 'https://realitylottery.koyeb.app';
     const LS_TOKEN = 'rl_token';
     const REWARD_AMOUNTS = { 
-      'basic': { 2: 5, 3: 8, 6: 20 },
-      'pro': { 2: 8, 3: 12, 6: 26 },
-      'vip': { 2: 10, 3: 16, 6: 35 },
-      'none': { 2: 2, 3: 3, 6: 6 }
-    };
+  'basic': { 2: 5, 3: 8, 4: 8, 5: 8, 6: 20 },
+  'pro': { 2: 8, 3: 12, 4: 12, 5: 12, 6: 26 },
+  'vip': { 2: 10, 3: 16, 4: 16, 5: 16, 6: 35 },
+  'none': { 2: 2, 3: 3, 4: 3, 5: 3, 6: 6 }
+};
 
     function getToken(){ return localStorage.getItem(LS_TOKEN)||''; }
     function isSigned(){ return !!getToken(); }
@@ -282,14 +282,14 @@
     }
 
     function calculateReward(subscriptionType, currentTaskProgress){
-      const subType = (subscriptionType||'none').toLowerCase();
-      const rewards = REWARD_AMOUNTS[subType] || REWARD_AMOUNTS.none;
-      
-      if(currentTaskProgress >= 6) return rewards[6];
-      if(currentTaskProgress >= 3) return rewards[3];
-      if(currentTaskProgress >= 2) return rewards[2];
-      
-      return 0;
+  const subType = (subscriptionType||'none').toLowerCase();
+  const rewards = REWARD_AMOUNTS[subType] || REWARD_AMOUNTS.none;
+  
+  if(currentTaskProgress >= 6) return rewards[6];
+  if(currentTaskProgress >= 3) return rewards[3]; // هذا سيعطي نفس المكافأة للمستويات 3، 4، 5
+  if(currentTaskProgress >= 2) return rewards[2];
+  
+  return 0;
     }
 
     async function completeTask(userId, rewardAmount, subscriptionType, isReset=false){
@@ -325,19 +325,19 @@
     }
 
     function updateResetButton(progress, subscriptionType){
-      const resetBtn = document.getElementById('resetTaskBtn'); 
-      const resetInfo = document.getElementById('resetInfo');
-      
-      // يمكن لأي شخص المطالبة بالمكافأة إذا كان التقدم 2 أو 3 أو 6 (حتى بدون اشتراك)
-      if(progress === 2 || progress === 3 || progress === 6){
-        const rewardAmount = calculateReward(subscriptionType, progress);
-        resetBtn.innerHTML = `<i class="fa-solid fa-rotate-left"></i> Reset Task & Claim $${rewardAmount}`;
-        resetBtn.style.display = 'block'; 
-        resetInfo.style.display = 'block';
-      } else { 
-        resetBtn.style.display = 'none'; 
-        resetInfo.style.display = 'none'; 
-      }
+  const resetBtn = document.getElementById('resetTaskBtn'); 
+  const resetInfo = document.getElementById('resetInfo');
+  
+  // جعل الزر مفعلاً لأي تقدم ≥ 2 (2, 3, 4, 5, 6)
+  if(progress >= 2){
+    const rewardAmount = calculateReward(subscriptionType, progress);
+    resetBtn.innerHTML = `<i class="fa-solid fa-rotate-left"></i> Reset Task & Claim $${rewardAmount}`;
+    resetBtn.style.display = 'block'; 
+    resetInfo.style.display = 'block';
+  } else { 
+    resetBtn.style.display = 'none'; 
+    resetInfo.style.display = 'none'; 
+  }
     }
 
     function updateProgressBreakdown(progress, subscriptionType, successfulInvites, currentTaskProgress){
