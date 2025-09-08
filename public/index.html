@@ -11,68 +11,54 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
-      --primary-color: #ffd700;
-      --secondary-color: #ffa500;
-      --dark-bg: #000;
-      --header-bg: #111;
-      --text-light: #ccc;
-      --card-bg: #1a1a1a;
-    }
+  --primary-color: #ffd700;
+  --secondary-color: #ffa500;
+  --dark-bg: #000;
+  --header-bg: #111;
+  --text-light: #ccc;
+  --card-bg: #1a1a1a;
+}
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+/* إضافة الأنماط المفقودة هنا */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--dark-bg);
+  color: var(--text-light);
+}
 
-    body {
-      background: var(--dark-bg);
-      color: #fff;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      line-height: 1.6;
-    }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 5%;
+  background-color: var(--header-bg);
+  border-bottom: 2px solid var(--primary-color);
+}
 
-    header {
-      padding: 15px 5%;
-      background: var(--header-bg);
-      border-bottom: 2px solid var(--primary-color);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      flex-wrap: wrap;
-    }
+.logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
 
-    .logo {
-      font-size: clamp(1.5rem, 3vw, 2rem);
-      font-weight: bold;
-      color: var(--primary-color);
-      letter-spacing: 1px;
-    }
+nav {
+  display: flex;
+  gap: 1.5rem;
+}
 
-    nav {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
+.nav-link {
+  color: var(--text-light);
+  text-decoration: none;
+  transition: color 0.3s;
+}
 
-    .nav-link {
-      color: var(--primary-color);
-      text-decoration: none;
-      font-weight: bold;
-      transition: color 0.3s;
-      font-size: clamp(0.9rem, 2vw, 1rem);
-    }
+.nav-link:hover {
+  color: var(--primary-color);
+}
 
-    .nav-link:hover {
-      color: var(--secondary-color);
-      text-decoration: underline;
-    }
+/* استمر في إضافة الأنماط الأخرى */
 
     #userBox {
       margin-left: 15px;
@@ -903,8 +889,7 @@ html, body {
       const registerLink = document.getElementById('registerLink');
       const userBox = document.getElementById('userBox');
 
-      document.getElementById("infoButton").addEventListener("click", () => {
-    window.location.href = "info.html";
+      
   });
       // Handle authentication state
 function updateAuthUI() {
