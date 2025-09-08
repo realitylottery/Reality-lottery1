@@ -35,7 +35,7 @@ const jwt = require('jsonwebtoken');
 
 
 
-
+const Transaction = require('./models/Transaction');
 
 
 const cors = require('cors');
@@ -1995,8 +1995,6 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 app.post("/api/tasks/claim-reward", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-
-    // Get user data
     const user = await User.findById(userId);
     
     if (!user) {
@@ -2006,10 +2004,10 @@ app.post("/api/tasks/claim-reward", authMiddleware, async (req, res) => {
       });
     }
 
-    // Calculate current progress (based on successful invites and completed tasks)
-    const currentProgress = Math.min(6, (user.successfulInvites || 0) + (user.completedTasks || 0));
+    // حساب التقدم الصحيح - يعتمد على currentTaskProgress
+    const currentProgress = user.currentTaskProgress || 0;
     
-    // Check if progress is 4 or 5 (as requested)
+    // التحقق إذا كان التقدم 4 أو 5
     if (currentProgress !== 4 && currentProgress !== 5) {
       return res.status(400).json({
         success: false,
@@ -2017,7 +2015,7 @@ app.post("/api/tasks/claim-reward", authMiddleware, async (req, res) => {
       });
     }
     
-    // Calculate reward
+    // حساب المكافأة
     const reward = calculateTaskReward(user.subscriptionType, currentProgress);
     
     if (reward <= 0) {
@@ -2027,23 +2025,17 @@ app.post("/api/tasks/claim-reward", authMiddleware, async (req, res) => {
       });
     }
     
-    // Grant reward to user
+    // منح المكافأة للمستخدم
     user.balance += reward;
     
-    // Reset progress (clear current progress)
-    user.completedTasks = 0;
-    user.successfulInvites = 0;
+    // إعادة تعيين التقدم
     user.currentTaskProgress = 0;
+    // لا نمسح completedTasks و successfulInvites لأنها لأغراض إحصائية
     
     await user.save();
     
-    // Record transaction
-    await Transaction.create({
-      user: userId,
-      amount: reward,
-      type: 'TASK_REWARD_CLAIM',
-      description: `Claimed reward at progress ${currentProgress}`
-    });
+    // إذا كان نموذج Transaction غير موجود، يمكنك استخدام console.log بدلاً منه
+    console.log(`💰 Reward claimed: User ${user.username}, Amount: $${reward}, Progress: ${currentProgress}`);
     
     res.status(200).json({
       success: true,
@@ -2057,11 +2049,9 @@ app.post("/api/tasks/claim-reward", authMiddleware, async (req, res) => {
 
   } catch (err) {
     console.error('Error claiming reward:', err);
-    
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      message: 'Internal server error'
     });
   }
 });
@@ -10213,6 +10203,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
