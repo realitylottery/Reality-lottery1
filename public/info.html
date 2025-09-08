@@ -3,187 +3,317 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>RealityLottery - Info</title>
-  <link rel="stylesheet" href="styles.css" /> <!-- نفس ملف CSS الأساسي -->
+  <title>RealityLottery - How It Works</title>
   <style>
-/* إعدادات أساسية للصفحة */
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #000; /* خلفية سوداء */
-  color: #ffd700; /* ذهبي */
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
+    :root {
+      --primary-bg: #000;
+      --secondary-bg: #111;
+      --accent-color: #ffd700;
+      --accent-hover: #e6c200;
+      --text-color: #ffd700;
+      --section-bg: #1a1a1a;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--primary-bg);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
 
-/* الهيدر */
-header {
-  background: #000;
-  color: #ffd700;
-  padding: 20px;
-  text-align: center;
-  border-bottom: 2px solid #ffd700;
-}
+    header {
+      background: var(--primary-bg);
+      color: var(--accent-color);
+      padding: 25px 20px;
+      text-align: center;
+      border-bottom: 2px solid var(--accent-color);
+    }
+    
+    header h1 {
+      font-size: 2.2rem;
+      margin: 0;
+    }
 
-/* الحاوية الرئيسية */
-.info-container {
-  flex: 1;
-  max-width: 900px;
-  margin: 40px auto;
-  padding: 0 15px; /* مسافة جانبية */
-}
+    .info-container {
+      flex: 1;
+      max-width: 1000px;
+      margin: 40px auto;
+      background: var(--secondary-bg);
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(255,215,0,0.2);
+    }
 
-/* عنوان الصفحة */
-.info-container h1 {
-  text-align: center;
-  color: #ffd700;
-  margin-bottom: 30px;
-}
+    .page-title {
+      text-align: center;
+      color: var(--accent-color);
+      margin-bottom: 30px;
+      font-size: 2rem;
+      position: relative;
+      padding-bottom: 15px;
+    }
+    
+    .page-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 3px;
+      background: var(--accent-color);
+      border-radius: 3px;
+    }
 
-/* كل قسم داخل الكارد */
-.info-section {
-  background: #222; /* داكن أكثر */
-  padding: 25px 30px;
-  margin-bottom: 25px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(255,215,0,0.2);
-  border-left: 5px solid #ffd700; /* خط ذهبي على اليسار */
-}
+    .info-section {
+      background: var(--section-bg);
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 25px;
+      border-left: 4px solid var(--accent-color);
+    }
+    
+    .info-section h2 {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      color: var(--accent-color);
+      font-size: 1.5rem;
+    }
+    
+    .info-section h2 .icon {
+      margin-right: 10px;
+      font-size: 1.8rem;
+    }
+    
+    .info-section p {
+      font-size: 1.05rem;
+      margin-bottom: 15px;
+    }
+    
+    .steps {
+      padding-left: 20px;
+      margin: 15px 0;
+    }
+    
+    .steps li {
+      margin-bottom: 12px;
+      padding-left: 5px;
+    }
+    
+    .steps li strong {
+      color: var(--accent-color);
+    }
+    
+    .plans-comparison {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    
+    .plans-comparison th, .plans-comparison td {
+      border: 1px solid #333;
+      padding: 12px;
+      text-align: center;
+    }
+    
+    .plans-comparison th {
+      background-color: #222;
+      color: var(--accent-color);
+    }
+    
+    .plans-comparison tr:nth-child(even) {
+      background-color: #151515;
+    }
+    
+    .highlight {
+      background-color: rgba(255, 215, 0, 0.1) !important;
+      font-weight: bold;
+    }
+    
+    .note {
+      background-color: rgba(255, 0, 0, 0.1);
+      border-left: 4px solid #ff4d4d;
+      padding: 12px 15px;
+      border-radius: 4px;
+      margin: 15px 0;
+      font-size: 0.95rem;
+    }
+    
+    .back-btn {
+      display: block;
+      width: fit-content;
+      margin: 40px auto 0;
+      background: var(--accent-color);
+      color: #000;
+      padding: 14px 32px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 1.1rem;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      border: 2px solid var(--accent-color);
+    }
 
-/* عناوين الأقسام */
-.info-section h2 {
-  color: #ffd700;
-  margin-bottom: 15px;
-  font-size: 22px;
-  border-bottom: 1px dashed #ffd700;
-  padding-bottom: 8px;
-}
+    .back-btn:hover {
+      background: transparent;
+      color: var(--accent-color);
+    }
 
-/* النصوص داخل الأقسام */
-.info-section p, 
-.info-section ul, 
-.info-section ol {
-  color: #fff;
-  font-size: 17px;
-  line-height: 1.8;
-  margin-bottom: 15px;
-}
+    footer {
+      background: var(--primary-bg);
+      color: var(--accent-color);
+      text-align: center;
+      padding: 20px;
+      font-size: 0.9rem;
+      margin-top: auto;
+      border-top: 2px solid var(--accent-color);
+    }
 
-/* تحسين القوائم */
-.info-section ul li,
-.info-section ol li {
-  margin-bottom: 8px;
-}
+    footer a {
+      color: var(--accent-color);
+      text-decoration: underline;
+      transition: color 0.3s ease;
+    }
 
-/* زر العودة */
-.back-btn {
-  display: block;
-  width: fit-content;
-  margin: 20px auto 30px;
-  background: #ffd700;
-  color: #000;
-  padding: 12px 28px;
-  border-radius: 10px;
-  text-decoration: none;
-  font-size: 18px;
-  font-weight: bold;
-  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
-}
-
-.back-btn:hover {
-  background: #e6c200;
-  color: #000;
-  transform: scale(1.05); /* تأثير تكبير بسيط عند المرور */
-}
-
-/* الفوتر */
-footer {
-  background: #000;
-  color: #ffd700;
-  text-align: center;
-  padding: 15px;
-  font-size: 14px;
-  margin-top: auto;
-  border-top: 2px solid #ffd700;
-}
-
-footer a {
-  color: #ffd700;
-  text-decoration: underline;
-}
-
-footer a:hover {
-  color: #e6c200;
-}
+    footer a:hover {
+      color: var(--accent-hover);
+    }
+    
+    @media (max-width: 768px) {
+      .info-container {
+        padding: 25px 20px;
+        margin: 20px 15px;
+      }
+      
+      .page-title {
+        font-size: 1.7rem;
+      }
+      
+      .info-section {
+        padding: 20px 15px;
+      }
+      
+      .plans-comparison {
+        font-size: 0.85rem;
+      }
+      
+      .plans-comparison th, .plans-comparison td {
+        padding: 8px 5px;
+      }
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>RealityLottery - Info</h1>
+    <h1>RealityLottery - How It Works</h1>
   </header>
 
   <div class="info-container">
-  <div class="info-section">
-    <h2>🎉 Welcome to Reality Lottery 🎉</h2>
-    <p>Your chance to win is real! Here's how you can join and start winning:</p>
-  </div>
+    <h1 class="page-title">How the Lottery Works</h1>
+    
+    <div class="info-section">
+      <h2><span class="icon">🎉</span> Welcome to Reality Lottery</h2>
+      <p>Where your chance to win is real! Discover how you can participate, earn rewards, and potentially win life-changing prizes.</p>
+    </div>
+    
+    <div class="info-section">
+      <h2><span class="icon">📝</span> How to Join</h2>
+      <ol class="steps">
+        <li><strong>Register</strong> a free account on RealityLottery.</li>
+        <li><strong>Choose</strong> one of our subscription plans (Free – Basic – Pro – VIP).</li>
+        <li><strong>Complete</strong> your payment easily using multiple supported methods USDT TRC20 (Binance, Tonkeeper, Trust Wallet, and more).</li>
+      </ol>
+      <p>👉 Payment is fast and secure, processed within 30 minutes only.</p>
+      <p>👉 Contact us via Instagram, WhatsApp, or Email for assistance.</p>
+    </div>
+    
+    <div class="info-section">
+      <h2><span class="icon">💸</span> Referral System</h2>
+      <p>Earn While You Share! Each paid plan comes with referral rewards.</p>
+      
+      <div class="note">
+        <strong>Note:</strong> To participate in the referral program, users must subscribe to one of the three paid plans.
+      </div>
+      
+      <table class="plans-comparison">
+        <thead>
+          <tr>
+            <th>Plan</th>
+            <th>2 Referrals</th>
+            <th>3 Referrals</th>
+            <th>6 Referrals</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Basic Plan ($10)</strong></td>
+            <td class="highlight">Earn $5</td>
+            <td>Earn $8</td>
+            <td class="highlight">Earn $20</td>
+          </tr>
+          <tr>
+            <td><strong>Pro Plan ($20)</strong></td>
+            <td>Earn $8</td>
+            <td class="highlight">Earn $12</td>
+            <td>Earn $26</td>
+          </tr>
+          <tr>
+            <td><strong>VIP Plan ($30)</strong></td>
+            <td class="highlight">Earn $10</td>
+            <td>Earn $16</td>
+            <td class="highlight">Earn $35</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>The more you share, the more you earn!</p>
+    </div>
+    
+    <div class="info-section">
+      <h2><span class="icon">🎡</span> Lucky Wheel</h2>
+      <p>Get 1 free spin immediately when you subscribe to any plan.</p>
+      <p>Every time you bring 3 subscribers to one of the three paid plans, you get another spin.</p>
+      <p>Win bonus prizes, extra cash, or free entries to the lottery!</p>
+    </div>
+    
+    <div class="info-section">
+      <h2><span class="icon">🎁</span> Grand Lottery Prizes</h2>
+      <p>Beyond referrals and rewards, Reality Lottery hosts special global draws.</p>
+      <p>At scheduled times, everyone who subscribed gets the chance to win huge prizes:</p>
+      <ul class="steps">
+        <li>Cash prizes 💵</li>
+        <li>Smartphones 📱</li>
+        <li>Laptops 💻</li>
+        <li>And more exciting rewards!</li>
+      </ul>
+    </div>
+    
+    <div class="info-section">
+      <h2><span class="icon">🔒</span> Why Choose Reality Lottery?</h2>
+      <ul class="steps">
+        <li>Trusted platform with 4 years of operation</li>
+        <li>Fast & reliable customer support, always ready to help</li>
+        <li>Multiple secure payment methods</li>
+        <li>Transparent process with live draws streamed on YouTube</li>
+      </ul>
+    </div>
+    
+    <div class="info-section">
+      <h2><span class="icon">✨</span> Get Started Today!</h2>
+      <p>Join Reality Lottery today, invite friends, earn money, and get your chance to win life-changing prizes!</p>
+    </div>
 
-  <div class="info-section">
-    <h2>📝 How to Join</h2>
-    <ol>
-      <li>Register a free account on RealityLottery.</li>
-      <li>Choose one of our subscription plans: <strong>Free – Basic – Pro – VIP</strong>.</li>
-      <li>Complete your payment easily using multiple supported methods: <strong>USDT TRC20 (Binance, Tonkeeper, Trust Wallet, and more)</strong>. Payment is fast and secure, processed within 30 minutes.</li>
-      <li>Contact us via <strong>Instagram, WhatsApp, or Email</strong> for any help.</li>
-    </ol>
-  </div>
-
-  <div class="info-section">
-    <h2>💸 Referral System (Earn While You Share!)</h2>
-    <p>Note: Subscribers must join one of the three paid plans. Each plan comes with referral rewards:</p>
-    <ul>
-      <li><strong>Basic Plan ($10)</strong>: Invite 2 friends → Earn $5, Invite 3 friends → $8, Invite 6 friends → $20</li>
-      <li><strong>Pro Plan ($20)</strong>: Invite 2 friends → $8, Invite 3 friends → $12, Invite 6 friends → $26</li>
-      <li><strong>VIP Plan ($30)</strong>: Invite 2 friends → $10, Invite 3 friends → $16, Invite 6 friends → $35</li>
-    </ul>
-    <p>The more you share, the more you earn!</p>
-  </div>
-
-  <div class="info-section">
-    <h2>🎡 Lucky Wheel</h2>
-    <ul>
-      <li>Get 1 free spin immediately when you subscribe to any plan.</li>
-      <li>Every time you bring 3 subscribers in one of the paid plans, you get another spin.</li>
-      <li>Win bonus prizes, extra cash, or free entries to the lottery!</li>
-    </ul>
-  </div>
-
-  <div class="info-section">
-    <h2>🎁 Grand Lottery Prizes</h2>
-    <ul>
-      <li>Cash prizes 💵</li>
-      <li>Smartphones 📱</li>
-      <li>Laptops 💻</li>
-      <li>And more exciting rewards!</li>
-    </ul>
-  </div>
-
-  <div class="info-section">
-    <h2>🔒 Why Reality Lottery?</h2>
-    <ul>
-      <li>Trusted platform with 4 years of operation.</li>
-      <li>Fast & reliable customer support, always ready to help.</li>
-      <li>Multiple secure payment methods.</li>
-      <li>Transparent process with live draws streamed on YouTube.</li>
-    </ul>
-  </div>
-
-  <div class="info-section">
-    <p>✨ Join Reality Lottery today, invite friends, earn money, and get your chance to win life-changing prizes!</p>
-  </div>
-
-  <a href="index.html" class="back-btn">⬅ Back to Home</a>
+    <a href="index.html" class="back-btn">⬅ Back to Home</a>
   </div>
 
   <footer>
