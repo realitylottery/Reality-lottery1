@@ -1991,6 +1991,80 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 
 });
 
+// Endpoint to claim reward at progress 4 or 5
+app.post("/api/tasks/claim-reward", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get user data
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Calculate current progress (based on successful invites and completed tasks)
+    const currentProgress = Math.min(6, (user.successfulInvites || 0) + (user.completedTasks || 0));
+    
+    // Check if progress is 4 or 5 (as requested)
+    if (currentProgress !== 4 && currentProgress !== 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reward can only be claimed when progress is at 4 or 5'
+      });
+    }
+    
+    // Calculate reward
+    const reward = calculateTaskReward(user.subscriptionType, currentProgress);
+    
+    if (reward <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No reward available to claim'
+      });
+    }
+    
+    // Grant reward to user
+    user.balance += reward;
+    
+    // Reset progress (clear current progress)
+    user.completedTasks = 0;
+    user.successfulInvites = 0;
+    user.currentTaskProgress = 0;
+    
+    await user.save();
+    
+    // Record transaction
+    await Transaction.create({
+      user: userId,
+      amount: reward,
+      type: 'TASK_REWARD_CLAIM',
+      description: `Claimed reward at progress ${currentProgress}`
+    });
+    
+    res.status(200).json({
+      success: true,
+      message: `Successfully claimed reward: $${reward}`,
+      data: {
+        reward: reward,
+        newBalance: user.balance,
+        progressBeforeReset: currentProgress
+      }
+    });
+
+  } catch (err) {
+    console.error('Error claiming reward:', err);
+    
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+});
 
 // في ملف الخادم (مثال باستخدام Express)
 app.post('/api/tasks/subscription-progress', authMiddleware, async (req, res) => {
@@ -10139,6 +10213,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
