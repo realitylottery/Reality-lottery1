@@ -481,61 +481,26 @@ function generateToken(user) {
 
 
 function calculateTaskReward(subscriptionType, progress) {
-
-
-
   const rewards = {
-
-
-
-    'BASIC': { 2: 5, 3: 8, 6: 20 },
-
-
-
-    'PRO': { 2: 8, 3: 12, 6: 26 },
-
-
-
-    'VIP': { 2: 10, 3: 16, 6: 35 },
-
-
-
-    'NONE': { 2: 2, 3: 3, 6: 6 },      // غير إلى 'NONE' (كبيرة)
-
-
-
-    '': { 2: 2, 3: 3, 6: 6 }           // أضف هذا للقيم الفارغة
-
-
-
+    'BASIC': { 2: 5, 3: 8, 4: 8, 5: 8, 6: 20 },
+    'PRO': { 2: 8, 3: 12, 4: 12, 5: 12, 6: 26 },
+    'VIP': { 2: 10, 3: 16, 4: 16, 5: 16, 6: 35 },
+    'NONE': { 2: 2, 3: 3, 4: 3, 5: 3, 6: 6 },
+    '': { 2: 2, 3: 3, 4: 3, 5: 3, 6: 6 }
   };
-
-
-
   
-
-
-
   // تحويل إلى uppercase للتأكد من المطابقة
-
-
-
   const subscription = (subscriptionType || 'NONE').toUpperCase();
-
-
-
   const rewardTable = rewards[subscription] || rewards['NONE'];
-
-
-
   
-
-
-
-  return rewardTable[progress] || 0;
-
-
-
+  // تحديد المكافأة بناءً على مستوى التقدم
+  if (progress >= 6) return rewardTable[6];
+  if (progress >= 5) return rewardTable[5] || rewardTable[3]; // استخدام مكافأة المستوى 3 للمستوى 5
+  if (progress >= 4) return rewardTable[4] || rewardTable[3]; // استخدام مكافأة المستوى 3 للمستوى 4
+  if (progress >= 3) return rewardTable[3];
+  if (progress >= 2) return rewardTable[2];
+  
+  return 0;
 }
 
 
@@ -7521,239 +7486,131 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 
 
 app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
-
-
-
   try {
+    const { taskId, completed } = req.body;
+    const userId = req.user.id;
 
+    // التحقق من المدخلات
+    if (!taskId || typeof completed !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'معرف المهمة وحالة الإكمال مطلوبان'
+      });
+    }
 
-
-    const { userId, isReset } = req.body;
-
-
-
-    if (!userId) return res.status(400).json({ message: "userId is required" });
-
-
-
-
-
-
-
-    const user = await User.findById(userId);
-
-
-
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-
-
-
-
-
-
-    // حساب التقدم الصحيح
-
-
-
-    const progress = Math.min(6, user.currentTaskProgress || 0);
-
-
-
+    // البحث عن المهمة والتأكد من ملكية المستخدم
+    const task = await Task.findOne({ _id: taskId, user: userId });
     
-
-
-
-    // مكافأة حسب التقدم
-
-
-
-    const rewardAmount = calculateTaskReward(user.subscriptionType, progress);
-
-
-
-
-
-
-
-    // 🔥 التصفير التلقائي عندما تصل المهمة إلى 6/6 (حتى بدون isReset)
-
-
-
-    const shouldAutoReset = progress === 6;
-
-
-
-
-
-
-
-    if (!isReset && !shouldAutoReset) {
-
-
-
-      return res.json({ 
-
-
-
-        success: true, 
-
-
-
-        message: "Nothing to do without reset", 
-
-
-
-        progress, 
-
-
-
-        reward: rewardAmount 
-
-
-
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: 'لم يتم العثور على المهمة أو لا يوجد صلاحية للوصول'
       });
-
-
-
     }
 
-
-
-
-
-
-
-    // يُسمح بالريست فقط لو التقدم >= 2
-
-
-
-    if (progress < 2) {
-
-
-
-      return res.status(400).json({ 
-
-
-
-        message: "Progress too low to reset/claim", 
-
-
-
-        progress 
-
-
-
+    // إذا كانت المهمة مكتملة بالفعل ولا يحاول المستخدم تعطيلها
+    if (task.completed && completed) {
+      return res.status(400).json({
+        success: false,
+        message: 'المهمة مكتملة بالفعل'
       });
-
-
-
     }
 
+    // تحديث حالة إكمال المهمة
+    const oldCompletedStatus = task.completed;
+    task.completed = completed;
+    task.completedAt = completed ? new Date() : null;
+    
+    // إذا كان المستخدم يكمل المهمة، حساب المكافأة
+    let reward = 0;
+    if (completed && !oldCompletedStatus) {
+      // الحصول على نوع الاشتراك للمستخدم (افتراضي 'NONE')
+      const user = await User.findById(userId);
+      const subscriptionType = user?.subscriptionType || 'NONE';
+      
+      // حساب التقدم (هنا يمكنك تعديله حسب منطق تطبيقك)
+      const progress = calculateProgress(task); // دالة افتراضية تحتاج إلى تنفيذها
+      
+      // حساب المكافأة باستخدام الدالة المطلوبة
+      reward = calculateTaskReward(subscriptionType, progress);
+      
+      // تحديث رصيد المستخدم
+      user.balance += reward;
+      await user.save();
+      
+      // تسجيل المعاملة إذا لزم الأمر
+      await Transaction.create({
+        user: userId,
+        amount: reward,
+        type: 'TASK_REWARD',
+        description: `مكافأة إكمال المهمة: ${task.title}`
+      });
+    }
+    
+    await task.save();
 
-
-
-
-
-
-    // إضافة المكافأة + زيادة المهام المنجزة + تصفير تقدم الدورة
-
-
-
-    user.balance = (user.balance || 0) + rewardAmount;
-
-
-
-    user.completedTasks = (user.completedTasks || 0) + 1;
-
-
-
-    user.currentTaskProgress = 0;
-
-
-
-
-
-
-
-    await user.save();
-
-
-
-
-
-
-
-    return res.json({
-
-
-
+    res.status(200).json({
       success: true,
-
-
-
-      message: shouldAutoReset ? "Task auto-completed & reward claimed" : "Task reset & reward claimed",
-
-
-
-      reward: rewardAmount,
-
-
-
-      newBalance: user.balance,
-
-
-
-      completedTasks: user.completedTasks,
-
-
-
-      currentTaskProgress: user.currentTaskProgress,
-
-
-
-      successfulInvites: user.successfulInvites,
-
-
-
-      autoReset: shouldAutoReset // إضافة هذا الحقل للتمييز بين التلقائي واليدوي
-
-
-
+      message: `تم ${completed ? 'إكمال' : 'تعطيل إكمال'} المهمة بنجاح`,
+      data: {
+        task,
+        reward: completed ? reward : 0
+      }
     });
 
-
-
-
-
-
-
   } catch (err) {
+    console.error('خطأ في إكمال المهمة:', err);
+    
+    if (err.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        message: 'صيغة معرف المهمة غير صحيحة'
+      });
+    }
 
-
-
-    console.error("Complete task error:", err);
-
-
-
-    res.status(500).json({ message: "Error completing task" });
-
-
-
+    res.status(500).json({
+      success: false,
+      message: 'خطأ داخلي في الخادم',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
-
-
-
 });
 
+// دالة حساب المكافآت كما طلبت
+function calculateTaskReward(subscriptionType, progress) {
+  const rewards = {
+    'BASIC': { 2: 5, 3: 8, 4: 8, 5: 8, 6: 20 },
+    'PRO': { 2: 8, 3: 12, 4: 12, 5: 12, 6: 26 },
+    'VIP': { 2: 10, 3: 16, 4: 16, 5: 16, 6: 35 },
+    'NONE': { 2: 2, 3: 3, 4: 3, 5: 3, 6: 6 },
+    '': { 2: 2, 3: 3, 4: 3, 5: 3, 6: 6 }
+  };
+  
+  // تحويل إلى uppercase للتأكد من المطابقة
+  const subscription = (subscriptionType || 'NONE').toUpperCase();
+  const rewardTable = rewards[subscription] || rewards['NONE'];
+  
+  // تحديد المكافأة بناءً على مستوى التقدم
+  if (progress >= 6) return rewardTable[6];
+  if (progress >= 5) return rewardTable[5] || rewardTable[3];
+  if (progress >= 4) return rewardTable[4] || rewardTable[3];
+  if (progress >= 3) return rewardTable[3];
+  if (progress >= 2) return rewardTable[2];
+  
+  return 0;
+}
 
-
-
-
-
-
-// تحديث تقدم المهمة عند اشتراك مدعو
-
+// دالة مساعدة لحساب التقدم (تحتاج إلى تعديلها حسب منطق تطبيقك)
+function calculateProgress(task) {
+  // هذا مثال - يمكنك تعديله حسب احتياجاتك
+  // يمكن أن يعتمد على تعقيد المهمة، وقت إكمالها، إلخ.
+  
+  if (task.difficulty === 'hard') return 6;
+  if (task.difficulty === 'medium') return 4;
+  if (task.difficulty === 'easy') return 2;
+  
+  return 3; // افتراضي
+}
 
 
 
@@ -10282,6 +10139,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
