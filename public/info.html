@@ -6,84 +6,116 @@
   <title>RealityLottery - Info</title>
   <link rel="stylesheet" href="styles.css" /> <!-- نفس ملف CSS الأساسي -->
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #000; /* خلفية سوداء */
-      color: #ffd700; /* ذهبي */
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
+/* إعدادات أساسية للصفحة */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #000; /* خلفية سوداء */
+  color: #ffd700; /* ذهبي */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
 
-    header {
-      background: #000;
-      color: #ffd700;
-      padding: 20px;
-      text-align: center;
-      border-bottom: 2px solid #ffd700;
-    }
+/* الهيدر */
+header {
+  background: #000;
+  color: #ffd700;
+  padding: 20px;
+  text-align: center;
+  border-bottom: 2px solid #ffd700;
+}
 
-    .info-container {
-      flex: 1;
-      max-width: 900px;
-      margin: 40px auto;
-      background: #111; /* خلفية داكنة للكارد */
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(255,215,0,0.3);
-    }
+/* الحاوية الرئيسية */
+.info-container {
+  flex: 1;
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 15px; /* مسافة جانبية */
+}
 
-    .info-container h1 {
-      text-align: center;
-      color: #ffd700;
-      margin-bottom: 20px;
-    }
+/* عنوان الصفحة */
+.info-container h1 {
+  text-align: center;
+  color: #ffd700;
+  margin-bottom: 30px;
+}
 
-    .info-container p {
-      font-size: 18px;
-      line-height: 1.8;
-      margin-bottom: 20px;
-      text-align: center;
-    }
+/* كل قسم داخل الكارد */
+.info-section {
+  background: #222; /* داكن أكثر */
+  padding: 25px 30px;
+  margin-bottom: 25px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(255,215,0,0.2);
+  border-left: 5px solid #ffd700; /* خط ذهبي على اليسار */
+}
 
-    .back-btn {
-      display: block;
-      width: fit-content;
-      margin: 30px auto 0;
-      background: #ffd700;
-      color: #000;
-      padding: 12px 28px;
-      border-radius: 10px;
-      text-decoration: none;
-      font-size: 18px;
-      font-weight: bold;
-      transition: background 0.3s ease, color 0.3s ease;
-    }
+/* عناوين الأقسام */
+.info-section h2 {
+  color: #ffd700;
+  margin-bottom: 15px;
+  font-size: 22px;
+  border-bottom: 1px dashed #ffd700;
+  padding-bottom: 8px;
+}
 
-    .back-btn:hover {
-      background: #e6c200;
-      color: #000;
-    }
+/* النصوص داخل الأقسام */
+.info-section p, 
+.info-section ul, 
+.info-section ol {
+  color: #fff;
+  font-size: 17px;
+  line-height: 1.8;
+  margin-bottom: 15px;
+}
 
-    footer {
-      background: #000;
-      color: #ffd700;
-      text-align: center;
-      padding: 15px;
-      font-size: 14px;
-      margin-top: auto;
-      border-top: 2px solid #ffd700;
-    }
+/* تحسين القوائم */
+.info-section ul li,
+.info-section ol li {
+  margin-bottom: 8px;
+}
 
-    footer a {
-      color: #ffd700;
-      text-decoration: underline;
-    }
+/* زر العودة */
+.back-btn {
+  display: block;
+  width: fit-content;
+  margin: 20px auto 30px;
+  background: #ffd700;
+  color: #000;
+  padding: 12px 28px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: bold;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+}
 
-    footer a:hover {
-      color: #e6c200;
-    }
+.back-btn:hover {
+  background: #e6c200;
+  color: #000;
+  transform: scale(1.05); /* تأثير تكبير بسيط عند المرور */
+}
+
+/* الفوتر */
+footer {
+  background: #000;
+  color: #ffd700;
+  text-align: center;
+  padding: 15px;
+  font-size: 14px;
+  margin-top: auto;
+  border-top: 2px solid #ffd700;
+}
+
+footer a {
+  color: #ffd700;
+  text-decoration: underline;
+}
+
+footer a:hover {
+  color: #e6c200;
+}
   </style>
 </head>
 <body>
@@ -92,100 +124,66 @@
   </header>
 
   <div class="info-container">
-    <h1>How the Lottery Works?</h1>
-    <p>
-      🎉 Welcome to Reality Lottery 🎉
+  <div class="info-section">
+    <h2>🎉 Welcome to Reality Lottery 🎉</h2>
+    <p>Your chance to win is real! Here's how you can join and start winning:</p>
+  </div>
 
-Where your chance to win is real!
+  <div class="info-section">
+    <h2>📝 How to Join</h2>
+    <ol>
+      <li>Register a free account on RealityLottery.</li>
+      <li>Choose one of our subscription plans: <strong>Free – Basic – Pro – VIP</strong>.</li>
+      <li>Complete your payment easily using multiple supported methods: <strong>USDT TRC20 (Binance, Tonkeeper, Trust Wallet, and more)</strong>. Payment is fast and secure, processed within 30 minutes.</li>
+      <li>Contact us via <strong>Instagram, WhatsApp, or Email</strong> for any help.</li>
+    </ol>
+  </div>
 
-📝 How to Join
+  <div class="info-section">
+    <h2>💸 Referral System (Earn While You Share!)</h2>
+    <p>Note: Subscribers must join one of the three paid plans. Each plan comes with referral rewards:</p>
+    <ul>
+      <li><strong>Basic Plan ($10)</strong>: Invite 2 friends → Earn $5, Invite 3 friends → $8, Invite 6 friends → $20</li>
+      <li><strong>Pro Plan ($20)</strong>: Invite 2 friends → $8, Invite 3 friends → $12, Invite 6 friends → $26</li>
+      <li><strong>VIP Plan ($30)</strong>: Invite 2 friends → $10, Invite 3 friends → $16, Invite 6 friends → $35</li>
+    </ul>
+    <p>The more you share, the more you earn!</p>
+  </div>
 
-1. Register a free account on RealityLottery.
+  <div class="info-section">
+    <h2>🎡 Lucky Wheel</h2>
+    <ul>
+      <li>Get 1 free spin immediately when you subscribe to any plan.</li>
+      <li>Every time you bring 3 subscribers in one of the paid plans, you get another spin.</li>
+      <li>Win bonus prizes, extra cash, or free entries to the lottery!</li>
+    </ul>
+  </div>
 
+  <div class="info-section">
+    <h2>🎁 Grand Lottery Prizes</h2>
+    <ul>
+      <li>Cash prizes 💵</li>
+      <li>Smartphones 📱</li>
+      <li>Laptops 💻</li>
+      <li>And more exciting rewards!</li>
+    </ul>
+  </div>
 
-2. Choose one of our subscription plans (Free – Basic – Pro – VIP).
+  <div class="info-section">
+    <h2>🔒 Why Reality Lottery?</h2>
+    <ul>
+      <li>Trusted platform with 4 years of operation.</li>
+      <li>Fast & reliable customer support, always ready to help.</li>
+      <li>Multiple secure payment methods.</li>
+      <li>Transparent process with live draws streamed on YouTube.</li>
+    </ul>
+  </div>
 
+  <div class="info-section">
+    <p>✨ Join Reality Lottery today, invite friends, earn money, and get your chance to win life-changing prizes!</p>
+  </div>
 
-3. Complete your payment easily using multiple supported methods USDT TRC20 of (Binance, Tonkeeper, Trust Wallet, and more).
-👉 Payment is fast and secure, processed within 30 minutes only.
-
-👉 Contact us with Instagram, WhatsApp and Email
-    </p>
-    <p>
-      ---
-
-💸 Referral System (Earn While You Share!) 
-
-🛑Note: subscribers most join one of the three payed plans
-
-Each plan comes with referral rewards.
-
-Example:
-
-Basic Plan ($10): Invite 2 friends → Earn $5, Invite 3 friends → $8, Invite 6 friends → $20.
-
-Pro Plan ($20): Invite 2 friends → $8, Invite 3 friends → $12, Invite 6 friends → $26.
-
-VIP Plan ($30): Invite 2 friends → $10, Invite 3 friends → $16, Invite 6 friends → $35.
-
-
-The more you share, the more you earn.
-
-
-
----
-
-🎡 Lucky Wheel
-
-Get 1 free spin immediately when you subscribe to any plan.
-
-Every time you bring 3 subscribers in one of the three payed plans , you get another spin.
-
-Win bonus prizes, extra cash, or free entries to the lottery!
-
-
-
----
-
-🎁 Grand Lottery Prizes
-
-Beyond referrals and rewards, Reality Lottery hosts special global draws.
-
-At scheduled times, everyone who subscribed gets the chance to win huge prizes:
-
-Cash prizes 💵
-
-Smartphones 📱
-
-Laptops 💻
-
-
-And more exciting rewards!
-
-
-
-
----
-
-🔒 Why Reality Lottery?
-
-Trusted platform with 4 years of operation.
-
-Fast & reliable customer support, always ready to help.
-
-Multiple secure payment methods.
-
-Transparent process with live draws streamed on YouTube.
-
-
-
----
-
-✨ Join Reality Lottery today, invite friends, earn money, and get your chance to win life-changing prizes!
-    </p>
-
-    <!-- زر العودة للرئيسية -->
-    <a href="index.html" class="back-btn">⬅ Back to Home</a>
+  <a href="index.html" class="back-btn">⬅ Back to Home</a>
   </div>
 
   <footer>
