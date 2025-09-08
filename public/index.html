@@ -699,7 +699,7 @@ html, body {
     </a>
   </div>
     <div class="lottery-info-container">
-    <a href="info.html" class="lottery-info-btn">
+    <a href="info.html" class="info-btn">
        Lottery Info
     </a>
     </div>
@@ -903,6 +903,9 @@ html, body {
       const registerLink = document.getElementById('registerLink');
       const userBox = document.getElementById('userBox');
 
+      document.getElementById("infoButton").addEventListener("click", () => {
+    window.location.href = "info.html";
+  });
       // Handle authentication state
 function updateAuthUI() {
   const token = localStorage.getItem('rl_token');
