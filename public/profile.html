@@ -477,43 +477,45 @@ if (user.subscriptionActive && user.subscriptionType !== 'None' &&
       // Completed tasks
       document.getElementById('completedTasks').textContent = user.completedTasks||0;
 
-      // إذا كان التقدم 6، امنح المكافأة تلقائياً
+// هذا الجزء داخل increaseProgress أو أي دالة مسؤولة عن التقدم
 if (progress === 6) {
   try {
-    const response = await fetch(API_BASE + '/api/tasks/complete', {
+    // استدعاء نفس API الخاص بالـ reset
+    const response = await fetch(API_BASE + '/api/tasks/claimReward', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer ' + getToken(),
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        taskType: 'auto_complete_6_steps',
-        progressValue: 6 // سيتم حساب المكافأة تلقائياً في الخادم
+        taskType: 'reset_after_complete', // نفس اللي تشتغل في reset
+        progressValue: 6                  // عشان يعرف إن المهمة خلصت
       })
     });
-    
+
     const result = await response.json();
-    
+
     if (response.ok && result.success) {
       const rewardAmount = calculateReward(user.subscriptionType, progress);
       showRewardNotification(rewardAmount, user.subscriptionType, false);
-      
-      // تحديث البيانات دون إعادة تحميل الصفحة
+
+      // تحديث البيانات محلياً
       user.balance = result.data.newBalance || user.balance;
       user.completedTasks = (user.completedTasks || 0) + 1;
       user.currentTaskProgress = 0;
-      
+
+      // تحديث واجهة المستخدم
       document.getElementById('balanceAmount').textContent = user.balance;
       document.getElementById('completedTasks').textContent = user.completedTasks;
       document.getElementById('progressText').textContent = '0/6';
       document.getElementById('progressFill').style.width = '0%';
-      
+
       // إعادة تعيين الخطوات
       const stepElements = document.querySelectorAll('#stepsWrap .step');
       stepElements.forEach(step => step.classList.remove('done'));
     }
   } catch (error) {
-    console.error('Error auto-completing task:', error);
+    console.error('Error auto-resetting task:', error);
   }
 }
 
