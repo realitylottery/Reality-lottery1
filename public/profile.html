@@ -454,12 +454,44 @@ if (user.subscriptionActive && user.subscriptionType !== 'None' &&
       document.getElementById('completedTasks').textContent = user.completedTasks||0;
 
       // إذا كان التقدم 6، امنح المكافأة تلقائياً
-      if (progress === 6) {
-        const rewardAmount = calculateReward(user.subscriptionType, progress);
-        await completeTask(user.id || user._id, rewardAmount, user.subscriptionType, false);
-        // إعادة تحميل الصفحة لتحديث البيانات
-        location.reload();
-      }
+if (progress === 6) {
+  try {
+    const response = await fetch(API_BASE + '/api/tasks/complete', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + getToken(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        taskType: 'auto_complete_6_steps',
+        progressValue: 0 // سيتم حساب المكافأة تلقائياً في الخادم
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok && result.success) {
+      const rewardAmount = calculateReward(user.subscriptionType, progress);
+      showRewardNotification(rewardAmount, user.subscriptionType, false);
+      
+      // تحديث البيانات دون إعادة تحميل الصفحة
+      user.balance = result.data.newBalance || user.balance;
+      user.completedTasks = (user.completedTasks || 0) + 1;
+      user.currentTaskProgress = 0;
+      
+      document.getElementById('balanceAmount').textContent = user.balance;
+      document.getElementById('completedTasks').textContent = user.completedTasks;
+      document.getElementById('progressText').textContent = '0/6';
+      document.getElementById('progressFill').style.width = '0%';
+      
+      // إعادة تعيين الخطوات
+      const stepElements = document.querySelectorAll('#stepsWrap .step');
+      stepElements.forEach(step => step.classList.remove('done'));
+    }
+  } catch (error) {
+    console.error('Error auto-completing task:', error);
+  }
+}
 
 // Reset button event
 const resetBtn = document.getElementById('resetTaskBtn');
