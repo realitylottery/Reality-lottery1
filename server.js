@@ -5221,7 +5221,173 @@ app.post("/api/admin/payments/:id/reject", authMiddleware, async (req, res) => {
 
 
 
+// ================= ADMIN TASK PROGRESS ROUTES =================
 
+// Get user task progress (admin only)
+app.get("/api/admin/users/:id/task-progress", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const user = await User.findById(req.params.id)
+      .select("username email currentTaskProgress completedTasks successfulInvites subscriptionType");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        currentTaskProgress: user.currentTaskProgress || 0,
+        completedTasks: user.completedTasks || 0,
+        successfulInvites: user.successfulInvites || 0,
+        subscriptionType: user.subscriptionType,
+        expectedReward: calculateTaskReward(user.subscriptionType, user.currentTaskProgress || 0)
+      }
+    });
+  } catch (err) {
+    console.error("Get task progress error:", err);
+    res.status(500).json({ message: "Error fetching task progress" });
+  }
+});
+
+// Update user task progress (admin only)
+app.put("/api/admin/users/:id/task-progress", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const { currentTaskProgress, action, amount = 1 } = req.body;
+    
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    let newProgress = user.currentTaskProgress || 0;
+    let message = "";
+
+    if (currentTaskProgress !== undefined) {
+      // Set specific value
+      newProgress = Math.max(0, Math.min(6, parseInt(currentTaskProgress)));
+      message = `Task progress set to ${newProgress}`;
+    } else if (action === "increment") {
+      // Increment progress
+      newProgress = Math.min(6, (user.currentTaskProgress || 0) + parseInt(amount));
+      message = `Task progress incremented by ${amount}`;
+    } else if (action === "decrement") {
+      // Decrement progress
+      newProgress = Math.max(0, (user.currentTaskProgress || 0) - parseInt(amount));
+      message = `Task progress decremented by ${amount}`;
+    } else if (action === "reset") {
+      // Reset progress
+      newProgress = 0;
+      message = "Task progress reset to 0";
+    } else if (action === "complete") {
+      // Complete task and award reward
+      const reward = calculateTaskReward(user.subscriptionType, 6);
+      user.balance += reward;
+      user.completedTasks = (user.completedTasks || 0) + 1;
+      newProgress = 0;
+      message = `Task completed! Awarded $${reward}`;
+
+      // Record transaction
+      await Transaction.create({
+        userId: user._id,
+        amount: reward,
+        type: 'TASK_REWARD_ADMIN',
+        description: `Admin completed task reward`
+      });
+    } else {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid action. Use 'increment', 'decrement', 'reset', 'complete', or provide 'currentTaskProgress' value" 
+      });
+    }
+
+    user.currentTaskProgress = newProgress;
+    await user.save();
+
+    res.json({
+      success: true,
+      message,
+      data: {
+        _id: user._id,
+        username: user.username,
+        currentTaskProgress: user.currentTaskProgress,
+        completedTasks: user.completedTasks,
+        balance: user.balance,
+        expectedReward: calculateTaskReward(user.subscriptionType, user.currentTaskProgress)
+      }
+    });
+  } catch (err) {
+    console.error("Update task progress error:", err);
+    res.status(500).json({ message: "Error updating task progress" });
+  }
+});
+
+// Get all users with task progress (admin only)
+app.get("/api/admin/task-progress", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const { page = 1, limit = 20, search = "" } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Build search query
+    let searchQuery = {};
+    if (search) {
+      searchQuery = {
+        $or: [
+          { username: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } }
+        ]
+      };
+    }
+
+    const users = await User.find(searchQuery)
+      .select("username email currentTaskProgress completedTasks successfulInvites subscriptionType subscriptionActive createdAt")
+      .sort({ currentTaskProgress: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const totalUsers = await User.countDocuments(searchQuery);
+
+    res.json({
+      success: true,
+      data: users.map(user => ({
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        currentTaskProgress: user.currentTaskProgress || 0,
+        completedTasks: user.completedTasks || 0,
+        successfulInvites: user.successfulInvites || 0,
+        subscriptionType: user.subscriptionType,
+        subscriptionActive: user.subscriptionActive,
+        createdAt: user.createdAt,
+        expectedReward: calculateTaskReward(user.subscriptionType, user.currentTaskProgress || 0)
+      })),
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalUsers / parseInt(limit)),
+        totalUsers,
+        hasNext: skip + users.length < totalUsers,
+        hasPrev: page > 1
+      }
+    });
+  } catch (err) {
+    console.error("Get all task progress error:", err);
+    res.status(500).json({ message: "Error fetching task progress" });
+  }
+});
 
 // Payment statistics
 
@@ -10391,6 +10557,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
