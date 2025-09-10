@@ -992,8 +992,81 @@ app.delete('/api/admin/notifications/:id', authMiddleware, async (req, res) => {
 
 });
 
+// إضافة هذا middleware ليتحقق من التقدم في كل طلب للمستخدم
+app.use('/api/*', async (req, res, next) => {
+  if (req.user && req.user.id) {
+    try {
+      const user = await User.findById(req.user.id);
+      if (user && user.currentTaskProgress >= 6) {
+        const rewardAmount = calculateTaskReward(user.subscriptionType, 6);
+        
+        // تحديث الرصيد
+        user.balance = (user.balance || 0) + rewardAmount;
+        
+        // تسجيل المعاملة
+        await Transaction.create({
+          userId: user._id,
+          amount: rewardAmount,
+          type: 'TASK_REWARD',
+          description: `مكافأة تلقائية لإكمال 6/6 مهمات`
+        });
+        
+        // تصفير التقدم
+        user.currentTaskProgress = 0;
+        user.completedTasks = (user.completedTasks || 0) + 1;
+        
+        await user.save();
+        console.log(`🎉 تمت مكافأة ${user.username} تلقائياً: $${rewardAmount}`);
+      }
+    } catch (error) {
+      console.error('Error in auto-progress check:', error);
+    }
+  }
+  next();
+});
 
 
+app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    let reward = 0;
+    let autoClaimed = false;
+    
+    // التحقق إذا وصل التقدم إلى 6
+    if (user.currentTaskProgress >= 6) {
+      reward = calculateTaskReward(user.subscriptionType, 6);
+      user.balance += reward;
+      user.completedTasks = (user.completedTasks || 0) + 1;
+      user.currentTaskProgress = 0; // تصفير التقدم
+      autoClaimed = true;
+      
+      await user.save();
+    }
+    
+    res.json({
+      success: true,
+      autoClaimed,
+      reward,
+      currentProgress: user.currentTaskProgress,
+      balance: user.balance
+    });
+    
+  } catch (err) {
+    console.error('Error checking auto reward:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking for auto reward'
+    });
+  }
+});
 
 
 /* ==== API spin العجلة ==== */
@@ -1043,6 +1116,42 @@ app.post("/api/wheel/spin", async (req, res) => {
 } catch (err) {
   console.error(err);
   res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// إضافة هذا ال endpoint للتحقق من التقدم في كل مرة
+app.get('/api/tasks/check-progress', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    let reward = 0;
+    let autoClaimed = false;
+
+    // التحقق إذا كان التقدم 6 أو أكثر
+    if (user.currentTaskProgress >= 6) {
+      reward = calculateTaskReward(user.subscriptionType, 6);
+      user.balance += reward;
+      user.completedTasks = (user.completedTasks || 0) + 1;
+      user.currentTaskProgress = 0;
+      autoClaimed = true;
+
+      await user.save();
+    }
+
+    res.json({
+      currentProgress: user.currentTaskProgress,
+      reward,
+      autoClaimed,
+      balance: user.balance
+    });
+
+  } catch (error) {
+    console.error('Progress check error:', error);
+    res.status(500).json({ message: 'Error checking progress' });
   }
 });
 
@@ -7580,13 +7689,12 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 
 
 
-
 app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
   try {
     const { taskId, completed } = req.body;
     const userId = req.user.id;
 
-    // Validate inputs
+    // التحقق من المدخلات
     if (!taskId || typeof completed !== 'boolean') {
       return res.status(400).json({
         success: false,
@@ -7594,7 +7702,7 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
       });
     }
 
-    // Find the task and verify user ownership
+    // البحث عن المهمة والتحقق من ملكية المستخدم
     const task = await Task.findOne({ _id: taskId, user: userId });
     
     if (!task) {
@@ -7604,7 +7712,7 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
       });
     }
 
-    // If task is already completed and user is not trying to uncomplete it
+    // إذا كانت المهمة مكتملة بالفعل والمستخدم لا يحاول إلغاء إكمالها
     if (task.completed && completed) {
       return res.status(400).json({
         success: false,
@@ -7612,7 +7720,7 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
       });
     }
 
-    // Update task completion status
+    // تحديث حالة إكمال المهمة
     const oldCompletedStatus = task.completed;
     task.completed = completed;
     task.completedAt = completed ? new Date() : null;
@@ -7621,22 +7729,23 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
     let autoClaimed = false;
     
     if (completed && !oldCompletedStatus) {
-      // Get user data
+      // الحصول على بيانات المستخدم
       const user = await User.findById(userId);
       const subscriptionType = user?.subscriptionType || 'NONE';
       
-      // Increase completed tasks count
-      user.completedTasks = (user.completedTasks || 0) + 1;
-      const currentProgress = user.completedTasks;
+      // زيادة التقدم الحالي (ليس completedTasks)
+      user.currentTaskProgress = (user.currentTaskProgress || 0) + 1;
+      const currentProgress = user.currentTaskProgress;
       
-      // Check if progress is 6 for automatic reward
-      if (currentProgress === 6) {
+      // التحقق إذا كان التقدم 6 للمكافأة التلقائية
+      if (currentProgress >= 6) {
         reward = calculateTaskReward(subscriptionType, 6);
         user.balance += reward;
-        user.completedTasks = 0; // Reset count
+        user.completedTasks = (user.completedTasks || 0) + 1; // زيادة المهام المكتملة إجمالاً
+        user.currentTaskProgress = 0; // تصفير التقدم الحالي
         autoClaimed = true;
         
-        // Record transaction
+        // تسجيل المعاملة
         await Transaction.create({
           user: userId,
           amount: reward,
@@ -7657,7 +7766,7 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
         task,
         reward: completed ? reward : 0,
         autoClaimed,
-        currentProgress: autoClaimed ? 0 : (await User.findById(userId)).completedTasks
+        currentProgress: autoClaimed ? 0 : (await User.findById(userId)).currentTaskProgress
       }
     });
 
@@ -10208,6 +10317,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
