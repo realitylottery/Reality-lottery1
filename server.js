@@ -1422,7 +1422,6 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 });
 
-
 app.post("/api/tasks/claimReward", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -1456,6 +1455,7 @@ app.post("/api/tasks/claimReward", authMiddleware, async (req, res) => {
       user.balance += reward;
       user.completedTasks = (user.completedTasks || 0) + 1;
       user.currentTaskProgress = 0; // تصفير التقدم
+      user.availableSpins = (user.availableSpins || 0) + 1; // 🎯 زيادة سبين واحد
       autoClaimed = true;
 
       // 📝 تسجيل المعاملة
@@ -1483,7 +1483,8 @@ app.post("/api/tasks/claimReward", authMiddleware, async (req, res) => {
         autoClaimed,
         newBalance: user.balance,
         completedTasks: user.completedTasks,
-        currentTaskProgress: user.currentTaskProgress
+        currentTaskProgress: user.currentTaskProgress,
+        availableSpins: user.availableSpins // ✅ رجعنا عدد السبين بعد الزيادة
       }
     });
 
@@ -10390,6 +10391,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
