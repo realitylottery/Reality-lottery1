@@ -1423,7 +1423,80 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 });
 
 
+app.post("/api/tasks/claimReward", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { progressValue } = req.body;
 
+    // ✅ التحقق من المدخلات
+    if (typeof progressValue !== 'number') {
+      return res.status(400).json({
+        success: false,
+        message: 'progressValue is required and must be a number'
+      });
+    }
+
+    // ✅ جلب بيانات المستخدم
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    let reward = 0;
+    let autoClaimed = false;
+
+    // ✅ التحقق إذا كان التقدم مكتمل (6/6)
+    if (progressValue >= 6) {
+      const subscriptionType = user?.subscriptionType || 'NONE';
+
+      reward = calculateTaskReward(subscriptionType, 6); // دالة حساب المكافأة
+      user.balance += reward;
+      user.completedTasks = (user.completedTasks || 0) + 1;
+      user.currentTaskProgress = 0; // تصفير التقدم
+      autoClaimed = true;
+
+      // 📝 تسجيل المعاملة
+      await Transaction.create({
+        user: userId,
+        amount: reward,
+        type: 'TASK_REWARD_AUTO',
+        description: `Automatic reward at progress 6`
+      });
+
+      await user.save();
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Progress not yet completed (must be 6)'
+      });
+    }
+
+    // ✅ إرجاع الرد
+    res.status(200).json({
+      success: true,
+      message: `Reward claimed successfully`,
+      data: {
+        reward,
+        autoClaimed,
+        newBalance: user.balance,
+        completedTasks: user.completedTasks,
+        currentTaskProgress: user.currentTaskProgress
+      }
+    });
+
+  } catch (err) {
+    console.error('Error in claimReward:', err);
+
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+});
 
 
 
@@ -10317,6 +10390,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
