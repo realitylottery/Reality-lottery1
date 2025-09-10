@@ -295,28 +295,24 @@
   return 0;
     }
 
-    // احذف دالة completeTask الحالية واستبدلها بهذه:
 async function claimReward(rewardAmount, subscriptionType) {
   try {
-    console.log("Claiming reward for progress...");
-    
     const response = await fetch(API_BASE + '/api/tasks/claim-reward', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer ' + getToken(),
         'Content-Type': 'application/json'
       }
-      // لا حاجة لإرسال بيانات - السيرفر يعتمد على تقدم المستخدم الحالي
     });
     
-    const responseData = await response.json();
-    console.log("Claim reward response:", responseData);
+    const result = await response.json();
     
     if (response.ok) {
       showRewardNotification(rewardAmount, subscriptionType, true);
-      return responseData;
+      return result;
     } else {
-      throw new Error(responseData.message || 'Failed to claim reward');
+      // إذا فشل claim-reward، جرب استخدام complete-task
+      return await completeTask(null, rewardAmount, subscriptionType, true);
     }
   } catch(err) {
     console.error('Error claiming reward:', err);
@@ -370,6 +366,34 @@ async function claimReward(rewardAmount, subscriptionType) {
   }
     }
 
+    async function completeTask(userId, rewardAmount, subscriptionType, isReset) {
+  try {
+    const response = await fetch(API_BASE + '/api/tasks/complete', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + getToken(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        taskType: isReset ? 'manual_reset' : 'auto_complete',
+        progressValue: 6 // لإخبار الخادم أننا أكملنا 6 خطوات
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok && result.success) {
+      showRewardNotification(rewardAmount, subscriptionType, isReset);
+      return result;
+    } else {
+      throw new Error(result.message || 'Failed to complete task');
+    }
+  } catch (error) {
+    console.error('Error completing task:', error);
+    throw error;
+  }
+    }
+    
     async function loadProfile(){
       if(!isSigned()){ 
         location.href='login.html?next=profile.html'; 
