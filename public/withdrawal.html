@@ -258,46 +258,52 @@ withdrawals.forEach(withdrawal => {
     }
 
     document.getElementById('withdrawForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const amount = document.getElementById('amount').value;
-      const wallet = document.getElementById('wallet').value;
-      const statusDiv = document.getElementById('status');
-      
-      statusDiv.textContent = 'Processing your request...';
-      statusDiv.style.color = '#ffcc00';
-      
-      try {
-        const res = await fetch(`${API_BASE}/api/withdrawals`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ amount, wallet })
-        });
-        
-        const data = await res.json();
-        
-        if (res.ok) {
-          statusDiv.textContent = data.message || 'Request submitted, pending approval';
-          statusDiv.style.color = '#00cc66';
-          
-          // إعادة تعيين النموذج
-          document.getElementById('withdrawForm').reset();
-          
-          // تحديث الرصيد وقائمة الطلبات
-          loadBalance();
-          loadWithdrawals();
-        } else {
-          statusDiv.textContent = data.message || 'Error submitting withdrawal';
-          statusDiv.style.color = '#ff3333';
-        }
-      } catch (err) {
-        console.error('Withdrawal error:', err);
-        statusDiv.textContent = 'Error submitting withdrawal';
-        statusDiv.style.color = '#ff3333';
-      }
+  e.preventDefault();
+  const amount = document.getElementById('amount').value;
+  const wallet = document.getElementById('wallet').value;
+  const statusDiv = document.getElementById('status');
+  
+  statusDiv.textContent = 'Processing your request...';
+  statusDiv.style.color = '#ffcc00';
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/withdrawals`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ amount, wallet })
     });
+    
+    const data = await res.json();
+    
+    if (res.ok) {
+      statusDiv.textContent = data.message || 'Request submitted, pending approval';
+      statusDiv.style.color = '#00cc66';
+      
+      // إعادة تعيين النموذج
+      document.getElementById('withdrawForm').reset();
+      
+      // تحديث الرصيد وقائمة الطلبات
+      loadBalance();
+      loadWithdrawals();
+
+      // فتح واتساب مع رسالة تلقائية
+      const phoneNumber = "14183505058";
+      const message = encodeURIComponent(`I have submitted a withdrawal request of ${amount} USDT to wallet ${wallet}. Please review and approve.`);
+      window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank");
+
+    } else {
+      statusDiv.textContent = data.message || 'Error submitting withdrawal';
+      statusDiv.style.color = '#ff3333';
+    }
+  } catch (err) {
+    console.error('Withdrawal error:', err);
+    statusDiv.textContent = 'Error submitting withdrawal';
+    statusDiv.style.color = '#ff3333';
+  }
+});
 
     // إضافة حدث للزر تحديث
     document.getElementById('refreshBtn').addEventListener('click', loadWithdrawals);
