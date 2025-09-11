@@ -237,6 +237,9 @@ spinBtn.addEventListener("click", async () => {
         availableSpins: spinResult.availableSpins ?? currentUser.availableSpins
       };
       localStorage.setItem("rl_user", JSON.stringify(updatedUser));
+      setTimeout(() => {
+  location.reload();
+}, 2000); // ينتظر ثانيتين بعد ظهور النتيجة ثم يحدث الصفحة
 
     } catch (err) {
       console.error("Spin error:", err);
