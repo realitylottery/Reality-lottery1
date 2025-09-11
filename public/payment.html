@@ -353,6 +353,7 @@
             <li>Open your wallet application</li>
             <li>Send the required amount (<span id="paymentAmount">0</span>) to the copied address</li>
             <li>Keep the Transaction ID and enter it in the form below</li>
+            <li>After you click on the Submit Payment bottom ,you will be directed to direct WhatsApp message to our support to notify us about your payment</li>
             <li>Your payment will be reviewed and activated within 24 hours</li>
           </ol>
         </div>
@@ -507,13 +508,19 @@
           const data = await response.json();
           
           if (response.ok) {
-            showAlert('Payment submitted successfully! It will be reviewed within 24 hours.', 'success');
-            document.getElementById('paymentForm').reset();
-            
-            // Redirect to profile after 3 seconds
-            setTimeout(() => {
-              window.location.href = 'profile.html';
-            }, 3000);
+  showAlert('Payment submitted successfully! Redirecting to WhatsApp...', 'success');
+  document.getElementById('paymentForm').reset();
+  
+  // فتح واتساب مع الرسالة
+  const phoneNumber = "14183505058";
+  const message = encodeURIComponent("I have submitted a payment request, please make sure to accept my request.");
+  window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank");
+
+  // التحويل لصفحة index.html بعد 3 ثواني
+  setTimeout(() => {
+    window.location.href = "index.html";
+  }, 3000);
+          }
           } else {
             showAlert(data.message || 'Payment submission failed', 'error');
           }
