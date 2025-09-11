@@ -520,9 +520,9 @@
   setTimeout(() => {
     window.location.href = "index.html";
   }, 3000);
-          }
-          } else {
-            showAlert(data.message || 'Payment submission failed', 'error');
+
+} else {
+  showAlert(data.message || 'Payment submission failed', 'error');
           }
         } catch (error) {
           console.error('Payment error:', error);
