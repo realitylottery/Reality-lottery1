@@ -74,6 +74,39 @@
   align-items: center;
   flex-wrap: wrap;
   }
+  /* Task Progress Styles */
+.progress-bar {
+  height: 10px;
+  background: #181818;
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 999px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0f6, #7dffb2);
+  transition: width 0.3s ease;
+}
+
+.user-selected {
+  background: rgba(255, 215, 0, 0.1) !important;
+  border-left: 3px solid var(--gold);
+}
+
+.task-progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-weight: bold;
+  color: var(--gold);
+}
 </style>
 </head>
 <body>
@@ -99,6 +132,9 @@
     <button class="navbtn" data-tab="tab-tickers"><i class="fa-solid fa-scroll"></i> News Tickers</button>
     <button class="navbtn" data-tab="tab-notifications">
   <i class="fa-solid fa-bell"></i> Notifications</button>
+    <button class="navbtn" data-tab="tab-task-progress">
+  <i class="fa-solid fa-tasks"></i> Task Progress Management
+    </button>
     <button class="navbtn" data-tab="tab-reviews">
   <i class="fa-solid fa-star"></i> Reviews Management
     </button>
@@ -617,7 +653,94 @@
         </div>
       </div>
     </section>
-
+<!-- TASK PROGRESS MANAGEMENT -->
+<section id="tab-task-progress" class="section hidden">
+  <div class="title"><i class="fa-solid fa-tasks"></i> Task Progress Management</div>
+  
+  <div class="filter-bar">
+    <input id="taskProgressSearch" placeholder="Search by username..." />
+    <select id="taskProgressFilter" class="filter-select">
+      <option value="all">All Users</option>
+      <option value="progress0">Progress: 0</option>
+      <option value="progress1">Progress: 1</option>
+      <option value="progress2">Progress: 2</option>
+      <option value="progress3">Progress: 3</option>
+      <option value="progress4">Progress: 4</option>
+      <option value="progress5">Progress: 5</option>
+      <option value="progress6">Progress: 6 (Complete)</option>
+    </select>
+    <button class="btn" id="btnReloadTaskProgress">
+      <i class="fa-solid fa-rotate"></i> Reload
+    </button>
+  </div>
+  
+  <div class="row" style="overflow:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Current Progress</th>
+          <th>Completed Tasks</th>
+          <th>Successful Invites</th>
+          <th>Subscription</th>
+          <th>Expected Reward</th>
+          <th class="nowrap">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="taskProgressTbody">
+        <tr><td colspan="8" class="muted">Loading task progress data...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Task Progress Controls -->
+  <div class="card" style="margin-top: 20px;">
+    <div class="title" style="font-size: 16px;">
+      <i class="fa-solid fa-sliders"></i> Selected User Controls
+    </div>
+    
+    <div id="selectedUserInfo" class="notice">
+      Select a user from the table above to manage their task progress.
+    </div>
+    
+    <div class="grid grid-3" style="margin-top: 15px;">
+      <div class="card">
+        <label>Set Progress Value (0-6)</label>
+        <input type="number" id="setProgressValue" min="0" max="6" value="0" />
+        <button class="btn" id="btnSetProgress" style="margin-top: 10px;">
+          <i class="fa-solid fa-pen-to-square"></i> Set Progress
+        </button>
+      </div>
+      
+      <div class="card">
+        <label>Adjust Progress</label>
+        <div class="row">
+          <button class="btn btn-info" id="btnIncrementProgress">
+            <i class="fa-solid fa-plus"></i> +1
+          </button>
+          <button class="btn btn-info" id="btnDecrementProgress">
+            <i class="fa-solid fa-minus"></i> -1
+          </button>
+        </div>
+        <button class="btn btn-outline" id="btnResetProgress" style="margin-top: 10px;">
+          <i class="fa-solid fa-rotate-left"></i> Reset to 0
+        </button>
+      </div>
+      
+      <div class="card">
+        <label>Complete Task</label>
+        <button class="btn btn-ok" id="btnCompleteTask">
+          <i class="fa-solid fa-check-circle"></i> Complete Task (6/6)
+        </button>
+        <div class="muted small" style="margin-top: 8px;">
+          Awards reward and resets progress
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+    
     <section id="tab-tickers" class="section hidden">
   <div class="title"><i class="fa-solid fa-scroll"></i> News Tickers Management</div>
   
@@ -1609,7 +1732,212 @@ async function loadUsers(){
 
 $('#btnReloadUsers').addEventListener('click', loadUsers);
 $('#userSearch').addEventListener('input', loadUsers);
+
+  // ========= TASK PROGRESS MANAGEMENT =========
+let selectedUserId = null;
+let selectedUserData = null;
+
+async function loadTaskProgress() {
+  const tb = $('#taskProgressTbody');
+  tb.innerHTML = '<tr><td colspan="8" class="muted">Loading task progress data...</td></tr>';
   
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/task-progress', { 
+      headers: authHeaders(false) 
+    });
+    
+    if (r._error) {
+      tb.innerHTML = '<tr><td colspan="8"><div class="notice">' + r.message + '</div></td></tr>';
+      return;
+    }
+    
+    const users = r.data || [];
+    if (!users.length) {
+      tb.innerHTML = '<tr><td colspan="8" class="muted">No users found.</td></tr>';
+      return;
+    }
+    
+    // تطبيق الفلتر والبحث
+    const filter = $('#taskProgressFilter').value;
+    const searchQuery = $('#taskProgressSearch').value.trim().toLowerCase();
+    
+    const filtered = users.filter(user => {
+      // تطبيق البحث
+      if (searchQuery && 
+          !user.username.toLowerCase().includes(searchQuery) && 
+          !user.email.toLowerCase().includes(searchQuery)) {
+        return false;
+      }
+      
+      // تطبيق الفلتر
+      if (filter !== 'all') {
+        const targetProgress = parseInt(filter.replace('progress', ''));
+        return user.currentTaskProgress === targetProgress;
+      }
+      
+      return true;
+    });
+    
+    renderTaskProgressTable(filtered);
+    
+  } catch (error) {
+    console.error('Error loading task progress:', error);
+    tb.innerHTML = '<tr><td colspan="8"><div class="notice">Error loading task progress: ' + error.message + '</div></td></tr>';
+  }
+}
+
+function renderTaskProgressTable(users) {
+  const tb = $('#taskProgressTbody');
+  
+  if (!users.length) {
+    tb.innerHTML = '<tr><td colspan="8" class="muted">No matching users found.</td></tr>';
+    return;
+  }
+  
+  tb.innerHTML = '';
+  
+  users.forEach(user => {
+    const tr = document.createElement('tr');
+    const progressPercent = Math.round((user.currentTaskProgress / 6) * 100);
+    const isSelected = selectedUserId === user._id;
+    
+    if (isSelected) {
+      tr.style.backgroundColor = 'rgba(255, 215, 0, 0.1)';
+    }
+    
+    tr.innerHTML = `
+      <td>
+        <strong>${user.username || '-'}</strong>
+        ${isSelected ? '<span class="chip" style="background:var(--gold);color:#000;">Selected</span>' : ''}
+      </td>
+      <td>${user.email || '-'}</td>
+      <td>
+        <div class="progress-bar" style="width:100px; display:inline-block; margin-right:8px;">
+          <div class="progress-fill" style="width:${progressPercent}%"></div>
+        </div>
+        <span class="mono">${user.currentTaskProgress}/6</span>
+      </td>
+      <td>${user.completedTasks || 0}</td>
+      <td>${user.successfulInvites || 0}</td>
+      <td>${user.subscriptionType || 'None'}</td>
+      <td>$${user.expectedReward || 0}</td>
+      <td class="nowrap">
+        <button class="btn small" data-select-user="${user._id}">
+          <i class="fa-solid fa-check"></i> Select
+        </button>
+      </td>
+    `;
+    
+    tb.appendChild(tr);
+  });
+  
+  // إضافة معالجات الأحداث لأزرار التحديد
+  tb.querySelectorAll('[data-select-user]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const userId = btn.dataset.selectUser;
+      await selectUserForTaskManagement(userId);
+    });
+  });
+}
+
+async function selectUserForTaskManagement(userId) {
+  try {
+    const r = await safeFetch(API_BASE + '/api/admin/users/' + userId + '/task-progress', { 
+      headers: authHeaders(false) 
+    });
+    
+    if (r._error) {
+      alert('Error loading user data: ' + r.message);
+      return;
+    }
+    
+    selectedUserId = userId;
+    selectedUserData = r.data;
+    
+    // تحديث واجهة المستخدم
+    $('#selectedUserInfo').innerHTML = `
+      <strong>Selected User:</strong> ${selectedUserData.username} (${selectedUserData.email})<br>
+      <strong>Current Progress:</strong> ${selectedUserData.currentTaskProgress}/6<br>
+      <strong>Expected Reward:</strong> $${selectedUserData.expectedReward}
+    `;
+    
+    // إعادة تحميل الجدول لتحديد الصف المحدد
+    loadTaskProgress();
+    
+  } catch (error) {
+    console.error('Error selecting user:', error);
+    alert('Error selecting user: ' + error.message);
+  }
+}
+
+async function updateTaskProgress(action, value = null) {
+  if (!selectedUserId) {
+    alert('Please select a user first.');
+    return;
+  }
+  
+  let endpoint = API_BASE + '/api/admin/users/' + selectedUserId + '/task-progress';
+  let method = 'PUT';
+  let body = {};
+  
+  if (action === 'set') {
+    body = { currentTaskProgress: parseInt(value) };
+  } else if (action === 'increment') {
+    body = { action: 'increment', amount: 1 };
+  } else if (action === 'decrement') {
+    body = { action: 'decrement', amount: 1 };
+  } else if (action === 'reset') {
+    body = { action: 'reset' };
+  } else if (action === 'complete') {
+    body = { action: 'complete' };
+  }
+  
+  try {
+    const r = await safeFetch(endpoint, {
+      method: method,
+      headers: authHeaders(true),
+      body: JSON.stringify(body)
+    });
+    
+    if (r._error) {
+      alert('Error updating task progress: ' + r.message);
+    } else {
+      alert('Task progress updated successfully!');
+      // إعادة تحميل البيانات
+      await selectUserForTaskManagement(selectedUserId);
+      loadTaskProgress();
+    }
+  } catch (error) {
+    console.error('Error updating task progress:', error);
+    alert('Error updating task progress: ' + error.message);
+  }
+}
+
+// إضافة مستمعي الأحداث
+$('#btnReloadTaskProgress').addEventListener('click', loadTaskProgress);
+$('#taskProgressSearch').addEventListener('input', loadTaskProgress);
+$('#taskProgressFilter').addEventListener('change', loadTaskProgress);
+
+$('#btnSetProgress').addEventListener('click', () => {
+  const value = $('#setProgressValue').value;
+  if (value >= 0 && value <= 6) {
+    updateTaskProgress('set', value);
+  } else {
+    alert('Please enter a value between 0 and 6.');
+  }
+});
+
+$('#btnIncrementProgress').addEventListener('click', () => updateTaskProgress('increment'));
+$('#btnDecrementProgress').addEventListener('click', () => updateTaskProgress('decrement'));
+$('#btnResetProgress').addEventListener('click', () => updateTaskProgress('reset'));
+$('#btnCompleteTask').addEventListener('click', () => updateTaskProgress('complete'));
+
+// تحميل بيانات تقدم المهام عند فتح التبويب
+document.querySelector('[data-tab="tab-task-progress"]').addEventListener('click', () => {
+  if (isSigned()) {
+    loadTaskProgress();
+  }
+});
   // ========= PAYMENTS =========
   function getPaymentStatusChip(status) {
     switch(status) {
