@@ -134,11 +134,6 @@
           <label>Current Balance</label>
           <div><strong id="balanceAmount">0</strong> <span class="muted">USD</span></div>
         </div>
-        <div class="field">
-  <label>Secondary Earnings</label>
-  <div><strong id="secondaryEarnings">0</strong> <span class="muted">USD</span></div>
-  <div class="muted" style="font-size:12px;">You earn 10% from each invited user's balance automatically.</div>
-        </div>
 
         <div class="field">
           <label>Subscription</label>
@@ -434,7 +429,6 @@ async function claimReward(rewardAmount, subscriptionType) {
 
       // Balance & referral
       document.getElementById('balanceAmount').textContent = user.balance||0;
-      document.getElementById('secondaryEarnings').textContent = (user.secondaryEarnings || 0).toFixed(2);
       document.getElementById('subType').textContent = user.subscriptionType||'None';
       document.getElementById('refLink').value = `${location.origin}/register.html?ref=${user.referralCode||''}`;
       // إحصائيات الدعوات - استخدام الحقول الصحيحة من الخادم
