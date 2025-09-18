@@ -6937,95 +6937,393 @@ app.get('/api/health', (req, res) =>
 
 
 app.post('/api/auth/register', async (req, res) => {
+
+
+
   try {
+
+
+
     const { fullName, email, phone, username, password, referralCode } = req.body;
+
+
+
+
+
+
+
     if (!fullName || !email || !username || !password) {
+
+
+
       return res.status(400).json({ message: 'Missing required fields' });
+
+
+
     }
+
+
+
+
+
+
+
     const existing = await User.findOne({
+
+
+
       $or: [{ email: email.toLowerCase() }, { username }]
+
+
+
     });
+
+
+
+    
+
+
+
     if (existing) {
+
+
+
       return res.status(409).json({ message: 'Email or username already used' });
+
+
+
     }
+
+
+
+
+
+
+
     let referredBy = null;
+
+
+
     let referrer = null;
+
+
+
+
+
+
+
     // البحث عن المستخدم باستخدام كود الدعوة (ref)
+
+
+
     if (referralCode) {
+
+
+
       console.log('🔍 Searching for referrer with code:', referralCode);
+
+
+
+      
+
+
+
       referrer = await User.findOne({ 
+
+
+
         $or: [
+
+
+
           { referralCode: referralCode },  // البحث بكود الدعوة أولاً
+
+
+
           { username: referralCode }       // ثم البحث باسم المستخدم
+
+
+
         ]
+
+
+
       });
 
+
+
+
+
+
+
       if (referrer) {
+
+
+
         console.log('✅ Found referrer:', referrer.username);
+
+
+
         referredBy = referrer.referralCode;
+
+
+
+        
+
+
+
         // إذا كان البحث باسم مستخدم ولم يكن لديه كود دعوة، ننشئ له واحد
+
+
+
         if (!referrer.referralCode) {
+
+
+
           referrer.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+
+
+
           await referrer.save();
-          referredBy = referrer._id;
+
+
+
+          referredBy = referrer.referralCode;
+
+
+
         }
 
+
+
       } else {
-        console.log('❌ No referrer found with code:', referralCode);
+
+
+
+        console.log('❌ No referrer found with code:', ref);
+
+
 
       }
+
+
+
     }
+
+
+
+
+
+
 
     const salt = await bcrypt.genSalt(10);
+
+
+
     const hash = await bcrypt.hash(password, salt);
+
+
+
+
+
+
+
     const user = new User({
+
+
+
       fullName,
+
+
+
       email: email.toLowerCase(),
+
+
+
       phone: phone || '',
+
+
+
       username,
+
+
+
       password: hash,
+
+
+
       referredBy: referredBy // ⚠️ هذا هو الحقل المهم
+
+
+
     });
+
+
+
+
+
+
+
     await user.save();
+
+
+
     console.log('✅ User saved with referredBy:', user.referredBy);
+
+
+
+
+
+
+
     // إذا كان هناك مدعٍ، تحديث إحصائياته
+
+
+
     if (referrer) {
+
+
+
       try {
+
+
+
         await User.findByIdAndUpdate(referrer._id, {
+
+
+
           $inc: { totalInvites: 1 }
+
+
+
         });
+
+
+
         console.log(`✅ Updated totalInvites for referrer: ${referrer.username}`);
+
+
+
       } catch (updateError) {
 
+
+
         console.error('Error updating referrer stats:', updateError);
+
+
+
       }
 
 
 
     }
 
+
+
+
+
+
+
     // إنشاء كود دعوة للمستخدم الجديد إذا لم يكن لديه
+
+
+
     if (!user.referralCode) {
+
+
+
       user.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+
+
+
       await user.save();
+
+
+
     }
+
+
+
+
+
+
+
     const token = generateToken(user);
+
+
+
+
+
+
+
     return res.status(201).json({
+
+
+
       message: 'User registered',
+
+
+
       user: {
+
+
+
         id: user._id,
+
+
+
         username: user.username,
+
+
+
         fullName: user.fullName,
+
+
+
         email: user.email,
+
+
+
         referralCode: user.referralCode,
-      referredBy: user.referredBy // للتأكد من القيمة
+
+
+
+        referredBy: user.referredBy // للتأكد من القيمة
+
+
+
       },
+
+
+
       token
+
+
+
     });
+
+
+
+
+
+
+
   } catch (err) {
+
+
+
     console.error('Registration error:', err);
+
+
+
     return res.status(500).json({ message: 'Server error', error: err.message });
+
+
+
   }
+
+
+
 });
 
 
@@ -9382,11 +9680,6 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const availableSpins = user.calculateAvailableSpins(); // العدد المحسوب ديناميكيًا
-    const referredUsers = await User.find({ referredBy: user._id });
-
-const secondaryEarnings = referredUsers.reduce((sum, u) => {
-  return sum + ((u.balance || 0) * 0.10); // 10%
-}, 0);
 
     const currentProgress = Math.min(6, (user.successfulInvites || 0) + (user.subscriptionActive ? 1 : 0));
     const expectedReward = calculateTaskReward(user.subscriptionType, currentProgress);
@@ -9411,8 +9704,7 @@ const secondaryEarnings = referredUsers.reduce((sum, u) => {
       currentProgress,
       lotteryEntries: user.lotteryEntries || 0,
       expectedReward,
-      canReset: currentProgress >= 2,
-      secondaryEarnings: parseFloat(secondaryEarnings.toFixed(2))
+      canReset: currentProgress >= 2
     });
   } catch (err) {
     console.error('Me error:', err);
@@ -10265,8 +10557,6 @@ app.listen(PORT, () => {
 
 
 });
-
-
 
 
 
