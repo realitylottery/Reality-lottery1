@@ -31,6 +31,10 @@ const userSchema = new mongoose.Schema({
     type: Number, 
     default: 0 
   },
+  referralBalanceShare: { 
+    type: Number, 
+    default: 0 
+  }, 
   referralEarningsHistory: [{
     referralId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     amount: Number,
