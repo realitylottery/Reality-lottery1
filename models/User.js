@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema({
   type: Boolean,
   default: false
   },
+  referrals: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   // نظام الدعوات
   referredBy: { type: String, default: null },
   referralCode: { type: String, unique: true, sparse: true },
