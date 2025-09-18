@@ -434,7 +434,7 @@ async function claimReward(rewardAmount, subscriptionType) {
 
       // Balance & referral
       document.getElementById('balanceAmount').textContent = user.balance||0;
-      document.getElementById('secondaryEarningsAmount').textContent = user.secondaryEarnings?.toFixed(2) || "0.00";
+      document.getElementById('secondaryEarnings').textContent = (user.secondaryEarnings || 0).toFixed(2);
       document.getElementById('subType').textContent = user.subscriptionType||'None';
       document.getElementById('refLink').value = `${location.origin}/register.html?ref=${user.referralCode||''}`;
       // إحصائيات الدعوات - استخدام الحقول الصحيحة من الخادم
