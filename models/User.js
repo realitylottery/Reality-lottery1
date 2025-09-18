@@ -27,6 +27,16 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
+  referralEarnings: { 
+    type: Number, 
+    default: 0 
+  },
+  referralEarningsHistory: [{
+    referralId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    amount: Number,
+    date: { type: Date, default: Date.now },
+    description: String
+  }],
   // نظام الدعوات
   referredBy: { type: String, default: null },
   referralCode: { type: String, unique: true, sparse: true },
