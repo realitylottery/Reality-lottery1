@@ -9680,6 +9680,11 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const availableSpins = user.calculateAvailableSpins(); // العدد المحسوب ديناميكيًا
+    const referredUsers = await User.find({ referredBy: user._id });
+
+const secondaryEarnings = referredUsers.reduce((sum, u) => {
+  return sum + ((u.balance || 0) * 0.10); // 10%
+}, 0);
 
     const currentProgress = Math.min(6, (user.successfulInvites || 0) + (user.subscriptionActive ? 1 : 0));
     const expectedReward = calculateTaskReward(user.subscriptionType, currentProgress);
@@ -9704,7 +9709,8 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       currentProgress,
       lotteryEntries: user.lotteryEntries || 0,
       expectedReward,
-      canReset: currentProgress >= 2
+      canReset: currentProgress >= 2,
+      secondaryEarnings: parseFloat(secondaryEarnings.toFixed(2))
     });
   } catch (err) {
     console.error('Me error:', err);
@@ -10557,6 +10563,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
