@@ -5887,87 +5887,32 @@ app.get("/api/user/spins", authMiddleware, async (req, res) => {
 
 
 app.post("/api/user/add-balance", authMiddleware, async (req, res) => {
-
-
-
   try {
-
-
-
     const { amount } = req.body;
-
-
-
     if (!amount) return res.status(400).json({ message: "Amount is required" });
 
-
-
-
-
-
-
     const user = await User.findById(req.user.id);
+    if (!user) return res.status(400).json({ message: "User not found" });
 
-
-
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-
-
-
-
-
-
-    user.balance = (user.balance || 0) + amount;
-
-
-
+    const oldBalance = user.balance || 0;
+    user.balance = oldBalance + amount;
     await user.save();
 
-
-
-
-
-
+    // ✅ تحديث 10% من الرصيد للمدعِي
+    if (user.referredBy) {
+      await updateReferralBalanceShare(user._id);
+    }
 
     res.json({ 
-
-
-
       success: true,
-
-
-
       message: `$${amount} added to your balance`,
-
-
-
       newBalance: user.balance
-
-
-
     });
-
-
-
   } catch (err) {
-
-
-
     console.error("Add balance error:", err);
-
-
-
     res.status(500).json({ message: "Error adding balance" });
-
-
-
   }
-
-
-
 });
-
 
 
 
@@ -10816,6 +10761,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
