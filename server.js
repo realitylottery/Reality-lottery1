@@ -507,7 +507,71 @@ function calculateTaskReward(subscriptionType, progress) {
 
 
 
+// ================= نظام 10% من الرصيد =================
 
+// دالة حساب 10% من رصيد المدعو
+function calculateTenPercent(balance) {
+  return balance * 0.1; // 10% من الرصيد
+}
+
+// دالة لتحديث حصة المدعِي من رصيد المدعو
+async function updateReferralBalanceShare(referralId) {
+  try {
+    const referralUser = await User.findById(referralId);
+    if (!referralUser || !referralUser.referredBy) return;
+
+    const referrer = await User.findOne({ referralCode: referralUser.referredBy });
+    if (!referrer) return;
+
+    // حساب 10% من رصيد المدعو الحالي
+    const tenPercent = calculateTenPercent(referralUser.balance || 0);
+    
+    // البحث في السجل عن هذا المدعو
+    const existingRecord = referrer.referralEarningsHistory.find(
+      record => record.referralId.toString() === referralId.toString()
+    );
+
+    if (existingRecord) {
+      // تحديث القيمة إذا كان المدعو موجوداً سابقاً
+      const difference = tenPercent - existingRecord.amount;
+      if (difference !== 0) {
+        referrer.referralBalanceShare += difference;
+        existingRecord.amount = tenPercent;
+        existingRecord.date = new Date();
+        existingRecord.description = `10% of ${referralUser.username}'s balance ($${referralUser.balance})`;
+      }
+    } else {
+      // إضافة جديد إذا كان المدعو غير موجود
+      referrer.referralBalanceShare += tenPercent;
+      referrer.referralEarningsHistory.push({
+        referralId: referralUser._id,
+        amount: tenPercent,
+        description: `10% of ${referralUser.username}'s balance ($${referralUser.balance})`,
+        date: new Date()
+      });
+    }
+
+    await referrer.save();
+    return tenPercent;
+  } catch (error) {
+    console.error('Error updating referral balance share:', error);
+  }
+}
+
+// دالة لتحديث جميع حصص الرصيد (تشتغل تلقائياً)
+async function updateAllReferralBalances() {
+  try {
+    const usersWithReferrals = await User.find({ referredBy: { $exists: true, $ne: null } });
+    
+    for (const user of usersWithReferrals) {
+      await updateReferralBalanceShare(user._id);
+    }
+    
+    console.log(`✅ Updated referral balances for ${usersWithReferrals.length} users`);
+  } catch (error) {
+    console.error('Error updating all referral balances:', error);
+  }
+}
 
 
 
@@ -743,6 +807,82 @@ function calculateAvailableSpins(user) {
 }
 // =====> نهاية الدالة <=====
 
+// middleware لتحديث حصة الرصيد عند أي تغيير
+app.use('/api/*', async (req, res, next) => {
+  if (req.user && req.user.id && (req.method === 'POST' || req.method === 'PUT')) {
+    // إذا كان الطلب يغير الرصيد
+    const balanceChangingRoutes = [
+      '/api/user/add-balance',
+      '/api/tasks/complete',
+      '/api/tasks/claimReward',
+      '/api/admin/users/'
+    ];
+    
+    const isBalanceChange = balanceChangingRoutes.some(route => 
+      req.originalUrl.includes(route)
+    );
+
+    if (isBalanceChange) {
+      // تحديث حصة الرصيد بعد انتهاء الطلب
+      res.on('finish', async () => {
+        try {
+          const user = await User.findById(req.user.id);
+          if (user && user.referredBy) {
+            await updateReferralBalanceShare(user._id);
+          }
+        } catch (error) {
+          console.error('Error in referral balance middleware:', error);
+        }
+      });
+    }
+  }
+  next();
+});
+
+// الحصول على 10% من رصيد المدعوين
+app.get('/api/referral-balance-share', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .populate('referralEarningsHistory.referralId', 'username balance')
+      .populate('referrals', 'username email balance subscriptionActive');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // حساب القيمة الحالية ل 10% من كل مدعو
+    const currentReferrals = await User.find({ referredBy: user.referralCode });
+    let totalShare = 0;
+    const referralDetails = [];
+
+    for (const referral of currentReferrals) {
+      const shareAmount = calculateTenPercent(referral.balance || 0);
+      totalShare += shareAmount;
+      
+      referralDetails.push({
+        username: referral.username,
+        email: referral.email,
+        balance: referral.balance || 0,
+        yourShare: shareAmount,
+        subscriptionActive: referral.subscriptionActive
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        totalShare: totalShare,
+        yourShare: user.referralBalanceShare || 0,
+        referralCount: currentReferrals.length,
+        referralDetails: referralDetails,
+        earningsHistory: user.referralEarningsHistory || []
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching referral balance share:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // ========= NOTIFICATION ROUTES =========
 
@@ -7137,15 +7277,8 @@ app.post('/api/auth/register', async (req, res) => {
 
 
 
-
-    // البحث عن المستخدم باستخدام كود الدعوة (ref)
-
-
-
-    // داخل app.post('/api/auth/register', ...)
+// في app.post('/api/auth/register', ...)
 if (referralCode) {
-  console.log('🔍 Searching for referrer with code:', referralCode);
-  
   referrer = await User.findOne({ 
     $or: [
       { referralCode: referralCode },
@@ -7154,15 +7287,17 @@ if (referralCode) {
   });
 
   if (referrer) {
-    console.log('✅ Found referrer:', referrer.username);
     referredBy = referrer.referralCode;
     
     // إضافة المستخدم الجديد إلى قائمة إحالات المدعِي
     referrer.referrals.push(user._id);
     referrer.totalInvites += 1;
     await referrer.save();
-    
-    console.log(`✅ Added user to referrer's referrals list: ${referrer.username}`);
+
+    // بدء تتبع 10% من رصيد هذا المدعو الجديد
+    setTimeout(async () => {
+      await updateReferralBalanceShare(user._id);
+    }, 1000);
   }
 }
 
@@ -9779,6 +9914,15 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    
+    // حساب 10% من رصيد المدعوين الحالي
+    const currentReferrals = await User.find({ referredBy: user.referralCode });
+    let currentTotalShare = 0;
+    
+    for (const referral of currentReferrals) {
+      currentTotalShare += calculateTenPercent(referral.balance || 0);
+    }
+
     const availableSpins = user.calculateAvailableSpins(); // العدد المحسوب ديناميكيًا
 
     const currentProgress = Math.min(6, (user.successfulInvites || 0) + (user.subscriptionActive ? 1 : 0));
@@ -9806,6 +9950,9 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       expectedReward,
       canReset: currentProgress >= 2,
       referralEarnings: user.referralEarnings || 0,
+      referralBalanceShare: user.referralBalanceShare || 0,
+      currentBalanceShare: currentTotalShare,
+      totalReferrals: currentReferrals.length,
       referrals: user.referrals || []
     });
   } catch (err) {
@@ -10623,7 +10770,15 @@ app.get('*', (req, res) => {
 
 
 
-
+// تحديث يومي تلقائي لجميع حصص الرصيد
+setInterval(async () => {
+  try {
+    await updateAllReferralBalances();
+    console.log('🔄 Daily referral balance update completed');
+  } catch (error) {
+    console.error('Error in daily referral balance update:', error);
+  }
+}, 24 * 60 * 60 * 1000); // كل 24 ساعة
 
 
 
@@ -10659,6 +10814,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
