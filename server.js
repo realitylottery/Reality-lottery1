@@ -7294,12 +7294,14 @@ if (referralCode) {
     referrer.totalInvites += 1;
     await referrer.save();
 
-    // بدء تتبع 10% من رصيد هذا المدعو الجديد
-    setTimeout(async () => {
-      await updateReferralBalanceShare(user._id);
-    }, 1000);
+// بدء تتبع 10% من رصيد هذا المدعو الجديد
+setTimeout(async () => {
+  try {
+    await updateReferralBalanceShare(user._id);
+  } catch (error) {
+    console.error('Error in referral balance share:', error);
   }
-}
+}, 1000);
 
 
 
@@ -10814,6 +10816,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
