@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema({
     description: String
   }],
   // نظام الدعوات
-  referredBy: { type: String, default: null },
+  referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   referralCode: { type: String, unique: true, sparse: true },
   totalInvites: { type: Number, default: 0 },
   extraSpins: { type: Number, default: 0 },
