@@ -508,7 +508,22 @@ function calculateTaskReward(subscriptionType, progress) {
 
 
 
-
+async function addReferralEarning(userId, amount) {
+  try {
+    const user = await User.findById(userId);
+    if (user && user.referral) {
+      const referrer = await User.findById(user.referral);
+      if (referrer) {
+        const commission = amount * 0.10; // نسبة 10% من ربح المدعو
+        referrer.referralEarnings += commission;
+        referrer.balance += commission; // نضيفها مباشرة لرصيد الأب
+        await referrer.save();
+      }
+    }
+  } catch (err) {
+    console.error("Referral earning error:", err);
+  }
+}
 
 
 
@@ -1049,6 +1064,8 @@ app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
       autoClaimed = true;
       
       await user.save();
+      await addReferralEarning(user._id, reward);
+      
     }
     
     res.json({
@@ -1107,6 +1124,7 @@ app.post("/api/wheel/spin", async (req, res) => {
   }
 
   await user.save();
+  await addReferralEarning(user._id, prize);
 
   res.json({
     message: `You won ${prize}!`,
@@ -1467,6 +1485,8 @@ app.post("/api/tasks/claimReward", authMiddleware, async (req, res) => {
       });
 
       await user.save();
+      await addReferralEarning(user._id, reward);
+
     } else {
       return res.status(400).json({
         success: false,
@@ -10557,6 +10577,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
