@@ -74,55 +74,6 @@
       opacity: 1;
     }
 
-.secondary-earnings {
-  background: rgba(35, 209, 139, 0.1);
-  border: 1px solid rgba(35, 209, 139, 0.3);
-  border-radius: 10px;
-  padding: 12px;
-  margin-top: 12px;
-}
-
-.secondary-earnings .title {
-  color: #23d18b;
-}
-
-.earnings-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.earnings-box {
-  background: rgba(0, 0, 0, 0.2);
-  padding: 10px;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.earnings-value {
-  font-size: 18px;
-  font-weight: bold;
-  color: #23d18b;
-  margin: 3px 0;
-}
-
-.earnings-label {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.referral-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.referral-item:last-child {
-  border-bottom: none;
-}
-
     .reset-btn {
       background: linear-gradient(45deg, #ff5252, #ff7b7b);
       margin-top: 15px;
@@ -222,30 +173,6 @@
           <a href="withdrawal.html" class="btn btn-small"><i class="fa-solid fa-arrow-up-right-from-square"></i> Withdrawal</a>
           <a href="index.html" class="btn btn-outline btn-small"><i class="fa-solid fa-star"></i> Plans</a>
         </div>
-      </section>
-      <section class="card">
-  <div class="title"><i class="fa-solid fa-money-bill-transfer"></i> Secondary Earnings</div>
-  <div class="muted" style="font-size: 13px; margin-bottom: 10px">
-    You earn 10% from the earnings of people you referred
-  </div>
-  
-  <div class="earnings-grid">
-    <div class="earnings-box">
-      <div class="earnings-label">Total Referrals</div>
-      <div class="earnings-value" id="totalReferrals">0</div>
-    </div>
-    <div class="earnings-box">
-      <div class="earnings-label">Active Referrals</div>
-      <div class="earnings-value" id="activeReferrals">0</div>
-    </div>
-  </div>
-  
-  <div class="secondary-earnings">
-    <div class="title" style="font-size: 14px"><i class="fa-solid fa-users"></i> Referral Details</div>
-    <div id="referralDetails" class="muted" style="font-size: 12px; margin-top: 8px">
-      Loading referral details...
-    </div>
-  </div>
       </section>
     </div>
 
@@ -508,32 +435,6 @@ async function claimReward(rewardAmount, subscriptionType) {
 document.getElementById('totalInvited').textContent = user.totalInvites || 0; // جميع المدعوين
 document.getElementById('subscribedInvited').textContent = user.successfulInvites || 0; // فقط المشتركين
 
-      // Secondary Earnings Section
-document.getElementById('totalReferrals').textContent = user.totalInvites || 0;
-document.getElementById('activeReferrals').textContent = user.successfulInvites || 0;
-
-// Referral details
-const referralDetails = document.getElementById('referralDetails');
-if (user.referrals && user.referrals.length > 0) {
-  let detailsHTML = '<div style="max-height: 200px; overflow-y: auto">';
-  user.referrals.forEach(ref => {
-    const status = ref.subscriptionActive ? 
-      '<span style="color:#23d18b">Active</span>' : 
-      '<span style="color:var(--muted)">Inactive</span>';
-    
-    detailsHTML += `
-      <div class="referral-item">
-        <div>${ref.username}</div>
-        <div>${status}</div>
-      </div>
-    `;
-  });
-  detailsHTML += '</div>';
-  referralDetails.innerHTML = detailsHTML;
-} else {
-  referralDetails.textContent = 'No referrals yet. Share your link to earn more!';
-}
-      
 // حساب lotteryEntries تلقائياً
 const subscriptionBonusMap = { 
   'basic': 1, 
