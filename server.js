@@ -1519,7 +1519,7 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 
 });
 
-app.post("/api/tasks/claimReward", authMiddleware, async (req, res) => {
+app.post("/api/tasks/claimReward", authMiddleware, referralCommissionMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
     const { progressValue } = req.body;
@@ -2272,7 +2272,7 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
 });
 
 // Endpoint to claim reward at progress 4 or 5
-app.post("/api/tasks/claim-reward", authMiddleware, async (req, res) => {
+app.post("/api/tasks/claim-reward", authMiddleware, referralCommissionMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
     const user = await User.findById(userId);
@@ -6333,7 +6333,36 @@ app.post("/api/admin/withdrawals/:id/approve", authMiddleware, async (req, res) 
 
 
 
+// إحصائيات الأرباح الثانوية للمسؤولين
+app.get("/api/admin/referral-earnings-stats", authMiddleware, async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("admin")) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
+    // إحصائيات عامة عن الأرباح الثانوية
+    const totalCommission = await User.aggregate([
+      { $group: { _id: null, total: { $sum: "$referralEarnings" } } }
+    ]);
+
+    // أفضل المستفيدين من العمولات
+    const topEarners = await User.find({ referralEarnings: { $gt: 0 } })
+      .select('username email referralEarnings totalInvites successfulInvites')
+      .sort({ referralEarnings: -1 })
+      .limit(10);
+
+    res.json({
+      success: true,
+      data: {
+        totalCommission: totalCommission[0]?.total || 0,
+        topEarners: topEarners
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching referral earnings stats:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 
 
 
@@ -7113,55 +7142,29 @@ app.post('/api/auth/register', async (req, res) => {
 
 
 
-    if (referralCode) {
+    // داخل app.post('/api/auth/register', ...)
+if (referralCode) {
+  console.log('🔍 Searching for referrer with code:', referralCode);
+  
+  referrer = await User.findOne({ 
+    $or: [
+      { referralCode: referralCode },
+      { username: referralCode }
+    ]
+  });
 
-
-
-      console.log('🔍 Searching for referrer with code:', referralCode);
-
-
-
-      
-
-
-
-      referrer = await User.findOne({ 
-
-
-
-        $or: [
-
-
-
-          { referralCode: referralCode },  // البحث بكود الدعوة أولاً
-
-
-
-          { username: referralCode }       // ثم البحث باسم المستخدم
-
-
-
-        ]
-
-
-
-      });
-
-
-
-
-
-
-
-      if (referrer) {
-
-
-
-        console.log('✅ Found referrer:', referrer.username);
-
-
-
-        referredBy = referrer.referralCode;
+  if (referrer) {
+    console.log('✅ Found referrer:', referrer.username);
+    referredBy = referrer.referralCode;
+    
+    // إضافة المستخدم الجديد إلى قائمة إحالات المدعِي
+    referrer.referrals.push(user._id);
+    referrer.totalInvites += 1;
+    await referrer.save();
+    
+    console.log(`✅ Added user to referrer's referrals list: ${referrer.username}`);
+  }
+}
 
 
 
@@ -8026,7 +8029,7 @@ app.get('/api/user/referral-link', authMiddleware, async (req, res) => {
 
 
 
-app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
+app.post("/api/tasks/complete", authMiddleware, referralCommissionMiddleware, async (req, res) => {
   try {
     const { taskId, completed } = req.body;
     const userId = req.user.id;
@@ -9801,7 +9804,9 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       currentProgress,
       lotteryEntries: user.lotteryEntries || 0,
       expectedReward,
-      canReset: currentProgress >= 2
+      canReset: currentProgress >= 2,
+      referralEarnings: user.referralEarnings || 0,
+      referrals: user.referrals || []
     });
   } catch (err) {
     console.error('Me error:', err);
@@ -10654,6 +10659,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
