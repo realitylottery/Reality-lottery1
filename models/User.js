@@ -109,5 +109,58 @@ userSchema.methods.getReferralLink = function() {
   const baseUrl = process.env.FRONTEND_ORIGIN || 'https://realitylottery.koyeb.app';
   return `${baseUrl}/register?ref=${this.referralCode}`;
 };
+// بعد السطر: userSchema.methods.getReferralLink = function() { ... };
+
+// طريقة لإضافة أرباح من الإحالات
+userSchema.methods.addReferralEarning = async function(referralId, amount, description) {
+  try {
+    // حساب العمولة (10%)
+    const commission = amount * 0.1;
+    
+    // إضافة العمولة إلى الرصيد
+    this.balance += commission;
+    this.referralEarnings += commission;
+    
+    // تسجيل في السجل
+    this.referralEarningsHistory.push({
+      referralId,
+      amount: commission,
+      description: `${description} - 10% commission`,
+      date: new Date()
+    });
+    
+    await this.save();
+    return commission;
+  } catch (error) {
+    console.error('Error adding referral earnings:', error);
+    throw error;
+  }
+};
+
+// طريقة للحصول على تفاصيل الأرباح الثانوية
+userSchema.methods.getReferralEarningsDetails = function() {
+  return {
+    totalReferralEarnings: this.referralEarnings,
+    totalInvites: this.totalInvites,
+    successfulInvites: this.successfulInvites,
+    earningsHistory: this.referralEarningsHistory
+  };
+};
+
+// طريقة لتحديث عدد الإحالات الناجحة
+userSchema.methods.incrementSuccessfulInvites = async function() {
+  this.successfulInvites += 1;
+  await this.save();
+};
+
+// طريقة للحصول على إحالات المستخدم مع تفاصيلهم
+userSchema.methods.getUserReferrals = async function() {
+  return await mongoose.model('User')
+    .find({ _id: { $in: this.referrals } })
+    .select('username email subscriptionActive subscriptionType balance createdAt')
+    .sort({ createdAt: -1 });
+};
+
+// قبل module.exports;
 
 module.exports = mongoose.model('User', userSchema);
