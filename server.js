@@ -655,7 +655,71 @@ async function authMiddleware(req, res, next) {
 
 
 
+// ================= REFERRAL EARNINGS HELPERS =================
 
+// دالة لحساب العمولة (10% من أرباح المدعو)
+function calculateReferralCommission(amount) {
+  return amount * 0.1; // 10% عمولة
+}
+
+// دالة لإضافة أرباح العمولة للمستخدم
+async function addReferralEarnings(referrerId, amount, referralId, description) {
+  try {
+    const referrer = await User.findById(referrerId);
+    if (!referrer) return;
+    
+    const commission = calculateReferralCommission(amount);
+    
+    // إضافة العمولة إلى الرصيد والأرباح الثانوية
+    referrer.balance += commission;
+    referrer.referralEarnings += commission;
+    
+    // تسجيل في السجل
+    referrer.referralEarningsHistory.push({
+      referralId,
+      amount: commission,
+      description,
+      date: new Date()
+    });
+    
+    await referrer.save();
+    return commission;
+  } catch (error) {
+    console.error('Error adding referral earnings:', error);
+    throw error;
+  }
+}
+
+// دالة middleware لإضافة العمولة تلقائياً
+const referralCommissionMiddleware = async (req, res, next) => {
+  try {
+    const { userId, amount, description } = req.body;
+    
+    if (!userId || !amount) {
+      return next();
+    }
+    
+    // البحث عن المستخدم الذي كسب
+    const earningUser = await User.findById(userId);
+    if (!earningUser || !earningUser.referredBy) {
+      return next();
+    }
+    
+    // البحث عن المستخدم الذي دعاه
+    const referrer = await User.findOne({ referralCode: earningUser.referredBy });
+    if (!referrer) {
+      return next();
+    }
+    
+    // إضافة العمولة
+    await addReferralEarnings(referrer._id, amount, userId, description || "Referral commission");
+    
+    next();
+  } catch (error) {
+    console.error('Error in referral commission middleware:', error);
+    next();
+  }
+};
 
 
 
@@ -1068,6 +1132,39 @@ app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
   }
 });
 
+// ================= REFERRAL EARNINGS ROUTES =================
+
+// الحصول على تفاصيل الأرباح الثانوية
+app.get('/api/referral-earnings', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .populate('referralEarningsHistory.referralId', 'username email')
+      .populate('referrals', 'username email subscriptionActive subscriptionType balance createdAt');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // الحصول على إحالات المستخدم
+    const referrals = await User.find({ referredBy: user.referralCode })
+      .select('username email subscriptionActive subscriptionType balance createdAt')
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      success: true,
+      data: {
+        totalReferralEarnings: user.referralEarnings || 0,
+        totalInvites: user.totalInvites || 0,
+        successfulInvites: user.successfulInvites || 0,
+        referrals: referrals,
+        earningsHistory: user.referralEarningsHistory || []
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching referral earnings:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 
 /* ==== API spin العجلة ==== */
 
@@ -10557,6 +10654,7 @@ app.listen(PORT, () => {
 
 
 });
+
 
 
 
