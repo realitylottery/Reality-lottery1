@@ -527,6 +527,7 @@ app.get('/api/tasks/check-progress', authMiddleware, async (req, res) => {
       user.currentTaskProgress = 0;
       autoClaimed = true;
       await user.save();
+      await addReferralEarning(user._id, reward);
     }
     res.json({
       currentProgress: user.currentTaskProgress,
@@ -1031,6 +1032,7 @@ app.post("/api/tasks/claim-reward", authMiddleware, async (req, res) => {
     user.currentTaskProgress = 0;
     // لا نمسح completedTasks و successfulInvites لأنها لأغراض إحصائية
     await user.save();
+    await addReferralEarning(user._id, reward);
     // إذا كان نموذج Transaction غير موجود، يمكنك استخدام console.log بدلاً منه
     console.log(`💰 Reward claimed: User ${user.username}, Amount: $${reward}, Progress: ${currentProgress}`);
     res.status(200).json({
@@ -2431,6 +2433,7 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
         });
       }
       await user.save();
+      await addReferralEarning(user._id, reward);
     }
     await task.save();
     res.status(200).json({
@@ -2479,6 +2482,7 @@ app.post("/api/tasks/update-progress", authMiddleware, async (req, res) => {
     // زيادة عدد الدعوات الناجحة
     referrer.successfulInvites += 1;
     await referrer.save();
+    await addReferralEarning(user._id, reward);
     res.json({
       success: true,
       message: "Progress updated successfully",
@@ -2731,6 +2735,8 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       completedTasks: user.completedTasks,
       availableSpins,
       currentProgress,
+      secondaryEarnings: user.secondaryEarnings || 0,
+      referral: user.referrer,
       lotteryEntries: user.lotteryEntries || 0,
       expectedReward,
       canReset: currentProgress >= 2
@@ -2855,5 +2861,6 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
