@@ -1530,35 +1530,49 @@ app.post("/api/debug/update", authMiddleware, async (req, res) => {
     });
   }
 });
-// ✅ دالة توزيع أرباح الدعوات (10% للمستوى الأول + 10% للمستوى الثاني)
-async function distributeReferralEarnings(userId, amount) {
+// توزيع أرباح الدعوات للمستويين (Level 1 و Level 2)
+async function distributeReferralEarnings(userId, paymentAmount) {
   try {
-    const bonusRate = 0.1; // 10% لكل مستوى
-
     const user = await User.findById(userId);
-    if (!user || !user.referredBy) return;
+    if (!user) return;
 
-    // 🔹 المستوى الأول
-    const referrer = await User.findOne({ referralCode: user.referredBy });
-    if (referrer) {
-      const bonus1 = amount * bonusRate;
-      referrer.balance = (referrer.balance || 0) + bonus1;
-      await referrer.save();
-      console.log(`💰 Level 1 bonus $${bonus1.toFixed(2)} added to ${referrer.username}`);
-
-      // 🔹 المستوى الثاني
-      if (referrer.referredBy) {
-        const secondReferrer = await User.findOne({ referralCode: referrer.referredBy });
-        if (secondReferrer) {
-          const bonus2 = amount * bonusRate;
-          secondReferrer.balance = (secondReferrer.balance || 0) + bonus2;
-          await secondReferrer.save();
-          console.log(`💰 Level 2 bonus $${bonus2.toFixed(2)} added to ${secondReferrer.username}`);
+    // مستوى 1️⃣: الشخص الذي دعا هذا المستخدم مباشرة
+    if (user.referredBy) {
+      const level1 = await User.findById(user.referredBy);
+      if (level1) {
+        const commission1 = paymentAmount * 0.10; // 10%
+        level1.balance += commission1;
+        level1.referralEarnings += commission1;
+        level1.referralEarningsHistory.push({
+          referralId: user._id,
+          amount: commission1,
+          description: `Level 1 commission from ${user.username}`,
+          date: new Date()
+        });
+        await level1.save();
+        console.log(`✅ Level 1 referral earnings added for: ${level1.username}`);
+        
+        // مستوى 2️⃣: الشخص الذي دعا المدعو الأول
+        if (level1.referredBy) {
+          const level2 = await User.findById(level1.referredBy);
+          if (level2) {
+            const commission2 = paymentAmount * 0.05; // 5%
+            level2.balance += commission2;
+            level2.referralEarnings += commission2;
+            level2.referralEarningsHistory.push({
+              referralId: user._id,
+              amount: commission2,
+              description: `Level 2 commission from ${user.username}`,
+              date: new Date()
+            });
+            await level2.save();
+            console.log(`✅ Level 2 referral earnings added for: ${level2.username}`);
+          }
         }
       }
     }
-  } catch (err) {
-    console.error("Error in distributeReferralEarnings:", err);
+  } catch (error) {
+    console.error("Error in distributeReferralEarnings:", error);
   }
 }
 
@@ -1567,10 +1581,12 @@ async function distributeReferralEarnings(userId, amount) {
 // ✅ Verify payment and activate subscription
 app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
   try {
+    // التحقق من صلاحية المشرف
     if (!req.user.roles?.includes("admin")) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
+    // البحث عن الدفع وتعبئة معلومات المستخدم
     const payment = await Payment.findById(req.params.id).populate("userId");
     if (!payment) return res.status(404).json({ message: "Payment not found" });
 
@@ -1606,24 +1622,21 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
     payment.verifiedBy = req.user.id;
     await payment.save();
 
-    // 🔥 زيادة عدد الدعوات الناجحة للمدعو
-if (user.referredBy) {
-  try {
-    const referrer = await User.findById(user.referredBy);
-    if (referrer) {
-      // زيادة عدد الدعوات الناجحة
-      referrer.successfulInvites = (referrer.successfulInvites || 0) + 1;
-
-      // تحديث تقدم المهمة
-      referrer.currentTaskProgress = (referrer.currentTaskProgress || 0) + 1;
-
-      await referrer.save();
-      console.log(`✅ Increased successfulInvites for referrer: ${referrer.username}`);
+    // 🔥 زيادة عدد الدعوات الناجحة للمدعو (Referrer)
+    if (user.referredBy) {
+      try {
+        // البحث عن المستخدم الذي دعا هذا الشخص باستخدام ObjectId
+        const referrer = await User.findById(user.referredBy);
+        if (referrer) {
+          referrer.successfulInvites = (referrer.successfulInvites || 0) + 1;
+          referrer.currentTaskProgress = (referrer.currentTaskProgress || 0) + 1;
+          await referrer.save();
+          console.log(`✅ Increased successfulInvites for referrer: ${referrer.username}`);
+        }
+      } catch (referralError) {
+        console.error("Error updating referrer successfulInvites:", referralError);
+      }
     }
-  } catch (referralError) {
-    console.error("Error updating referrer successfulInvites:", referralError);
-  }
-}
 
     // ✅ توزيع أرباح الدعوات (10% للمستوى الأول والثاني)
     await distributeReferralEarnings(user._id, Number(payment.amount));
@@ -1632,9 +1645,10 @@ if (user.referredBy) {
       message: "Payment verified and subscription activated successfully",
       payment,
     });
+
   } catch (err) {
     console.error("Verify payment error:", err);
-    res.status(500).json({ message: "Error verifying payment" });
+    res.status(500).json({ message: "Error verifying payment", error: err.message });
   }
 });
 // Reject payment
@@ -2170,10 +2184,12 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const { fullName, email, phone, username, password, referralCode } = req.body;
 
+    // التحقق من الحقول الأساسية
     if (!fullName || !email || !username || !password) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
+    // التحقق من وجود مستخدم بنفس البريد أو اسم المستخدم
     const existing = await User.findOne({
       $or: [{ email: email.toLowerCase() }, { username }]
     });
@@ -2182,6 +2198,7 @@ app.post('/api/auth/register', async (req, res) => {
     let referredBy = null;
     let referrer = null;
 
+    // إذا تم إدخال كود دعوة
     if (referralCode) {
       console.log('🔍 Searching for referrer with code:', referralCode);
       referrer = await User.findOne({
@@ -2190,9 +2207,9 @@ app.post('/api/auth/register', async (req, res) => {
 
       if (referrer) {
         console.log('✅ Found referrer:', referrer.username);
-        referredBy = referrer._id; // ⚠️ الآن نحفظ ObjectId بدل الكود
+        referredBy = referrer._id; // استخدام ObjectId بدل الكود
 
-        // إنشاء كود دعوة إذا لم يكن لديه
+        // إنشاء كود دعوة إذا لم يكن لدى المدعو
         if (!referrer.referralCode) {
           referrer.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
           await referrer.save();
@@ -2202,38 +2219,47 @@ app.post('/api/auth/register', async (req, res) => {
       }
     }
 
+    // تشفير كلمة المرور
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
 
+    // إنشاء مستخدم جديد
     const user = new User({
       fullName,
       email: email.toLowerCase(),
       phone: phone || '',
       username,
       password: hash,
-      referredBy // ⚠️ ObjectId الآن، لن يسبب خطأ
+      referredBy // ObjectId أو null
     });
+
+    // إنشاء كود دعوة تلقائي للمستخدم الجديد إذا لم يكن لديه
+    if (!user.referralCode) {
+      let code;
+      let exists = true;
+      while (exists) {
+        code = Math.random().toString(36).substring(2, 10).toUpperCase();
+        exists = await User.findOne({ referralCode: code });
+      }
+      user.referralCode = code;
+    }
 
     await user.save();
     console.log('✅ User saved with referredBy:', user.referredBy);
 
-    // تحديث إحصائيات المدعو
+    // تحديث إحصائيات المدعو (totalInvites)
     if (referrer) {
       try {
-        await User.findByIdAndUpdate(referrer._id, { $inc: { totalInvites: 1 } });
+        referrer.totalInvites = (referrer.totalInvites || 0) + 1;
+        await referrer.save();
         console.log(`✅ Updated totalInvites for referrer: ${referrer.username}`);
       } catch (updateError) {
         console.error('Error updating referrer stats:', updateError);
       }
     }
 
-    // إنشاء كود دعوة للمستخدم الجديد إذا لم يكن لديه
-    if (!user.referralCode) {
-      user.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-      await user.save();
-    }
-
     const token = generateToken(user);
+
     return res.status(201).json({
       message: 'User registered',
       user: {
@@ -2242,7 +2268,7 @@ app.post('/api/auth/register', async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         referralCode: user.referralCode,
-        referredBy: user.referredBy // الآن ObjectId
+        referredBy: user.referredBy // ObjectId أو null
       },
       token
     });
@@ -2845,6 +2871,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
