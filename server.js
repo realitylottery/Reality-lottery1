@@ -1607,23 +1607,23 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
     await payment.save();
 
     // 🔥 زيادة عدد الدعوات الناجحة للمدعو
-    if (user.referredBy) {
+if (user.referredBy) {
   try {
     const referrer = await User.findById(user.referredBy);
     if (referrer) {
-      // إذا غيرنا successfulInvites إلى مصفوفة
-      referrer.successfulInvites = referrer.successfulInvites || [];
-      if (!referrer.successfulInvites.includes(user._id)) {
-        referrer.successfulInvites.push(user._id);
-        referrer.currentTaskProgress = (referrer.currentTaskProgress || 0) + 1;
-        await referrer.save();
-        console.log(`✅ Added user to successfulInvites for referrer: ${referrer.username}`);
-      }
+      // زيادة عدد الدعوات الناجحة
+      referrer.successfulInvites = (referrer.successfulInvites || 0) + 1;
+
+      // تحديث تقدم المهمة
+      referrer.currentTaskProgress = (referrer.currentTaskProgress || 0) + 1;
+
+      await referrer.save();
+      console.log(`✅ Increased successfulInvites for referrer: ${referrer.username}`);
     }
   } catch (referralError) {
     console.error("Error updating referrer successfulInvites:", referralError);
   }
-    }
+}
 
     // ✅ توزيع أرباح الدعوات (10% للمستوى الأول والثاني)
     await distributeReferralEarnings(user._id, Number(payment.amount));
@@ -2845,6 +2845,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
