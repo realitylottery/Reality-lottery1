@@ -14,7 +14,8 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: ['user']
   },
-
+referrer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+secondaryEarnings: { type: Number, default: 0 },
   // الرصيد والتقدم في المهام
   balance: { type: Number, default: 0 },
   completedTasks: { type: Number, default: 0 },
