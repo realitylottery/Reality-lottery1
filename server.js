@@ -363,6 +363,34 @@ app.use('/api/*', async (req, res, next) => {
   }
   next();
 });
+// دالة توزيع أرباح الدعوات بشكل هرمي
+async function addReferralEarning(userId, amount) {
+  try {
+    if (!amount || amount <= 0) return; // تجاهل المبالغ الصفرية
+
+    let level = 1;
+    let currentUser = await User.findById(userId).populate('referrer');
+
+    while (currentUser && currentUser.referrer) {
+      const parent = await User.findById(currentUser.referrer);
+      if (!parent) break;
+
+      const commission = amount * 0.10; // 10% من ربح الابن
+      parent.secondaryEarnings += commission;
+      parent.balance += commission; // تضاف مباشرة للرصيد
+      await parent.save();
+
+      console.log(`Level ${level} commission: ${commission} added to ${parent.username}`);
+
+      currentUser = parent;
+      level++;
+    }
+  } catch (err) {
+    console.error("Error distributing referral earnings:", err);
+  }
+}
+
+// Endpoint لمكافآت المهام مع أرباح الدعوات
 app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -372,9 +400,11 @@ app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
         message: 'User not found'
       });
     }
+
     let reward = 0;
     let autoClaimed = false;
-    // التحقق إذا وصل التقدم إلى 6
+
+    // تحقق إذا وصل التقدم إلى 6
     if (user.currentTaskProgress >= 6) {
       reward = calculateTaskReward(user.subscriptionType, 6);
       user.balance += reward;
@@ -382,8 +412,11 @@ app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
       user.currentTaskProgress = 0; // تصفير التقدم
       autoClaimed = true;
       await user.save();
+
+      // توزيع أرباح الدعوات بشكل هرمي
       await addReferralEarning(user._id, reward);
     }
+
     res.json({
       success: true,
       autoClaimed,
@@ -391,6 +424,7 @@ app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
       currentProgress: user.currentTaskProgress,
       balance: user.balance
     });
+
   } catch (err) {
     console.error('Error checking auto reward:', err);
     res.status(500).json({
@@ -399,58 +433,79 @@ app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
     });
   }
 });
-/* ==== API spin العجلة ==== */
+// دالة توزيع أرباح الدعوات بشكل هرمي
+async function addReferralEarning(userId, prize) {
+  try {
+    // تحويل الجائزة إلى رقم
+    let amount = 0;
+    if (prize === "$3") amount = 3;
+    else if (prize === "$2") amount = 2;
+    else if (prize === "$1") amount = 1;
+    else return; // لا شيء لـ "extra"
+
+    let level = 1;
+    let currentUser = await User.findById(userId).populate('referrer');
+
+    while (currentUser && currentUser.referrer) {
+      const parent = await User.findById(currentUser.referrer);
+      if (!parent) break;
+
+      const commission = amount * 0.10; // 10% من ربح الابن
+      parent.secondaryEarnings += commission;
+      parent.balance += commission; // تضاف مباشرة للرصيد
+      await parent.save();
+
+      console.log(`Level ${level} commission: ${commission} added to ${parent.username}`);
+
+      currentUser = parent;
+      level++;
+    }
+  } catch (err) {
+    console.error("Error distributing referral earnings:", err);
+  }
+}
+
+// Endpoint عجلة الحظ مع توزيع أرباح الدعوات
 app.post("/api/wheel/spin", async (req, res) => {
   try {
-    // قراءة التوكن من الهيدر
     const token = req.header("Authorization")?.replace("Bearer ", "");
-    if (!token) return res.status(401).json({
-      msg: "No token, authorization denied"
-    });
+    if (!token) return res.status(401).json({ msg: "No token, authorization denied" });
+
     let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-      return res.status(401).json({
-        msg: "Token is not valid"
-      });
-    }
+    try { decoded = jwt.verify(token, process.env.JWT_SECRET); } 
+    catch { return res.status(401).json({ msg: "Token is not valid" }); }
+
     const user = await User.findById(decoded.id);
-    if (!user) return res.status(404).json({
-      msg: "User not found"
-    });
-    const {
-      prize,
-      amount
-    } = req.body;
-    // حساب الدورات المتاحة ديناميكيًا
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    const { prize } = req.body;
+
     const spinsLeft = user.calculateAvailableSpins();
-    if (spinsLeft <= 0) {
-      return res.status(400).json({
-        msg: "No spins available"
-      });
-    }
+    if (spinsLeft <= 0) return res.status(400).json({ msg: "No spins available" });
+
     // إضافة الجوائز حسب النوع
-    if (prize === "$3") user.balance += 3;
-    else if (prize === "$2") user.balance += 2;
-    else if (prize === "$1") user.balance += 1;
-    else if (prize === "extra") user.extraSpins += 1;
-    // تسجيل استخدام دورة واحدة فقط إذا لم تكن Extra Spin
-    if (prize !== "extra") {
-      user.spinsUsed = (user.spinsUsed ?? 0) + 1;
-    }
+    let rewardAmount = 0;
+    if (prize === "$3") { user.balance += 3; rewardAmount = 3; }
+    else if (prize === "$2") { user.balance += 2; rewardAmount = 2; }
+    else if (prize === "$1") { user.balance += 1; rewardAmount = 1; }
+    else if (prize === "extra") { user.extraSpins += 1; }
+
+    if (prize !== "extra") user.spinsUsed = (user.spinsUsed ?? 0) + 1;
+
     await user.save();
-    await addReferralEarning(user._id, prize);
+
+    // توزيع أرباح الدعوات فقط إذا هناك مبلغ نقدي
+    if (rewardAmount > 0) await addReferralEarning(user._id, prize);
+
     res.json({
       message: `You won ${prize}!`,
       balance: user.balance,
       availableSpins: user.calculateAvailableSpins(),
     });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({
-      msg: "Server error"
-    });
+    res.status(500).json({ msg: "Server error" });
   }
 });
 // إضافة هذا ال endpoint للتحقق من التقدم في كل مرة
@@ -2800,4 +2855,5 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
