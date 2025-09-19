@@ -125,6 +125,7 @@ async function addReferralEarning(userId, amount) {
     console.error("Referral earning error:", err);
   }
 }
+
 // إصلاح referredBy القديم
 async function fixReferredBy() {
   const users = await User.find({ referredBy: { $type: "string" } });
@@ -157,6 +158,50 @@ async function updateUserSpins(userId) {
     console.error('Error updating user spins:', error);
   }
 }
+// إصلاح referredBy القديم لجميع المستخدمين
+async function fixAllReferredBy() {
+  try {
+    // البحث عن جميع المستخدمين الذين لديهم referredBy كنص
+    const users = await User.find({ referredBy: { $type: "string" } });
+    console.log(`🔧 Found ${users.length} users with string referredBy`);
+    
+    let fixedCount = 0;
+    let errorCount = 0;
+    
+    for (const user of users) {
+      try {
+        if (user.referredBy && typeof user.referredBy === 'string') {
+          // البحث عن المستخدم باستخدام referralCode
+          const referrer = await User.findOne({ referralCode: user.referredBy });
+          
+          if (referrer) {
+            user.referredBy = referrer._id;
+            await user.save();
+            console.log(`✅ Fixed referredBy for user ${user.username}: ${user.referredBy} -> ${referrer._id}`);
+            fixedCount++;
+          } else {
+            // إذا لم يتم العثور على المحيل، مسح الحقل
+            console.log(`❌ Referrer not found for code: ${user.referredBy}, clearing field for user ${user.username}`);
+            user.referredBy = null;
+            await user.save();
+            errorCount++;
+          }
+        }
+      } catch (error) {
+        console.error(`❌ Error fixing user ${user.username}:`, error.message);
+        errorCount++;
+      }
+    }
+    
+    console.log(`📊 Fix completed: ${fixedCount} fixed, ${errorCount} errors`);
+  } catch (error) {
+    console.error('Error in fixAllReferredBy:', error);
+  }
+}
+
+// استدعاء الدالة عند تشغيل السيرفر
+setTimeout(fixAllReferredBy, 5000); // بعد 5 ثواني من التشغيل
+
 async function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
   if (!authHeader) return res.status(401).json({
@@ -186,6 +231,31 @@ function calculateAvailableSpins(user) {
   return Math.max(0, subscriptionSpin + inviteSpins + extraSpins - usedSpins);
 }
 // =====> نهاية الدالة <=====
+// middleware للتحقق من صحة referredBy
+app.use('/api/*', async (req, res, next) => {
+  try {
+    if (req.user && req.user.id) {
+      const user = await User.findById(req.user.id);
+      if (user && user.referredBy && typeof user.referredBy === 'string') {
+        // حاول إصلاح referredBy إذا كان نصاً
+        const referrer = await User.findOne({ referralCode: user.referredBy });
+        if (referrer) {
+          user.referredBy = referrer._id;
+          await user.save();
+          console.log(`✅ Auto-fixed referredBy for user ${user.username}`);
+        } else {
+          // إذا لم يتم العثور على المحيل، مسح الحقل
+          user.referredBy = null;
+          await user.save();
+          console.log(`❌ Cleared invalid referredBy for user ${user.username}`);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in referredBy validation middleware:', error);
+  }
+  next();
+});
 // ========= NOTIFICATION ROUTES =========
 // GET /api/notifications - Get active notifications (public)
 app.get('/api/notifications', async (req, res) => {
@@ -1548,11 +1618,30 @@ app.post("/api/debug/update", authMiddleware, async (req, res) => {
 async function distributeReferralEarnings(userId, paymentAmount) {
   try {
     const user = await User.findById(userId);
-    if (!user) return;
+    if (!user) {
+      console.log('User not found for referral earnings distribution');
+      return;
+    }
 
     // مستوى 1️⃣: الشخص الذي دعا هذا المستخدم مباشرة
     if (user.referredBy) {
-      const level1 = await User.findById(user.referredBy);
+      let level1;
+      
+      // التحقق إذا كان referredBy هو ObjectId صالح أو referralCode
+      if (mongoose.Types.ObjectId.isValid(user.referredBy)) {
+        level1 = await User.findById(user.referredBy);
+      } else {
+        // إذا كان نصاً، البحث باستخدام referralCode
+        level1 = await User.findOne({ referralCode: user.referredBy });
+        
+        // إذا تم العثور على المستخدم، تحديث referredBy ليكون ObjectId
+        if (level1) {
+          user.referredBy = level1._id;
+          await user.save();
+          console.log(`✅ Fixed referredBy for user ${user.username} during payment processing`);
+        }
+      }
+
       if (level1) {
         const commission1 = paymentAmount * 0.10; // 10%
         level1.balance += commission1;
@@ -1565,10 +1654,24 @@ async function distributeReferralEarnings(userId, paymentAmount) {
         });
         await level1.save();
         console.log(`✅ Level 1 referral earnings added for: ${level1.username}`);
-        
+
         // مستوى 2️⃣: الشخص الذي دعا المدعو الأول
         if (level1.referredBy) {
-          const level2 = await User.findById(level1.referredBy);
+          let level2;
+          
+          // نفس المنطق للتحقق من صحة referredBy
+          if (mongoose.Types.ObjectId.isValid(level1.referredBy)) {
+            level2 = await User.findById(level1.referredBy);
+          } else {
+            level2 = await User.findOne({ referralCode: level1.referredBy });
+            
+            if (level2) {
+              level1.referredBy = level2._id;
+              await level1.save();
+              console.log(`✅ Fixed referredBy for user ${level1.username} during payment processing`);
+            }
+          }
+
           if (level2) {
             const commission2 = paymentAmount * 0.05; // 5%
             level2.balance += commission2;
@@ -2878,6 +2981,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
