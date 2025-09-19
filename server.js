@@ -2215,21 +2215,25 @@ app.post('/api/auth/register', async (req, res) => {
     // إذا تم إدخال كود دعوة
     if (referralCode) {
       console.log('🔍 Searching for referrer with code:', referralCode);
-      referrer = await User.findOne({
-        $or: [{ referralCode: referralCode }, { username: referralCode }]
-      });
+      
+      // البحث عن المستخدم باستخدام كود الدعوة فقط (إزالة البحث بـ username)
+      referrer = await User.findOne({ referralCode: referralCode });
 
       if (referrer) {
         console.log('✅ Found referrer:', referrer.username);
-        referredBy = referrer._id; // استخدام ObjectId بدل الكود
+        referredBy = referrer._id; // استخدام ObjectId
 
-        // إنشاء كود دعوة إذا لم يكن لدى المدعو
-        if (!referrer.referralCode) {
-          referrer.referralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-          await referrer.save();
-        }
+        // تحديث إحصائيات المدعو (totalInvites) مباشرة هنا
+        referrer.totalInvites = (referrer.totalInvites || 0) + 1;
+        
+        // زيادة successfulInvites فقط إذا كان المستخدم الجديد سيدفع لاحقاً
+        // referrer.successfulInvites += 1; // أزل التعليق عندما تريد زيادة الدعوات الناجحة
+        
+        await referrer.save();
+        console.log(`✅ Updated totalInvites for referrer: ${referrer.username}`);
       } else {
         console.log('❌ No referrer found with code:', referralCode);
+        // يمكنك إضافة رسالة للمستخدم أن كود الدعوة غير صحيح
       }
     }
 
@@ -2260,17 +2264,6 @@ app.post('/api/auth/register', async (req, res) => {
 
     await user.save();
     console.log('✅ User saved with referredBy:', user.referredBy);
-
-    // تحديث إحصائيات المدعو (totalInvites)
-    if (referrer) {
-      try {
-        referrer.totalInvites = (referrer.totalInvites || 0) + 1;
-        await referrer.save();
-        console.log(`✅ Updated totalInvites for referrer: ${referrer.username}`);
-      } catch (updateError) {
-        console.error('Error updating referrer stats:', updateError);
-      }
-    }
 
     const token = generateToken(user);
 
@@ -2885,6 +2878,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
