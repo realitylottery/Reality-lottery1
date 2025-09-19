@@ -125,6 +125,20 @@ async function addReferralEarning(userId, amount) {
     console.error("Referral earning error:", err);
   }
 }
+// إصلاح referredBy القديم
+async function fixReferredBy() {
+  const users = await User.find({ referredBy: { $type: "string" } });
+  for (const user of users) {
+    const referrer = await User.findOne({ referralCode: user.referredBy });
+    if (referrer) {
+      user.referredBy = referrer._id;
+      await user.save();
+      console.log(`✅ Fixed referredBy for user ${user.username}`);
+    } else {
+      console.log(`❌ Could not find referrer for ${user.username}`);
+    }
+  }
+}
 // دالة لتحديث عدد اللفات تلقائياً بناءً على الدعوات الناجحة
 async function updateUserSpins(userId) {
   try {
@@ -2871,6 +2885,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
