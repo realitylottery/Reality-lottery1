@@ -1473,73 +1473,107 @@ app.post("/api/debug/update", authMiddleware, async (req, res) => {
     });
   }
 });
-// Verify payment and activate subscription
+// ✅ دالة توزيع أرباح الدعوات (10% للمستوى الأول + 10% للمستوى الثاني)
+async function distributeReferralEarnings(userId, amount) {
+  try {
+    const bonusRate = 0.1; // 10% لكل مستوى
+
+    const user = await User.findById(userId);
+    if (!user || !user.referredBy) return;
+
+    // 🔹 المستوى الأول
+    const referrer = await User.findOne({ referralCode: user.referredBy });
+    if (referrer) {
+      const bonus1 = amount * bonusRate;
+      referrer.balance = (referrer.balance || 0) + bonus1;
+      await referrer.save();
+      console.log(`💰 Level 1 bonus $${bonus1.toFixed(2)} added to ${referrer.username}`);
+
+      // 🔹 المستوى الثاني
+      if (referrer.referredBy) {
+        const secondReferrer = await User.findOne({ referralCode: referrer.referredBy });
+        if (secondReferrer) {
+          const bonus2 = amount * bonusRate;
+          secondReferrer.balance = (secondReferrer.balance || 0) + bonus2;
+          await secondReferrer.save();
+          console.log(`💰 Level 2 bonus $${bonus2.toFixed(2)} added to ${secondReferrer.username}`);
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error in distributeReferralEarnings:", err);
+  }
+}
+
+
+
+// ✅ Verify payment and activate subscription
 app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
   try {
     if (!req.user.roles?.includes("admin")) {
-      return res.status(403).json({
-        message: "Forbidden"
-      });
+      return res.status(403).json({ message: "Forbidden" });
     }
+
     const payment = await Payment.findById(req.params.id).populate("userId");
-    if (!payment) return res.status(404).json({
-      message: "Payment not found"
-    });
-    if (payment.status !== 'pending') {
-      return res.status(400).json({
-        message: "Payment already processed"
-      });
+    if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+    if (payment.status !== "pending") {
+      return res.status(400).json({ message: "Payment already processed" });
     }
+
     const user = await User.findById(payment.userId._id);
-    if (!user) return res.status(404).json({
-      message: "User not found"
-    });
-    // إعطاء لفات عند الاشتراك
-    user.availableSpins = 1; // أو أي عدد تريده
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // 🎡 إعطاء لفة عجلة عند الاشتراك
+    user.availableSpins = (user.availableSpins || 0) + 1;
+
+    // ✅ تحديث حالة الاشتراك
+    user.subscriptionType = payment.plan;
+    user.subscriptionActive = true;
+
+    // مدة الاشتراك (سنة كاملة)
+    const expirationDays = {
+      BASIC: 365,
+      PRO: 365,
+      VIP: 365,
+    };
+    user.subscriptionExpires = new Date(
+      Date.now() + (expirationDays[payment.plan] || 365) * 24 * 60 * 60 * 1000
+    );
+
     await user.save();
-    // Update payment status
-    payment.status = 'verified';
+
+    // ✅ تحديث حالة الدفع
+    payment.status = "verified";
     payment.verifiedAt = new Date();
     payment.verifiedBy = req.user.id;
     await payment.save();
-    // Update user subscription based on plan
-    user.subscriptionType = payment.plan;
-    user.subscriptionActive = true;
-    // Set subscription expiration based on plan
-    const expirationDays = {
-      'BASIC': 365,
-      'PRO': 365,
-      'VIP': 365
-    };
-    user.subscriptionExpires = new Date(Date.now() + expirationDays[payment.plan] * 24 * 60 * 60 * 1000);
-    await user.save();
-    // 🔥 زيادة successfulInvites للمدعِي إذا كان هذا المستخدم لديه مدعٍ
+
+    // 🔥 زيادة عدد الدعوات الناجحة للمدعو
     if (user.referredBy) {
       try {
-        // البحث عن المدعِي باستخدام كود الدعوة
-        const referrer = await User.findOne({
-          referralCode: user.referredBy
-        });
+        const referrer = await User.findOne({ referralCode: user.referredBy });
         if (referrer) {
-          referrer.successfulInvites += 1;
-          referrer.currentTaskProgress += 1;
+          referrer.successfulInvites = (referrer.successfulInvites || 0) + 1;
+          referrer.currentTaskProgress = (referrer.currentTaskProgress || 0) + 1;
           await referrer.save();
           console.log(`✅ Increased successfulInvites for referrer: ${referrer.username}`);
         }
       } catch (referralError) {
         console.error("Error updating referrer successfulInvites:", referralError);
-        // لا نوقف العملية إذا حدث خطأ في تحديث الإحصائيات
       }
     }
+
+    // ✅ توزيع أرباح الدعوات (10% للمستوى الأول والثاني)
+    await distributeReferralEarnings(user._id, Number(payment.amount));
+
     res.json({
       message: "Payment verified and subscription activated successfully",
-      payment
+      payment,
     });
   } catch (err) {
     console.error("Verify payment error:", err);
-    res.status(500).json({
-      message: "Error verifying payment"
-    });
+    res.status(500).json({ message: "Error verifying payment" });
   }
 });
 // Reject payment
@@ -2766,3 +2800,4 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
