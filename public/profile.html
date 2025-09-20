@@ -134,10 +134,6 @@
           <label>Current Balance</label>
           <div><strong id="balanceAmount">0</strong> <span class="muted">USD</span></div>
         </div>
-        <div class="field">
-  <label>Referral Earnings</label>
-  <div id="secondaryEarnings">0</div>
-        </div>
 
         <div class="field">
           <label>Subscription</label>
@@ -208,7 +204,7 @@
       </div>
 
       <div class="field" style="margin-top:12px">
-        <label>Next Reward</label>
+        <label>Current Reward</label>
         <div id="nextReward">Complete the task to see your reward</div>
       </div>
 
@@ -488,8 +484,6 @@ async function claimReward(rewardAmount, subscriptionType) {
 
       // Balance & referral
       document.getElementById('balanceAmount').textContent = user.balance||0;
-      // إضافة هذا السطر لتحديث secondaryEarnings
-document.getElementById('secondaryEarnings').textContent = user.secondaryEarnings || 0;
       document.getElementById('subType').textContent = user.subscriptionType||'None';
       document.getElementById('refLink').value = `${location.origin}/register.html?ref=${user.referralCode||''}`;
       // إحصائيات الدعوات - استخدام الحقول الصحيحة من الخادم
