@@ -1316,12 +1316,7 @@ app.post("/api/tasks/claim-reward", authMiddleware, async (req, res) => {
     // حساب التقدم الصحيح - يعتمد على currentTaskProgress
     const currentProgress = user.currentTaskProgress || 0;
     // التحقق إذا كان التقدم 4 أو 5
-    if (currentProgress !== 4 && currentProgress !== 5) {
-      return res.status(400).json({
-        success: false,
-        message: 'Reward can only be claimed when progress is at 4 or 5'
-      });
-    }
+  
     // حساب المكافأة
     const reward = calculateTaskReward(user.subscriptionType, currentProgress);
     if (reward <= 0) {
@@ -3224,6 +3219,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
