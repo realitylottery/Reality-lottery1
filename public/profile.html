@@ -299,6 +299,40 @@
   return 0;
     }
 
+  // منع استخدام localStorage و sessionStorage
+  Object.defineProperty(window, 'localStorage', {
+    get: () => {
+      console.warn('localStorage is disabled');
+      return {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {},
+        clear: () => {}
+      };
+    }
+  });
+
+  Object.defineProperty(window, 'sessionStorage', {
+    get: () => {
+      console.warn('sessionStorage is disabled');
+      return {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {},
+        clear: () => {}
+      };
+    }
+  });
+
+  // منع الكوكيز التي يمكن تخزينها بواسطة الجافاسكربت
+  document.cookie = '';
+  Object.defineProperty(document, 'cookie', {
+    get: () => '',
+    set: () => { console.warn('Cookies disabled'); }
+  });
+
+  // كل البيانات الآن يجب أن تأتي مباشرة من السيرفر
+
 async function claimReward(rewardAmount, subscriptionType) {
       try {
         // الحصول على معلومات المهمة الحالية أولاً
