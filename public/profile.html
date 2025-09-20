@@ -134,11 +134,17 @@
           <label>Current Balance</label>
           <div><strong id="balanceAmount">0</strong> <span class="muted">USD</span></div>
         </div>
-         <div class="field">
+        <div class="field">
+  <label>Referral Earnings</label>
+  <div id="secondaryEarnings">0</div>
+        </div>
+
+        <div class="field">
           <label>Subscription</label>
           <div id="subType">None</div>
         </div>
-         <div class="field">
+
+        <div class="field">
           <label>Your Referral Link</label>
           <div class="copy-wrap">
             <input id="refLink" class="mono" readonly style="flex:1;min-width:220px;background:#0b0b0b;border:1px solid rgba(255,215,0,.25);border-radius:8px;padding:8px;color:#fff" />
@@ -202,7 +208,7 @@
       </div>
 
       <div class="field" style="margin-top:12px">
-        <label>Current Reward</label>
+        <label>Next Reward</label>
         <div id="nextReward">Complete the task to see your reward</div>
       </div>
 
@@ -448,6 +454,8 @@ async function claimReward(rewardAmount, subscriptionType) {
 
       // Balance & referral
       document.getElementById('balanceAmount').textContent = user.balance||0;
+      // إضافة هذا السطر لتحديث secondaryEarnings
+document.getElementById('secondaryEarnings').textContent = user.secondaryEarnings || 0;
       document.getElementById('subType').textContent = user.subscriptionType||'None';
       document.getElementById('refLink').value = `${location.origin}/register.html?ref=${user.referralCode||''}`;
       // إحصائيات الدعوات - استخدام الحقول الصحيحة من الخادم
