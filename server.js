@@ -184,6 +184,95 @@ async function fixAllReferredBy() {
 // استدعاء الدالة فوراً
 setTimeout(fixAllReferredBy, 3000);
 
+// إصلاح referredBy القديم لجميع المستخدمين - الإصدار المؤكد
+async function fixAllReferredByDefinitive() {
+  try {
+    console.log('🔧 Starting definitive referredBy fix...');
+    
+    // الحصول على جميع المستخدمين بدون أي filters أولاً
+    const allUsers = await User.find({});
+    const usersWithInvalidRef = [];
+    
+    // البحث يدوياً عن المستخدمين الذين لديهم referredBy غير صالح
+    for (const user of allUsers) {
+      if (user.referredBy && typeof user.referredBy === 'string') {
+        usersWithInvalidRef.push(user);
+      }
+      // أيضًا معالجة الحالات التي يكون فيها referredBy غير صالح
+      else if (user.referredBy && !mongoose.Types.ObjectId.isValid(user.referredBy)) {
+        usersWithInvalidRef.push(user);
+      }
+    }
+    
+    console.log(`🔧 Found ${usersWithInvalidRef.length} users with invalid referredBy`);
+    
+    let fixedCount = 0;
+    let clearedCount = 0;
+    let errorCount = 0;
+    
+    for (const user of usersWithInvalidRef) {
+      try {
+        console.log(`🔧 Processing user ${user.username || user.email} with referredBy: ${user.referredBy}`);
+        
+        if (user.referredBy && typeof user.referredBy === 'string') {
+          // البحث عن المستخدم باستخدام referralCode
+          const referrer = await User.findOne({ referralCode: user.referredBy });
+          
+          if (referrer) {
+            // استخدام updateOne مباشرة لتجنب مشاكل التحقق
+            await User.updateOne(
+              { _id: user._id },
+              { $set: { referredBy: referrer._id } }
+            );
+            console.log(`✅ Fixed referredBy for user ${user.username || user.email}: ${user.referredBy} -> ${referrer._id}`);
+            fixedCount++;
+          } else {
+            // إذا لم يتم العثور على المحيل، مسح الحقل
+            await User.updateOne(
+              { _id: user._id },
+              { $set: { referredBy: null } }
+            );
+            console.log(`❌ Referrer not found for code: ${user.referredBy}, clearing field for user ${user.username || user.email}`);
+            clearedCount++;
+          }
+        } else if (user.referredBy && !mongoose.Types.ObjectId.isValid(user.referredBy)) {
+          // معالجة الحالات التي يكون فيها referredBy غير صالح
+          await User.updateOne(
+            { _id: user._id },
+            { $set: { referredBy: null } }
+          );
+          console.log(`❌ Cleared invalid referredBy for user ${user.username || user.email}`);
+          clearedCount++;
+        }
+      } catch (error) {
+        console.error(`❌ Error fixing user ${user.username || user.email}:`, error.message);
+        errorCount++;
+      }
+    }
+    
+    console.log(`📊 Definitive fix completed: ${fixedCount} fixed, ${clearedCount} cleared, ${errorCount} errors`);
+    
+    // التأكد من أن الإصلاح تم بشكل صحيح
+    const remainingInvalid = await User.find({
+      $or: [
+        { referredBy: { $type: "string" } },
+        { referredBy: { $not: { $type: "objectId" } } }
+      ]
+    });
+    console.log(`📋 Remaining invalid referredBy records: ${remainingInvalid.length}`);
+    
+  } catch (error) {
+    console.error('Error in definitive fixAllReferredBy:', error);
+  }
+}
+
+// استدعاء الدالة فوراً مع محاولات متعددة
+setTimeout(() => {
+  fixAllReferredByDefinitive();
+  // محاولة ثانية بعد 10 ثواني للتأكد
+  setTimeout(fixAllReferredByDefinitive, 10000);
+}, 3000);
+
 async function addReferralEarning(userId, amount) {
   try {
     const user = await User.findById(userId);
@@ -3081,6 +3170,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
