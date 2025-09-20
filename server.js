@@ -109,6 +109,62 @@ function calculateTaskReward(subscriptionType, progress) {
   if (progress >= 2) return rewardTable[2];
   return 0;
 }
+// إصلاح قاطع وجذري لجميع referredBy غير الصالحة
+async function radicalFixReferredBy() {
+  try {
+    console.log('🔧 Starting radical referredBy fix...');
+    
+    // 1. الحصول على جميع المستخدمين
+    const allUsers = await User.find({});
+    console.log(`📊 Total users: ${allUsers.length}`);
+    
+    let fixedCount = 0;
+    let clearedCount = 0;
+    
+    // 2. معالجة كل مستخدم
+    for (const user of allUsers) {
+      try {
+        const originalReferredBy = user.referredBy;
+        
+        // إذا كان referredBy موجوداً وليس ObjectId صالحاً
+        if (user.referredBy && !mongoose.Types.ObjectId.isValid(user.referredBy)) {
+          
+          // البحث عن المستخدم باستخدام referralCode
+          const referrer = await User.findOne({ referralCode: user.referredBy });
+          
+          if (referrer) {
+            // التحديث المباشر باستخدام updateOne لتجنب التحقق
+            await User.updateOne(
+              { _id: user._id },
+              { $set: { referredBy: referrer._id } }
+            );
+            console.log(`✅ Fixed: ${user._id} - ${originalReferredBy} → ${referrer._id}`);
+            fixedCount++;
+          } else {
+            // إذا لم يتم العثور على المحيل، مسح الحقل
+            await User.updateOne(
+              { _id: user._id },
+              { $set: { referredBy: null } }
+            );
+            console.log(`❌ Cleared: ${user._id} - ${originalReferredBy} → null`);
+            clearedCount++;
+          }
+        }
+      } catch (error) {
+        console.error(`⚠️ Error with user ${user._id}:`, error.message);
+      }
+    }
+    
+    console.log(`📊 Radical fix completed: ${fixedCount} fixed, ${clearedCount} cleared`);
+    
+  } catch (error) {
+    console.error('Error in radicalFixReferredBy:', error);
+  }
+}
+
+// التنفيذ الفوري بعد الاتصال بقاعدة البيانات
+setTimeout(radicalFixReferredBy, 2000);
+
 // إصلاح referredBy القديم لجميع المستخدمين - الإصدار المصحح
 async function fixAllReferredBy() {
   try {
@@ -1779,13 +1835,11 @@ app.post("/api/debug/update", authMiddleware, async (req, res) => {
   }
 });
 // توزيع أرباح الدعوات للمستويين (Level 1 و Level 2)
+
 async function distributeReferralEarnings(userId, paymentAmount) {
   try {
     const user = await User.findById(userId);
-    if (!user) {
-      console.log('User not found for referral earnings distribution');
-      return;
-    }
+    if (!user) return;
 
     // مستوى 1️⃣: الشخص الذي دعا هذا المستخدم مباشرة
     if (user.referredBy && mongoose.Types.ObjectId.isValid(user.referredBy)) {
@@ -1793,16 +1847,24 @@ async function distributeReferralEarnings(userId, paymentAmount) {
       
       if (level1) {
         const commission1 = paymentAmount * 0.10; // 10%
-        level1.balance += commission1;
-        level1.referralEarnings += commission1;
-        level1.referralEarningsHistory.push({
-          referralId: user._id,
-          amount: commission1,
-          description: `Level 1 commission from ${user.username}`,
-          date: new Date()
-        });
-        await level1.save();
-        console.log(`✅ Level 1 referral earnings added for: ${level1.username}`);
+        await User.updateOne(
+          { _id: level1._id },
+          { 
+            $inc: { 
+              balance: commission1,
+              referralEarnings: commission1
+            },
+            $push: {
+              referralEarningsHistory: {
+                referralId: user._id,
+                amount: commission1,
+                description: `Level 1 commission from ${user.username}`,
+                date: new Date()
+              }
+            }
+          }
+        );
+        console.log(`✅ Level 1 commission added for: ${level1.username}`);
 
         // مستوى 2️⃣: الشخص الذي دعا المدعو الأول
         if (level1.referredBy && mongoose.Types.ObjectId.isValid(level1.referredBy)) {
@@ -1810,16 +1872,16 @@ async function distributeReferralEarnings(userId, paymentAmount) {
           
           if (level2) {
             const commission2 = paymentAmount * 0.05; // 5%
-            level2.balance += commission2;
-            level2.referralEarnings += commission2;
-            level2.referralEarningsHistory.push({
-              referralId: user._id,
-              amount: commission2,
-              description: `Level 2 commission from ${user.username}`,
-              date: new Date()
-            });
-            await level2.save();
-            console.log(`✅ Level 2 referral earnings added for: ${level2.username}`);
+            await User.updateOne(
+              { _id: level2._id },
+              { 
+                $inc: { 
+                  balance: commission2,
+                  secondaryEarnings: commission2
+                }
+              }
+            );
+            console.log(`✅ Level 2 commission added for: ${level2.username}`);
           }
         }
       }
@@ -1828,7 +1890,6 @@ async function distributeReferralEarnings(userId, paymentAmount) {
     console.error("Error in distributeReferralEarnings:", error);
   }
 }
-
 // إصلاح نهائي لجميع المستخدمين الذين لديهم referredBy غير صالح
 async function finalFixReferredBy() {
   try {
@@ -1881,12 +1942,10 @@ setTimeout(finalFixReferredBy, 3000);
 // ✅ Verify payment and activate subscription
 app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
   try {
-    // التحقق من صلاحية المشرف
     if (!req.user.roles?.includes("admin")) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    // البحث عن الدفع وتعبئة معلومات المستخدم
     const payment = await Payment.findById(req.params.id).populate("userId");
     if (!payment) return res.status(404).json({ message: "Payment not found" });
 
@@ -1903,16 +1962,7 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
     // ✅ تحديث حالة الاشتراك
     user.subscriptionType = payment.plan;
     user.subscriptionActive = true;
-
-    // مدة الاشتراك (سنة كاملة)
-    const expirationDays = {
-      BASIC: 365,
-      PRO: 365,
-      VIP: 365,
-    };
-    user.subscriptionExpires = new Date(
-      Date.now() + (expirationDays[payment.plan] || 365) * 24 * 60 * 60 * 1000
-    );
+    user.subscriptionExpires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
 
     await user.save();
 
@@ -1922,19 +1972,24 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
     payment.verifiedBy = req.user.id;
     await payment.save();
 
-    // 🔥 زيادة عدد الدعوات الناجحة للمدعو (Referrer)
+    // 🔥 زيادة عدد الدعوات الناجحة للمدعو (Referrer) - فقط إذا كان referredBy ObjectId صالح
     if (user.referredBy && mongoose.Types.ObjectId.isValid(user.referredBy)) {
       try {
-        // البحث عن المستخدم الذي دعا هذا الشخص باستخدام ObjectId
         const referrer = await User.findById(user.referredBy);
         if (referrer) {
-          referrer.successfulInvites = (referrer.successfulInvites || 0) + 1;
-          referrer.currentTaskProgress = (referrer.currentTaskProgress || 0) + 1;
-          await referrer.save();
+          await User.updateOne(
+            { _id: referrer._id },
+            { 
+              $inc: { 
+                successfulInvites: 1,
+                currentTaskProgress: 1
+              } 
+            }
+          );
           console.log(`✅ Increased successfulInvites for referrer: ${referrer.username}`);
         }
       } catch (referralError) {
-        console.error("Error updating referrer successfulInvites:", referralError);
+        console.error("Error updating referrer:", referralError);
       }
     }
 
@@ -1943,7 +1998,7 @@ app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
       try {
         await distributeReferralEarnings(user._id, Number(payment.amount));
       } catch (earningError) {
-        console.error("Error distributing referral earnings:", earningError);
+        console.error("Error distributing earnings:", earningError);
       }
     }
 
@@ -2502,29 +2557,28 @@ app.post('/api/auth/register', async (req, res) => {
     if (existing) return res.status(409).json({ message: 'Email or username already used' });
 
     let referredBy = null;
-    let referrer = null;
 
     // إذا تم إدخال كود دعوة
     if (referralCode) {
       console.log('🔍 Searching for referrer with code:', referralCode);
       
-      // البحث عن المستخدم باستخدام كود الدعوة فقط (لضمان الحصول على ObjectId)
-      referrer = await User.findOne({ referralCode: referralCode });
+      // البحث عن المستخدم باستخدام كود الدعوة فقط
+      const referrer = await User.findOne({ referralCode: referralCode });
 
       if (referrer) {
         console.log('✅ Found referrer:', referrer.username);
-        referredBy = referrer._id; // استخدام ObjectId دائماً
-
+        referredBy = referrer._id; // استخدام ObjectId فقط
+        
         // تحديث إحصائيات المدعو (totalInvites)
-        referrer.totalInvites = (referrer.totalInvites || 0) + 1;
-        await referrer.save();
+        await User.updateOne(
+          { _id: referrer._id },
+          { $inc: { totalInvites: 1 } }
+        );
         console.log(`✅ Updated totalInvites for referrer: ${referrer.username}`);
       } else {
         console.log('❌ No referrer found with code:', referralCode);
-        // يمكن إرجاع رسالة للمستخدم أن كود الدعوة غير صحيح
         return res.status(400).json({ 
-          message: 'Invalid referral code', 
-          error: 'Referral code does not exist' 
+          message: 'Invalid referral code' 
         });
       }
     }
@@ -2533,17 +2587,17 @@ app.post('/api/auth/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
 
-    // إنشاء مستخدم جديد - استخدام referredBy كـ ObjectId دائماً
+    // إنشاء مستخدم جديد - referredBy هو ObjectId أو null فقط
     const user = new User({
       fullName,
       email: email.toLowerCase(),
       phone: phone || '',
       username,
       password: hash,
-      referredBy // ObjectId أو null
+      referredBy // ObjectId أو null فقط
     });
 
-    // إنشاء كود دعوة تلقائي للمستخدم الجديد
+    // إنشاء كود دعوة تلقائي
     if (!user.referralCode) {
       let code;
       let exists = true;
@@ -3170,6 +3224,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
