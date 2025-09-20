@@ -2743,7 +2743,7 @@ app.post("/api/tasks/complete", authMiddleware, async (req, res) => {
     } = req.body;
     const userId = req.user.id;
     // التحقق من المدخلات
-    if (!taskId || typeof completed !== 'boolean') {
+    if (taskId || typeof completed == 'boolean') {
       return res.status(400).json({
         success: false,
         message: 'Task ID and completion status are required'
@@ -3224,6 +3224,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
