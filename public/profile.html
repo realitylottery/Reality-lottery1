@@ -300,28 +300,39 @@
     }
 
 async function claimReward(rewardAmount, subscriptionType) {
-  try {
-    const response = await fetch(API_BASE + '/api/tasks/claim-reward', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + getToken(),
-        'Content-Type': 'application/json'
+      try {
+        // الحصول على معلومات المهمة الحالية أولاً
+        const taskInfo = await safeFetch(API_BASE + '/api/tasks/current', {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + getToken()
+          }
+        });
+        
+        const response = await fetch(API_BASE + '/api/tasks/claim-reward', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + getToken(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            taskId: taskInfo.id, // إضافة taskId
+            completed: true      // إضافة completion status
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          showRewardNotification(rewardAmount, subscriptionType, true);
+          return result;
+        } else {
+          throw new Error(result.message || 'Failed to claim reward');
+        }
+      } catch(err) {
+        console.error('Error claiming reward:', err);
+        throw err;
       }
-    });
-    
-    const result = await response.json();
-    
-    if (response.ok) {
-      showRewardNotification(rewardAmount, subscriptionType, true);
-      return result;
-    } else {
-      // إذا فشل claim-reward، جرب استخدام complete-task
-      return await completeTask(null, rewardAmount, subscriptionType, true);
-    }
-  } catch(err) {
-    console.error('Error claiming reward:', err);
-    throw err;
-  }
 }
 
     function updateResetButton(progress, subscriptionType){
@@ -371,31 +382,41 @@ async function claimReward(rewardAmount, subscriptionType) {
     }
 
     async function completeTask(userId, rewardAmount, subscriptionType, isReset) {
-  try {
-    const response = await fetch(API_BASE + '/api/tasks/complete', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + getToken(),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        taskType: isReset ? 'manual_reset' : 'auto_complete',
-        progressValue: 6 // لإخبار الخادم أننا أكملنا 6 خطوات
-      })
-    });
-    
-    const result = await response.json();
-    
-    if (response.ok && result.success) {
-      showRewardNotification(rewardAmount, subscriptionType, isReset);
-      return result;
-    } else {
-      throw new Error(result.message || 'Failed to complete task');
-    }
-  } catch (error) {
-    console.error('Error completing task:', error);
-    throw error;
-  }
+      try {
+        // الحصول على معلومات المهمة الحالية أولاً
+        const taskInfo = await safeFetch(API_BASE + '/api/tasks/current', {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + getToken()
+          }
+        });
+        
+        const response = await fetch(API_BASE + '/api/tasks/complete', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + getToken(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            taskId: taskInfo.id, // إضافة taskId
+            completed: true,     // إضافة completion status
+            taskType: isReset ? 'manual_reset' : 'auto_complete',
+            progressValue: 6
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          showRewardNotification(rewardAmount, subscriptionType, isReset);
+          return result;
+        } else {
+          throw new Error(result.message || 'Failed to complete task');
+        }
+      } catch (error) {
+        console.error('Error completing task:', error);
+        throw error;
+      }
     }
     
     async function loadProfile(){
