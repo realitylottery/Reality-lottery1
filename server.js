@@ -173,30 +173,30 @@ async function authMiddleware(req, res, next) {
 // ================= AUTO TASK RESET MIDDLEWARE =================
 app.use('/api/*', async (req, res, next) => {
   try {
+    // تأكد أن المستخدم تمت مصادقته أولاً
     if (req.user && req.user.id) {
       const user = await User.findById(req.user.id);
+      
       if (user && user.currentTaskProgress >= 6) {
         const rewardAmount = calculateTaskReward(user.subscriptionType, 6);
         
-        // تحديث الرصيد
+        // تحديث الرصيد والمهام
         user.balance = (user.balance || 0) + rewardAmount;
+        user.completedTasks = (user.completedTasks || 0) + 1;
+        user.currentTaskProgress = 0;
         
         // تسجيل المعاملة
         await Transaction.create({
           userId: user._id,
           amount: rewardAmount,
-          type: 'TASK_REWARD',
+          type: 'TASK_REWARD_AUTO',
           description: `مكافأة تلقائية لإكمال 6/6 مهمات`
         });
-        
-        // تصفير التقدم وزيادة المهام المكتملة
-        user.currentTaskProgress = 0;
-        user.completedTasks = (user.completedTasks || 0) + 1;
         
         await user.save();
         console.log(`🎉 تمت مكافأة ${user.username} تلقائياً: $${rewardAmount}`);
         
-        // توزيع أرباح الدعوات إذا وجدت
+        // توزيع أرباح الدعوات
         if (rewardAmount > 0 && user.referredBy) {
           await distributeReferralEarnings(user._id, rewardAmount);
         }
@@ -218,31 +218,6 @@ function calculateAvailableSpins(user) {
   return Math.max(0, subscriptionSpin + inviteSpins + extraSpins - usedSpins);
 }
 // =====> نهاية الدالة <=====
-// middleware للتحقق من صحة referredBy
-app.use('/api/*', async (req, res, next) => {
-  try {
-    if (req.user && req.user.id) {
-      const user = await User.findById(req.user.id);
-      if (user && user.referredBy && typeof user.referredBy === 'string') {
-        // حاول إصلاح referredBy إذا كان نصاً
-        const referrer = await User.findOne({ referralCode: user.referredBy });
-        if (referrer) {
-          user.referredBy = referrer._id;
-          await user.save();
-          console.log(`✅ Auto-fixed referredBy for user ${user.username}`);
-        } else {
-          // إذا لم يتم العثور على المحيل، مسح الحقل
-          user.referredBy = null;
-          await user.save();
-          console.log(`❌ Cleared invalid referredBy for user ${user.username}`);
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Error in referredBy validation middleware:', error);
-  }
-  next();
-});
 
 // GET /api/tasks/check-auto-reward - التحقق من المكافآت التلقائية
 app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
@@ -2888,6 +2863,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
