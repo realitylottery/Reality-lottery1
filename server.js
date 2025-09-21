@@ -718,7 +718,9 @@ app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
       await user.save();
 
       // توزيع أرباح الدعوات بشكل هرمي
-      await addReferralEarning(user._id, reward);
+      if (reward > 0) {
+        await distributeReferralEarnings(user._id, reward); // استخدام الدالة الصحيحة
+      }
     }
 
     res.json({
@@ -3242,6 +3244,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
