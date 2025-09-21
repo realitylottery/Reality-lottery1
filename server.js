@@ -150,6 +150,66 @@ async function incrementTaskProgress(userId) {
   await user.save();
   return user;
 }
+// ================= AUTO TASK RESET EVERY 5 MINUTES =================
+// دالة للتحقق من المهام المكتملة تلقائياً
+async function checkForAutoTaskReset() {
+  try {
+    console.log('⏰ [Every 5 min] Checking for auto task resets...');
+    
+    // البحث عن جميع المستخدمين الذين تقدمهم 6 أو أكثر
+    const users = await User.find({
+      currentTaskProgress: { $gte: 6 }
+    }).select('_id username currentTaskProgress subscriptionType');
+    
+    if (users.length > 0) {
+      console.log(`📊 Found ${users.length} users with completed tasks`);
+    }
+    
+    for (const user of users) {
+      try {
+        const reward = calculateTaskReward(user.subscriptionType, 6);
+        
+        // تحديث رصيد المستخدم
+        await User.findByIdAndUpdate(user._id, {
+          $inc: { 
+            balance: reward,
+            completedTasks: 1,
+            availableSpins: 1
+          },
+          $set: { currentTaskProgress: 0 }
+        });
+        
+        // تسجيل المعاملة
+        await Transaction.create({
+          userId: user._id,
+          amount: reward,
+          type: 'TASK_REWARD_AUTO',
+          description: `مكافأة تلقائية (فحص كل 5 دقائق)`
+        });
+        
+        // توزيع أرباح الدعوات
+        if (reward > 0 && user.referredBy) {
+          await distributeReferralEarnings(user._id, reward);
+        }
+        
+        console.log(`✅ Auto-rewarded user ${user.username}: $${reward}`);
+      } catch (userError) {
+        console.error(`❌ Error processing user ${user.username}:`, userError);
+      }
+    }
+  } catch (error) {
+    console.error('❌ Auto task reset error:', error);
+  }
+}
+
+// تشغيل التحقق فوراً عند بدء السيرفر
+checkForAutoTaskReset();
+
+// ثم تكرار العملية كل 5 دقائق (300000 مللي ثانية)
+const AUTO_RESET_INTERVAL = 5 * 60 * 1000; // 5 دقائق
+setInterval(checkForAutoTaskReset, AUTO_RESET_INTERVAL);
+
+console.log('✅ Auto task reset system initialized (runs every 5 minutes)');
 
 async function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -225,6 +285,33 @@ app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error checking for auto reward'
+    });
+  }
+});
+
+// GET /api/system/auto-reset-status - التحقق من حالة النظام التلقائي
+app.get('/api/system/auto-reset-status', async (req, res) => {
+  try {
+    // عدد المستخدمين الذين يحتاجون إلى تصفير
+    const usersNeedingReset = await User.countDocuments({
+      currentTaskProgress: { $gte: 6 }
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        autoResetEnabled: true,
+        checkInterval: 'كل 5 دقائق',
+        nextCheckIn: 'قريباً',
+        usersNeedingReset: usersNeedingReset,
+        lastChecked: new Date()
+      }
+    });
+  } catch (error) {
+    console.error('Auto reset status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching auto reset status'
     });
   }
 });
@@ -514,68 +601,60 @@ app.post("/api/withdrawals", authMiddleware, async (req, res) => {
 app.post("/api/tasks/claimReward", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    const {
-      progressValue
-    } = req.body;
-    // ✅ التحقق من المدخلات
-    if (typeof progressValue !== 'number') {
-      return res.status(400).json({
-        success: false,
-        message: 'progressValue is required and must be a number'
-      });
-    }
-    // ✅ جلب بيانات المستخدم
     const user = await User.findById(userId);
+    
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-    let reward = 0;
-    let autoClaimed = false;
-    // ✅ التحقق إذا كان التقدم مكتمل (6/6)
-    if (progressValue >= 6) {
-      const subscriptionType = user?.subscriptionType || 'NONE';
-      reward = calculateTaskReward(subscriptionType, 6); // دالة حساب المكافأة
-      user.balance += reward;
-      user.completedTasks = (user.completedTasks || 0) + 1;
-      user.currentTaskProgress = 0; // تصفير التقدم
-      user.availableSpins = (user.availableSpins || 0) + 1; // 🎯 زيادة سبين واحد
-      autoClaimed = true;
-      // 📝 تسجيل المعاملة
-      await Transaction.create({
-        user: userId,
-        amount: reward,
-        type: 'TASK_REWARD_AUTO',
-        description: `Automatic reward at progress 6`
-      });
-      await user.save();
-    } else {
+    
+    // إذا كان التقدم أقل من 6، لا يمكن المطالبة
+    if (user.currentTaskProgress < 6) {
       return res.status(400).json({
         success: false,
         message: 'Progress not yet completed (must be 6)'
       });
     }
+    
+    const subscriptionType = user.subscriptionType || 'NONE';
+    const reward = calculateTaskReward(subscriptionType, 6);
+    
+    // تحديث بيانات المستخدم
+    user.balance += reward;
+    user.completedTasks = (user.completedTasks || 0) + 1;
+    user.currentTaskProgress = 0;
+    user.availableSpins = (user.availableSpins || 0) + 1;
+    
+    // تسجيل المعاملة
+    await Transaction.create({
+      userId: userId,
+      amount: reward,
+      type: 'TASK_REWARD_CLAIMED',
+      description: `مكافأة مطالب بها يدوياً`
+    });
+    
+    await user.save();
+    await distributeReferralEarnings(user._id, reward);
+    
     // ✅ إرجاع الرد
     res.status(200).json({
       success: true,
-      message: `Reward claimed successfully`,
+      message: `تم المطالبة بالمكافأة بنجاح`,
       data: {
         reward,
-        autoClaimed,
         newBalance: user.balance,
         completedTasks: user.completedTasks,
         currentTaskProgress: user.currentTaskProgress,
-        availableSpins: user.availableSpins // ✅ رجعنا عدد السبين بعد الزيادة
+        availableSpins: user.availableSpins
       }
     });
   } catch (err) {
     console.error('Error in claimReward:', err);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      message: 'Internal server error'
     });
   }
 });
@@ -2863,6 +2942,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
