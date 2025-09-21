@@ -551,7 +551,6 @@ app.post("/api/tasks/claimReward", authMiddleware, async (req, res) => {
         description: `Automatic reward at progress 6`
       });
       await user.save();
-      await distributeReferralEarnings(user._id, reward);
     } else {
       return res.status(400).json({
         success: false,
@@ -2864,6 +2863,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
