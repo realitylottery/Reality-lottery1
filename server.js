@@ -607,7 +607,7 @@ app.post("/api/tasks/claimReward", authMiddleware, async (req, res) => {
         description: `Automatic reward at progress 6`
       });
       await user.save();
-      await addReferralEarning(user._id, reward);
+      await distributeReferralEarnings(user._id, reward);
     } else {
       return res.status(400).json({
         success: false,
@@ -1619,54 +1619,7 @@ async function distributeReferralEarnings(userId, paymentAmount) {
     console.error("Error in distributeReferralEarnings:", error);
   }
 }
-// إصلاح نهائي لجميع المستخدمين الذين لديهم referredBy غير صالح
-async function finalFixReferredBy() {
-  try {
-    console.log('🔧 Starting final referredBy fix...');
-    
-    // البحث عن جميع المستخدمين
-    const allUsers = await User.find({});
-    let fixedCount = 0;
-    let clearedCount = 0;
-    
-    for (const user of allUsers) {
-      try {
-        // إذا كان referredBy موجوداً但不是 ObjectId صالح
-        if (user.referredBy && !mongoose.Types.ObjectId.isValid(user.referredBy)) {
-          // البحث باستخدام referralCode
-          const referrer = await User.findOne({ referralCode: user.referredBy });
-          
-          if (referrer) {
-            // تحديث إلى ObjectId صالح
-            await User.updateOne(
-              { _id: user._id },
-              { $set: { referredBy: referrer._id } }
-            );
-            console.log(`✅ Fixed referredBy for user ${user.username}`);
-            fixedCount++;
-          } else {
-            // إذا لم يتم العثور على المحيل، مسح الحقل
-            await User.updateOne(
-              { _id: user._id },
-              { $set: { referredBy: null } }
-            );
-            console.log(`❌ Cleared invalid referredBy for user ${user.username}`);
-            clearedCount++;
-          }
-        }
-      } catch (error) {
-        console.error(`❌ Error fixing user ${user.username}:`, error.message);
-      }
-    }
-    
-    console.log(`📊 Final fix completed: ${fixedCount} fixed, ${clearedCount} cleared`);
-  } catch (error) {
-    console.error('Error in finalFixReferredBy:', error);
-  }
-}
 
-// استدعاء الدالة عند التشغيل
-setTimeout(finalFixReferredBy, 3000);
   
 // ✅ Verify payment and activate subscription
 app.post("/api/admin/payments/:id/verify", authMiddleware, async (req, res) => {
@@ -2953,6 +2906,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
