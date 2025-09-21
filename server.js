@@ -453,60 +453,6 @@ app.delete('/api/admin/notifications/:id', authMiddleware, async (req, res) => {
   }
 });
 // إضافة هذا middleware ليتحقق من التقدم في كل طلب للمستخدم
-app.use('/api/*', async (req, res, next) => {
-  if (req.user && req.user.id) {
-    try {
-      const user = await User.findById(req.user.id);
-      if (user && user.currentTaskProgress >= 6) {
-        const rewardAmount = calculateTaskReward(user.subscriptionType, 6);
-        // تحديث الرصيد
-        user.balance = (user.balance || 0) + rewardAmount;
-        // تسجيل المعاملة
-        await Transaction.create({
-          userId: user._id,
-          amount: rewardAmount,
-          type: 'TASK_REWARD',
-          description: `مكافأة تلقائية لإكمال 6/6 مهمات`
-        });
-        // تصفير التقدم
-        user.currentTaskProgress = 0;
-        user.completedTasks = (user.completedTasks || 0) + 1;
-        await user.save();
-        console.log(`🎉 تمت مكافأة ${user.username} تلقائياً: $${rewardAmount}`);
-      }
-    } catch (error) {
-      console.error('Error in auto-progress check:', error);
-    }
-  }
-  next();
-});
-// دالة توزيع أرباح الدعوات بشكل هرمي
-async function addReferralEarning(userId, amount) {
-  try {
-    if (!amount || amount <= 0) return; // تجاهل المبالغ الصفرية
-
-    let level = 1;
-    let currentUser = await User.findById(userId).populate('referrer');
-
-    while (currentUser && currentUser.referrer) {
-      const parent = await User.findById(currentUser.referrer);
-      if (!parent) break;
-
-      const commission = amount * 0.10; // 10% من ربح الابن
-      parent.secondaryEarnings += commission;
-      parent.balance += commission; // تضاف مباشرة للرصيد
-      await parent.save();
-
-      console.log(`Level ${level} commission: ${commission} added to ${parent.username}`);
-
-      currentUser = parent;
-      level++;
-    }
-  } catch (err) {
-    console.error("Error distributing referral earnings:", err);
-  }
-}
-
 
 
 // Endpoint عجلة الحظ مع توزيع أرباح الدعوات
@@ -2942,6 +2888,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
