@@ -150,24 +150,28 @@ async function incrementTaskProgress(userId) {
   await user.save();
   return user;
 }
-// ================= AUTO TASK RESET EVERY 5 MINUTES =================
+/// ================= AUTO TASK RESET EVERY 5 MINUTES =================
 // دالة للتحقق من المهام المكتملة تلقائياً
 async function checkForAutoTaskReset() {
   try {
     console.log('⏰ [Every 5 min] Checking for auto task resets...');
     
-    // البحث عن جميع المستخدمين الذين تقدمهم 6 أو أكثر
+    // البحث عن جميع المستخدمين الذين تقدمهم 6 أو أكثر - مع اختيار referredBy
     const users = await User.find({
       currentTaskProgress: { $gte: 6 }
-    }).select('_id username currentTaskProgress subscriptionType');
+    }).select('_id username currentTaskProgress subscriptionType referredBy');
     
     if (users.length > 0) {
       console.log(`📊 Found ${users.length} users with completed tasks`);
+    } else {
+      console.log('📊 No users with completed tasks found');
+      return;
     }
     
     for (const user of users) {
       try {
         const reward = calculateTaskReward(user.subscriptionType, 6);
+        console.log(`💸 Processing reward for ${user.username}: $${reward}`);
         
         // تحديث رصيد المستخدم
         await User.findByIdAndUpdate(user._id, {
@@ -187,9 +191,12 @@ async function checkForAutoTaskReset() {
           description: `مكافأة تلقائية (فحص كل 5 دقائق)`
         });
         
-        // توزيع أرباح الدعوات
+        // توزيع أرباح الدعوات - مع await والتأكد من وجود referredBy
         if (reward > 0 && user.referredBy) {
+          console.log(`👥 Distributing referral earnings for ${user.username}, referred by: ${user.referredBy}`);
           await distributeReferralEarnings(user._id, reward);
+        } else if (reward > 0) {
+          console.log(`ℹ️ No referral earnings for ${user.username} (no referrer)`);
         }
         
         console.log(`✅ Auto-rewarded user ${user.username}: $${reward}`);
@@ -202,11 +209,11 @@ async function checkForAutoTaskReset() {
   }
 }
 
-// تشغيل التحقق فوراً عند بدء السيرفر
-checkForAutoTaskReset();
+// تشغيل التحقق بعد بدء السيرفر بفترة
+setTimeout(checkForAutoTaskReset, 10000);
 
-// ثم تكرار العملية كل 5 دقائق (300000 مللي ثانية)
-const AUTO_RESET_INTERVAL = 5 * 60 * 1000; // 5 دقائق
+// ثم تكرار العملية كل 5 دقائق
+const AUTO_RESET_INTERVAL = 5 * 60 * 1000;
 setInterval(checkForAutoTaskReset, AUTO_RESET_INTERVAL);
 
 console.log('✅ Auto task reset system initialized (runs every 5 minutes)');
@@ -2942,6 +2949,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
