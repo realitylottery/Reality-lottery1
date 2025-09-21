@@ -130,6 +130,26 @@ async function updateUserSpins(userId) {
   }
 }
 
+async function incrementTaskProgress(userId) {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  user.currentTaskProgress = (user.currentTaskProgress || 0) + 1;
+
+  // تحقق من اكتمال المهمة
+  if (user.currentTaskProgress >= 6) {
+    const reward = calculateTaskReward(user.subscriptionType, 6);
+    user.currentTaskProgress = 0;             // إعادة التصفير
+    user.completedTasks = (user.completedTasks || 0) + 1;
+    user.balance = (user.balance || 0) + reward;
+
+    // يمكنك تسجيل تاريخ الاستلام أو إرسال إشعار
+    console.log(`User ${user.username} completed a task. Reward: $${reward}`);
+  }
+
+  await user.save();
+  return user;
+}
 
 async function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -2884,6 +2904,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
