@@ -170,6 +170,44 @@ async function authMiddleware(req, res, next) {
     });
   }
 }
+// ================= AUTO TASK RESET MIDDLEWARE =================
+app.use('/api/*', async (req, res, next) => {
+  try {
+    if (req.user && req.user.id) {
+      const user = await User.findById(req.user.id);
+      if (user && user.currentTaskProgress >= 6) {
+        const rewardAmount = calculateTaskReward(user.subscriptionType, 6);
+        
+        // تحديث الرصيد
+        user.balance = (user.balance || 0) + rewardAmount;
+        
+        // تسجيل المعاملة
+        await Transaction.create({
+          userId: user._id,
+          amount: rewardAmount,
+          type: 'TASK_REWARD',
+          description: `مكافأة تلقائية لإكمال 6/6 مهمات`
+        });
+        
+        // تصفير التقدم وزيادة المهام المكتملة
+        user.currentTaskProgress = 0;
+        user.completedTasks = (user.completedTasks || 0) + 1;
+        
+        await user.save();
+        console.log(`🎉 تمت مكافأة ${user.username} تلقائياً: $${rewardAmount}`);
+        
+        // توزيع أرباح الدعوات إذا وجدت
+        if (rewardAmount > 0 && user.referredBy) {
+          await distributeReferralEarnings(user._id, rewardAmount);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in auto-progress check:', error);
+  }
+  next();
+});
+
 // ================= ROUTES =================
 // =====> أعلى الملف قبل أي route <=====
 function calculateAvailableSpins(user) {
@@ -2904,6 +2942,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
