@@ -181,7 +181,7 @@ async function checkForAutoTaskReset() {
         
         // تسجيل المعاملة
         await Transaction.create({
-          userId: userid,
+          userId: user._id,
           amount: reward,
           type: 'TASK_REWARD_AUTO',
           description: `مكافأة تلقائية (فحص كل 5 دقائق)`
@@ -2942,6 +2942,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
