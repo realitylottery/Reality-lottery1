@@ -507,52 +507,6 @@ async function addReferralEarning(userId, amount) {
   }
 }
 
-// Endpoint لمكافآت المهام مع أرباح الدعوات
-app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    let reward = 0;
-    let autoClaimed = false;
-
-    // تحقق إذا وصل التقدم إلى 6
-    if (user.currentTaskProgress >= 6) {
-      reward = calculateTaskReward(user.subscriptionType, 6);
-      user.balance += reward;
-      user.completedTasks = (user.completedTasks || 0) + 1;
-      user.currentTaskProgress = 0; // تصفير التقدم
-      autoClaimed = true;
-      await user.save();
-
-      // توزيع أرباح الدعوات بشكل هرمي
-      if (reward > 0) {
-        await distributeReferralEarnings(user._id, reward); // استخدام الدالة الصحيحة
-      }
-    }
-
-    res.json({
-      success: true,
-      autoClaimed,
-      reward,
-      currentProgress: user.currentTaskProgress,
-      balance: user.balance
-    });
-
-  } catch (err) {
-    console.error('Error checking auto reward:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Error checking for auto reward'
-    });
-  }
-});
-// دالة توزيع أرباح الدعوات بشكل هرمي
 
 
 // Endpoint عجلة الحظ مع توزيع أرباح الدعوات
@@ -2988,6 +2942,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
