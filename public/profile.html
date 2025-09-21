@@ -359,7 +359,49 @@ async function claimReward(rewardAmount, subscriptionType) {
         <div>Total: ${progress}/6</div>
       `;
     }
-
+// إضافة هذه الدالة للتحقق من المكافآت التلقائية
+async function checkAutoRewards() {
+  try {
+    const response = await fetch(API_BASE + '/api/tasks/check-auto-reward', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + getToken()
+      }
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      if (result.autoClaimed && result.reward > 0) {
+        showRewardNotification(result.reward, user.subscriptionType, false);
+        
+        // تحديث البيانات المحلية
+        user.balance = (user.balance || 0) + result.reward;
+        user.completedTasks = (user.completedTasks || 0) + 1;
+        user.currentTaskProgress = 0;
+        
+        // تحديث واجهة المستخدم
+        document.getElementById('balanceAmount').textContent = user.balance;
+        document.getElementById('completedTasks').textContent = user.completedTasks;
+        document.getElementById('progressText').textContent = '0/6';
+        document.getElementById('progressFill').style.width = '0%';
+        
+        // إعادة تعيين الخطوات
+        const stepElements = document.querySelectorAll('#stepsWrap .step');
+        stepElements.forEach(step => step.classList.remove('done'));
+        
+        // إخفاء زر الإعادة
+        document.getElementById('resetTaskBtn').style.display = 'none';
+        document.getElementById('resetInfo').style.display = 'none';
+        
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.error('Error checking auto rewards:', error);
+    return false;
+  }
+}
     async function updateTaskProgressOnSubscription() {
   try {
     const response = await fetch(API_BASE + '/api/tasks/subscription-progress', {
@@ -420,27 +462,45 @@ async function claimReward(rewardAmount, subscriptionType) {
       }
     }
     
-    async function loadProfile(){
-      if(!isSigned()){ 
-        location.href='login.html?next=profile.html'; 
-        return; 
+    // تعديل دالة loadProfile للتحقق من المكافآت التلقائية
+async function loadProfile(){
+  if(!isSigned()){ 
+    location.href='login.html?next=profile.html'; 
+    return; 
+  }
+  
+  let me;
+  try{ 
+    me = await safeFetch(API_BASE+'/api/auth/me', {
+      headers: {
+        'Authorization': 'Bearer '+getToken()
       }
-      
-      let me;
-      try{ 
-        me = await safeFetch(API_BASE+'/api/auth/me', {
-          headers: {
-            'Authorization': 'Bearer '+getToken()
-          }
-        }); 
-      } catch(e){ 
-        alert('Network error or session expired. Please login again.'); 
-        signOut(); 
-        return; 
-      }
+    }); 
+  } catch(e){ 
+    alert('Network error or session expired. Please login again.'); 
+    signOut(); 
+    return; 
+  }
 
-      const user = me;
-      updateTopAuth(user);
+  let user = me;
+  updateTopAuth(user);
+
+  // التحقق من المكافآت التلقائية أولاً
+  const autoClaimed = await checkAutoRewards();
+  
+  // إذا تمت المطالبة تلقائياً، نحتاج إلى إعادة تحميل بيانات المستخدم
+  if (autoClaimed) {
+    try {
+      me = await safeFetch(API_BASE+'/api/auth/me', {
+        headers: {
+          'Authorization': 'Bearer '+getToken()
+        }
+      });
+      user = me;
+    } catch (e) {
+      console.error('Error reloading user data:', e);
+    }
+  }
 
       // Profile display
       const profileWrap = document.getElementById('profileWrap');
