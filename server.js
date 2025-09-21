@@ -738,36 +738,7 @@ app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
   }
 });
 // دالة توزيع أرباح الدعوات بشكل هرمي
-async function addReferralEarning(userId, prize) {
-  try {
-    // تحويل الجائزة إلى رقم
-    let amount = 0;
-    if (prize === "$3") amount = 3;
-    else if (prize === "$2") amount = 2;
-    else if (prize === "$1") amount = 1;
-    else return; // لا شيء لـ "extra"
 
-    let level = 1;
-    let currentUser = await User.findById(userId).populate('referrer');
-
-    while (currentUser && currentUser.referrer) {
-      const parent = await User.findById(currentUser.referrer);
-      if (!parent) break;
-
-      const commission = amount * 0.10; // 10% من ربح الابن
-      parent.secondaryEarnings += commission;
-      parent.balance += commission; // تضاف مباشرة للرصيد
-      await parent.save();
-
-      console.log(`Level ${level} commission: ${commission} added to ${parent.username}`);
-
-      currentUser = parent;
-      level++;
-    }
-  } catch (err) {
-    console.error("Error distributing referral earnings:", err);
-  }
-}
 
 // Endpoint عجلة الحظ مع توزيع أرباح الدعوات
 app.post("/api/wheel/spin", async (req, res) => {
@@ -783,23 +754,22 @@ app.post("/api/wheel/spin", async (req, res) => {
     if (!user) return res.status(404).json({ msg: "User not found" });
 
     const { prize } = req.body;
-
-    const spinsLeft = user.calculateAvailableSpins();
-    if (spinsLeft <= 0) return res.status(400).json({ msg: "No spins available" });
+    let rewardAmount = 0;
 
     // إضافة الجوائز حسب النوع
-    let rewardAmount = 0;
     if (prize === "$3") { user.balance += 3; rewardAmount = 3; }
     else if (prize === "$2") { user.balance += 2; rewardAmount = 2; }
     else if (prize === "$1") { user.balance += 1; rewardAmount = 1; }
-    else if (prize === "extra") { user.extraSpins += 1; }
+    else if (prize === "extra") { user.extraSpins = (user.extraSpins ?? 0) + 1; }
 
     if (prize !== "extra") user.spinsUsed = (user.spinsUsed ?? 0) + 1;
 
     await user.save();
 
-    // توزيع أرباح الدعوات فقط إذا هناك مبلغ نقدي
-    if (rewardAmount > 0) await addReferralEarning(user._id, prize);
+    // توزيع أرباح الدعوات على المستويين إذا المبلغ > 0
+    if (rewardAmount > 0) {
+      await distributeReferralEarnings(user._id, rewardAmount);
+    }
 
     res.json({
       message: `You won ${prize}!`,
@@ -1302,38 +1272,94 @@ app.put("/api/admin/users/:id", authMiddleware, async (req, res) => {
     });
   }
 });
+
+async function distributeReferralEarnings(userId, rewardAmount) {
+  try {
+    const user = await User.findById(userId);
+    if (!user) return;
+
+    // 🔹 المستوى 1: الشخص الذي دعا المستخدم مباشرة
+    if (user.referredBy && mongoose.Types.ObjectId.isValid(user.referredBy)) {
+      const level1 = await User.findById(user.referredBy);
+      if (level1) {
+        const commission1 = rewardAmount * 0.10; // 10% من مكافأة المستخدم
+        await User.updateOne(
+          { _id: level1._id },
+          { 
+            $inc: { 
+              balance: commission1,
+              referralEarnings: commission1
+            },
+            $push: {
+              referralEarningsHistory: {
+                referralId: user._id,
+                amount: commission1,
+                description: `Level 1 commission from ${user.username}`,
+                date: new Date()
+              }
+            }
+          }
+        );
+        console.log(`✅ Level 1 commission added for: ${level1.username}`);
+
+        // 🔹 المستوى 2: الشخص الذي دعا المدعو الأول
+        if (level1.referredBy && mongoose.Types.ObjectId.isValid(level1.referredBy)) {
+          const level2 = await User.findById(level1.referredBy);
+          if (level2) {
+            const commission2 = rewardAmount * 0.05; // 5% من مكافأة المستخدم
+            await User.updateOne(
+              { _id: level2._id },
+              { 
+                $inc: { 
+                  balance: commission2,
+                  secondaryEarnings: commission2
+                },
+                $push: {
+                  referralEarningsHistory: {
+                    referralId: user._id,
+                    amount: commission2,
+                    description: `Level 2 commission from ${user.username}`,
+                    date: new Date()
+                  }
+                }
+              }
+            );
+            console.log(`✅ Level 2 commission added for: ${level2.username}`);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error in distributeReferralEarnings:", error);
+  }
+}
 // Endpoint to claim reward at progress 4 or 5
 app.post("/api/tasks/claim-reward", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
-    // حساب التقدم الصحيح - يعتمد على currentTaskProgress
+
     const currentProgress = user.currentTaskProgress || 0;
-    // التحقق إذا كان التقدم 4 أو 5
-  
-    // حساب المكافأة
+
+    // حساب المكافأة حسب الاشتراك والتقدم
     const reward = calculateTaskReward(user.subscriptionType, currentProgress);
     if (reward <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No reward available to claim'
-      });
+      return res.status(400).json({ success: false, message: 'No reward available to claim' });
     }
-    // منح المكافأة للمستخدم
+
+    // إضافة المكافأة للمستخدم نفسه
     user.balance += reward;
-    // إعادة تعيين التقدم
     user.currentTaskProgress = 0;
-    // لا نمسح completedTasks و successfulInvites لأنها لأغراض إحصائية
     await user.save();
-    await addReferralEarning(user._id, reward);
-    // إذا كان نموذج Transaction غير موجود، يمكنك استخدام console.log بدلاً منه
+
+    // توزيع أرباح الدعوات للمستوى 1 و 2
+    await distributeReferralEarnings(user._id, reward);
+
     console.log(`💰 Reward claimed: User ${user.username}, Amount: $${reward}, Progress: ${currentProgress}`);
+
     res.status(200).json({
       success: true,
       message: `Successfully claimed reward: $${reward}`,
@@ -1345,10 +1371,7 @@ app.post("/api/tasks/claim-reward", authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error('Error claiming reward:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 // Reward calculation function
@@ -3219,6 +3242,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
