@@ -243,6 +243,52 @@ app.use('/api/*', async (req, res, next) => {
   }
   next();
 });
+
+// GET /api/tasks/check-auto-reward - التحقق من المكافآت التلقائية
+app.get("/api/tasks/check-auto-reward", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    let reward = 0;
+    let autoClaimed = false;
+
+    if (user.currentTaskProgress >= 6) {
+      reward = calculateTaskReward(user.subscriptionType, 6);
+      user.balance += reward;
+      user.completedTasks = (user.completedTasks || 0) + 1;
+      user.currentTaskProgress = 0;
+      autoClaimed = true;
+      await user.save();
+
+      // توزيع أرباح الدعوات إذا وجدت
+      if (reward > 0 && user.referredBy) {
+        await distributeReferralEarnings(user._id, reward);
+      }
+    }
+
+    res.json({
+      success: true,
+      autoClaimed,
+      reward,
+      currentProgress: user.currentTaskProgress,
+      balance: user.balance
+    });
+
+  } catch (err) {
+    console.error('Error checking auto reward:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking for auto reward'
+    });
+  }
+});
+
 // ========= NOTIFICATION ROUTES =========
 // GET /api/notifications - Get active notifications (public)
 app.get('/api/notifications', async (req, res) => {
@@ -2942,6 +2988,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
