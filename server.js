@@ -171,42 +171,7 @@ async function authMiddleware(req, res, next) {
   }
 }
 // ================= AUTO TASK RESET MIDDLEWARE =================
-app.use('/api/*', async (req, res, next) => {
-  try {
-    // تأكد أن المستخدم تمت مصادقته أولاً
-    if (req.user && req.user.id) {
-      const user = await User.findById(req.user.id);
-      
-      if (user && user.currentTaskProgress >= 6) {
-        const rewardAmount = calculateTaskReward(user.subscriptionType, 6);
-        
-        // تحديث الرصيد والمهام
-        user.balance = (user.balance || 0) + rewardAmount;
-        user.completedTasks = (user.completedTasks || 0) + 1;
-        user.currentTaskProgress = 0;
-        
-        // تسجيل المعاملة
-        await Transaction.create({
-          userId: user._id,
-          amount: rewardAmount,
-          type: 'TASK_REWARD_AUTO',
-          description: `مكافأة تلقائية لإكمال 6/6 مهمات`
-        });
-        
-        await user.save();
-        console.log(`🎉 تمت مكافأة ${user.username} تلقائياً: $${rewardAmount}`);
-        
-        // توزيع أرباح الدعوات
-        if (rewardAmount > 0 && user.referredBy) {
-          await distributeReferralEarnings(user._id, rewardAmount);
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Error in auto-progress check:', error);
-  }
-  next();
-});
+
 
 // ================= ROUTES =================
 // =====> أعلى الملف قبل أي route <=====
@@ -2841,6 +2806,42 @@ app.get("/api/admin/stats", authMiddleware, async (req, res) => {
     });
   }
 });
+app.use('/api/*', async (req, res, next) => {
+  try {
+    // تأكد أن المستخدم تمت مصادقته أولاً
+    if (req.user && req.user.id) {
+      const user = await User.findById(req.user.id);
+      
+      if (user && user.currentTaskProgress >= 6) {
+        const rewardAmount = calculateTaskReward(user.subscriptionType, 6);
+        
+        // تحديث الرصيد والمهام
+        user.balance = (user.balance || 0) + rewardAmount;
+        user.completedTasks = (user.completedTasks || 0) + 1;
+        user.currentTaskProgress = 0;
+        
+        // تسجيل المعاملة
+        await Transaction.create({
+          userId: user._id,
+          amount: rewardAmount,
+          type: 'TASK_REWARD_AUTO',
+          description: `مكافأة تلقائية لإكمال 6/6 مهمات`
+        });
+        
+        await user.save();
+        console.log(`🎉 تمت مكافأة ${user.username} تلقائياً: $${rewardAmount}`);
+        
+        // توزيع أرباح الدعوات
+        if (rewardAmount > 0 && user.referredBy) {
+          await distributeReferralEarnings(user._id, rewardAmount);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in auto-progress check:', error);
+  }
+  next();
+});
 // ================= STATIC FILES =================
 const FRONTEND_PATH = process.env.FRONTEND_PATH || path.join(__dirname, 'public');
 app.use(express.static(FRONTEND_PATH));
@@ -2863,6 +2864,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
