@@ -1841,73 +1841,51 @@ app.put("/api/admin/users/:id/task-progress", authMiddleware, async (req, res) =
     });
   }
 });
-// Get all users with task progress (admin only)
+// Get all users with task progress (admin only) - show all even if some fields are 0/null
 app.get("/api/admin/task-progress", authMiddleware, async (req, res) => {
   try {
     if (!req.user.roles?.includes("admin")) {
-      return res.status(403).json({
-        message: "Forbidden"
-      });
+      return res.status(403).json({ message: "Forbidden" });
     }
-    const {
-      page = 1, limit = 20, search = ""
-    } = req.query;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    // Build search query
+
+    const { search = "" } = req.query;
+
+    // بناء استعلام البحث
     let searchQuery = {};
     if (search) {
       searchQuery = {
-        $or: [{
-            username: {
-              $regex: search,
-              $options: 'i'
-            }
-          },
-          {
-            email: {
-              $regex: search,
-              $options: 'i'
-            }
-          }
+        $or: [
+          { username: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } }
         ]
       };
     }
-    const users = await User.find(searchQuery)
-      .select("username email currentTaskProgress completedTasks successfulInvites subscriptionType subscriptionActive createdAt")
-      .sort({
-        currentTaskProgress: -1,
-        createdAt: -1
-      })
-      .skip(skip)
-      .limit(parseInt(limit));
-    const totalUsers = await User.countDocuments(searchQuery);
-    res.json({
-      success: true,
-      data: users.map(user => ({
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        currentTaskProgress: user.currentTaskProgress || 0,
-        completedTasks: user.completedTasks || 0,
-        successfulInvites: user.successfulInvites || 0,
-        subscriptionType: user.subscriptionType,
-        subscriptionActive: user.subscriptionActive,
-        createdAt: user.createdAt,
-        expectedReward: calculateTaskReward(user.subscriptionType, user.currentTaskProgress || 0)
-      })),
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(totalUsers / parseInt(limit)),
-        totalUsers,
-        hasNext: skip + users.length < totalUsers,
-        hasPrev: page > 1
-      }
-    });
+
+    // جلب كل المستخدمين بدون pagination
+    const users = await User.find(searchQuery).sort({ currentTaskProgress: -1, createdAt: -1 });
+
+    // إعداد البيانات مع تعيين قيم افتراضية إذا كانت null أو undefined
+    const formattedUsers = users.map(user => ({
+      _id: user._id,
+      username: user.username || "N/A",
+      email: user.email || "N/A",
+      currentTaskProgress: user.currentTaskProgress ?? 0,  // إذا كانت null أو undefined تصبح 0
+      completedTasks: user.completedTasks ?? 0,
+      successfulInvites: user.successfulInvites ?? 0,
+      subscriptionType: user.subscriptionType || "None",
+      subscriptionActive: user.subscriptionActive ?? false,
+      createdAt: user.createdAt || null,
+      expectedReward: calculateTaskReward(
+        user.subscriptionType || "None",
+        user.currentTaskProgress ?? 0
+      )
+    }));
+
+    res.json({ success: true, data: formattedUsers });
+
   } catch (err) {
     console.error("Get all task progress error:", err);
-    res.status(500).json({
-      message: "Error fetching task progress"
-    });
+    res.status(500).json({ message: "Error fetching task progress" });
   }
 });
 // Payment statistics
@@ -2906,6 +2884,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
