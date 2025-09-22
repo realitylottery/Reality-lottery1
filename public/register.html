@@ -146,33 +146,41 @@
     }
 
     document.getElementById("registerForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const fullName = document.getElementById("fullName").value;
-      const email = document.getElementById("email").value;
-      const countryCode = document.getElementById("countryCode").value;
-const phone = countryCode + document.getElementById("phone").value;
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-      const referral = document.getElementById("referralInput").value;
+  e.preventDefault();
+  const fullName = document.getElementById("fullName").value;
+  const email = document.getElementById("email").value;
+  const countryCode = document.getElementById("countryCode").value;
+  const phone = countryCode + document.getElementById("phone").value;
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+  const referral = document.getElementById("referralInput").value.trim();
 
-      try {
-        const res = await fetch(API_BASE + "/auth/register", {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({fullName, email, phone, username, password, referralCode: referral})
-        });
+  // تجهيز البيانات الأساسية
+  let payload = { fullName, email, phone, username, password };
 
-        const data = await res.json();
-        if (res.ok) {
-          alert("Registration successful!");
-          window.location = "login.html";
-        } else {
-          alert(data.message || "Registration failed");
-        }
-      } catch (err) {
-        alert("Network error");
-      }
+  // إضافة referralCode فقط إذا المستخدم كتبه
+  if (referral) {
+    payload.referralCode = referral;
+  }
+
+  try {
+    const res = await fetch(API_BASE + "/auth/register", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
     });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert("Registration successful!");
+      window.location = "login.html";
+    } else {
+      alert(data.message || "Registration failed");
+    }
+  } catch (err) {
+    alert("Network error");
+  }
+});
   </script>
 </body>
 </html>
