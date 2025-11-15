@@ -1022,7 +1022,7 @@ async function distributeReferralEarnings(userId, rewardAmount) {
     if (user.referredBy && mongoose.Types.ObjectId.isValid(user.referredBy)) {
       const level1 = await User.findById(user.referredBy);
       if (level1) {
-        const commission1 = rewardAmount * 0.10; // 10% من مكافأة المستخدم
+        const commission1 = rewardAmount * 0; // 
         await User.updateOne(
           { _id: level1._id },
           { 
@@ -2949,6 +2949,7 @@ app.listen(PORT, () => {
   console.log(`🌐 Frontend served from: ${FRONTEND_PATH}`);
   console.log(`🗂 Media path: ${MEDIA_PATH}`);
 });
+
 
 
 
